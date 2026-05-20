@@ -3,65 +3,53 @@ package io.rosetta.imagehash.internal;
 /**
  * Pillow-compatible Lanczos3 resize on uint8 grayscale (int[][] in [0,255]).
  *
- * Implements the algorithm from libImaging/Resample.c:
- *   - separable horizontal then vertical pass
+ * Implements the algorithm from libImaging/Resample.c precisely:
  *   - center_of_pixel = (idx + 0.5) * scale
- *   - filter_scale = max(1.0, scale)  (kernel widens on downsample only)
+ *   - filter_scale = max(1.0, scale)
  *   - support = 3.0 * filter_scale
  *   - kernel = sinc(x) * sinc(x/3) for |x| < 3
- *   - per-output-pixel weight normalization
- *   - 32-bit fixed-point integer coefficients with int64 accumulator
- *   - output clipped to [0, 255]
- *
- * Byte-exact match against PIL on the lanczos_cases reference vectors.
+ *   - xmin = (int)(center - support + 0.5), clamped to [0, srcSize)
+ *   - xmax = (int)(center + support + 0.5), clamped to (xmin, srcSize] (EXCLUSIVE upper bound)
+ *   - weights normalized per output pixel
+ *   - PRECISION_BITS = 32 - 8 - 2 = 22 for fixed-point coefficients
+ *   - acc accumulated in int64
  */
 public final class LanczosFixed {
-    // PIL uses PRECISION_BITS = 32 - 8 - 2 = 22 in Resample.c. The "32" in the
-    // spec narrative refers to the int32 storage type for weights; the shift is 22.
-    // With weights normalized to ~1.0, 1.0 * 2^22 = 4194304 fits cleanly in int32,
-    // while 1.0 * 2^32 would overflow int32 entirely.
-    private static final int PRECISION_BITS = 32 - 8 - 2;
+    private static final int PRECISION_BITS = 32 - 8 - 2; // = 22
     private static final double SUPPORT = 3.0;
 
-    /** Resize uint8 src[H][W] to int[dstH][dstW] of uint8 values via Lanczos3. */
     public static int[][] resize(int[][] src, int dstW, int dstH) {
         int srcH = src.length;
         int srcW = src[0].length;
 
-        // Horizontal pass: src[srcH][srcW] -> mid[srcH][dstW]
-        int[][] coeffsH = precomputeCoeffs(srcW, dstW);
-        int[] offsetsH = computeOffsets(srcW, dstW);
-        int kSizeH = coeffsH[0].length;
+        // Horizontal pass
+        Coeffs cH = precomputeCoeffs(srcW, dstW);
         int[][] mid = new int[srcH][dstW];
         for (int y = 0; y < srcH; y++) {
             for (int xd = 0; xd < dstW; xd++) {
                 long acc = 0;
-                int[] w = coeffsH[xd];
-                int off = offsetsH[xd];
+                int off = cH.offsets[xd];
+                int len = cH.lengths[xd];
+                int[] w = cH.weights[xd];
                 int[] row = src[y];
-                for (int i = 0; i < kSizeH; i++) {
-                    int xs = off + i;
-                    if (xs < 0 || xs >= srcW) continue;
-                    acc += (long) w[i] * row[xs];
+                for (int i = 0; i < len; i++) {
+                    acc += (long) w[i] * row[off + i];
                 }
                 mid[y][xd] = clip8(acc);
             }
         }
 
-        // Vertical pass: mid[srcH][dstW] -> out[dstH][dstW]
-        int[][] coeffsV = precomputeCoeffs(srcH, dstH);
-        int[] offsetsV = computeOffsets(srcH, dstH);
-        int kSizeV = coeffsV[0].length;
+        // Vertical pass
+        Coeffs cV = precomputeCoeffs(srcH, dstH);
         int[][] out = new int[dstH][dstW];
         for (int yd = 0; yd < dstH; yd++) {
-            int[] w = coeffsV[yd];
-            int off = offsetsV[yd];
+            int off = cV.offsets[yd];
+            int len = cV.lengths[yd];
+            int[] w = cV.weights[yd];
             for (int x = 0; x < dstW; x++) {
                 long acc = 0;
-                for (int i = 0; i < kSizeV; i++) {
-                    int ys = off + i;
-                    if (ys < 0 || ys >= srcH) continue;
-                    acc += (long) w[i] * mid[ys][x];
+                for (int i = 0; i < len; i++) {
+                    acc += (long) w[i] * mid[off + i][x];
                 }
                 out[yd][x] = clip8(acc);
             }
@@ -76,49 +64,57 @@ public final class LanczosFixed {
         return (int) rounded;
     }
 
-    private static int[][] precomputeCoeffs(int srcSize, int dstSize) {
+    /** Holds per-output-pixel offsets, lengths, and weight arrays. */
+    private static final class Coeffs {
+        final int[] offsets;
+        final int[] lengths;
+        final int[][] weights; // weights[dstIdx] = int[length] of quantized coefficients
+        Coeffs(int[] offsets, int[] lengths, int[][] weights) {
+            this.offsets = offsets;
+            this.lengths = lengths;
+            this.weights = weights;
+        }
+    }
+
+    private static Coeffs precomputeCoeffs(int srcSize, int dstSize) {
         double scale = (double) srcSize / dstSize;
         double filterScale = Math.max(1.0, scale);
         double support = SUPPORT * filterScale;
-        int kSize = (int) Math.ceil(support * 2) + 1;
-        int[][] coeffs = new int[dstSize][kSize];
+
+        int[] offsets = new int[dstSize];
+        int[] lengths = new int[dstSize];
+        int[][] weights = new int[dstSize][];
+
         for (int xd = 0; xd < dstSize; xd++) {
             double center = (xd + 0.5) * scale;
-            int xmin = (int) Math.ceil(center - support);
-            int xmax = (int) Math.floor(center + support);
+            int xmin = (int) (center - support + 0.5);
             if (xmin < 0) xmin = 0;
-            if (xmax > srcSize - 1) xmax = srcSize - 1;
-            int n = xmax - xmin + 1;
-            double[] tmp = new double[n];
+            int xmax = (int) (center + support + 0.5);
+            if (xmax > srcSize) xmax = srcSize;
+            int len = xmax - xmin;
+            if (len < 0) len = 0;
+
+            double[] tmp = new double[len];
             double wsum = 0.0;
-            for (int i = 0; i < n; i++) {
+            for (int i = 0; i < len; i++) {
                 double dx = (xmin + i + 0.5 - center) / filterScale;
                 double w = lanczosKernel(dx);
                 tmp[i] = w;
                 wsum += w;
             }
             if (wsum != 0.0) {
-                for (int i = 0; i < n; i++) tmp[i] /= wsum;
+                for (int i = 0; i < len; i++) tmp[i] /= wsum;
             }
-            for (int i = 0; i < n; i++) {
-                coeffs[xd][i] = (int) Math.round(tmp[i] * (1L << PRECISION_BITS));
-            }
-        }
-        return coeffs;
-    }
 
-    private static int[] computeOffsets(int srcSize, int dstSize) {
-        double scale = (double) srcSize / dstSize;
-        double filterScale = Math.max(1.0, scale);
-        double support = SUPPORT * filterScale;
-        int[] offsets = new int[dstSize];
-        for (int xd = 0; xd < dstSize; xd++) {
-            double center = (xd + 0.5) * scale;
-            int xmin = (int) Math.ceil(center - support);
-            if (xmin < 0) xmin = 0;
+            int[] quantized = new int[len];
+            for (int i = 0; i < len; i++) {
+                quantized[i] = (int) Math.round(tmp[i] * (1L << PRECISION_BITS));
+            }
             offsets[xd] = xmin;
+            lengths[xd] = len;
+            weights[xd] = quantized;
         }
-        return offsets;
+        return new Coeffs(offsets, lengths, weights);
     }
 
     private static double lanczosKernel(double x) {
