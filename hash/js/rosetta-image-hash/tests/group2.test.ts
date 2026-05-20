@@ -71,3 +71,46 @@ describe("whash_haar goldens", () => {
     }
   });
 });
+
+describe("colorhash goldens", () => {
+  it("byte-exact across all fixtures × binbits", () => {
+    const cases = algorithmCases("colorhash");
+    const failures: string[] = [];
+    for (const c of cases) {
+      const img = loadPredecoded(c.fixture);
+      const h = rih.colorhash(img, c.size);
+      if (h.toHex() !== c.hex) {
+        failures.push(`fixture=${c.fixture} binbits=${c.size} got=${h.toHex()} want=${c.hex}`);
+      }
+    }
+    if (failures.length > 0) {
+      throw new Error(`${failures.length} failures:\n  ${failures.join("\n  ")}`);
+    }
+  });
+});
+
+describe("colorhash bin encoding (Group 1)", () => {
+  it("B=4 quirky encoding (v=8 → 0xc, NOT 0x8)", () => {
+    const cases: [number, boolean[]][] = [
+      [0,  [false, false, false, false]],
+      [1,  [false, false, false, true]],
+      [2,  [false, false, true,  false]],
+      [4,  [false, true,  true,  false]],
+      [7,  [false, true,  true,  true]],
+      [8,  [true,  true,  false, false]],
+      [15, [true,  true,  true,  true]],
+    ];
+    for (const [v, expected] of cases) {
+      const got = rih.colorhashBinEncode(v, 4);
+      expect(got.length).toBe(4);
+      for (let i = 0; i < 4; i++) {
+        expect(got[i]).toBe(expected[i]);
+      }
+    }
+  });
+
+  it("B=3 simple cases", () => {
+    expect(rih.colorhashBinEncode(0, 3)).toEqual([false, false, false]);
+    expect(rih.colorhashBinEncode(7, 3)).toEqual([true, true, true]);
+  });
+});

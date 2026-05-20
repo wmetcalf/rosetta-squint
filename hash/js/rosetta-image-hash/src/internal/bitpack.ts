@@ -2,8 +2,11 @@
  * Boolean array ↔ hex string conversion. Row-major MSB-first, zero-padded
  * to ceil(M*N / 4) chars.
  *
- * Uses nibble-aligned packing (NOT BigInt) so non-multiple-of-4 bit counts
- * (e.g., colorhash binbits=3 → 42 bits = 11 hex chars) work correctly.
+ * Matches Python imagehash's _binary_array_to_hex which treats the bit string
+ * as a big integer (RIGHT-aligned in the hex output). For bit counts that are
+ * not multiples of 4, this prepends (4 - total%4)%4 leading zero bits so the
+ * result agrees with Python's format (e.g. colorhash binbits=3 → 42 bits →
+ * 11 hex chars with 2 leading zero bits prepended before the first nibble).
  */
 
 import { ImageHashError } from "../hash.js";
@@ -14,9 +17,13 @@ export function pack(bits: boolean[][]): string {
   const w = bits[0].length;
   const total = h * w;
   const width = (total + 3) >> 2; // ceil(total/4)
-  const byteCount = (total + 7) >> 3;
+  // Number of leading zero-padding bits so the bit string is RIGHT-aligned
+  // within the hex representation (matches Python's big-integer formatting).
+  const pad = (4 - (total & 3)) & 3; // (4 - total%4) % 4
+  const paddedTotal = total + pad;
+  const byteCount = (paddedTotal + 7) >> 3; // ceil(paddedTotal/8)
   const bytes = new Uint8Array(byteCount);
-  let bi = 0;
+  let bi = pad; // start writing after the leading zero bits
   for (const row of bits) {
     for (const b of row) {
       if (b) {

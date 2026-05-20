@@ -7,3 +7,4 @@ export { averageHash } from "./averageHash.js";
 export { dhash } from "./dhash.js";
 export { phash } from "./phash.js";
 export { whashHaar } from "./whashHaar.js";
+export { colorhash, colorhashBinEncode } from "./colorhash.js";
