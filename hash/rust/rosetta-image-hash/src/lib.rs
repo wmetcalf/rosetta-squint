@@ -18,6 +18,9 @@ pub use dhash::dhash;
 mod phash;
 pub use phash::{phash, phash_with_factor};
 
+mod whash;
+pub use whash::whash_haar;
+
 use std::fmt;
 
 #[derive(Debug, thiserror::Error)]
