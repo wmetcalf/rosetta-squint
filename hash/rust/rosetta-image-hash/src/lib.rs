@@ -9,6 +9,9 @@ pub mod internal;
 mod hex;
 pub use hex::{hex_to_flathash, hex_to_hash};
 
+mod average;
+pub use average::average_hash;
+
 use std::fmt;
 
 #[derive(Debug, thiserror::Error)]
