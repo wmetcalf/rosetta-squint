@@ -3,3 +3,4 @@
 //! of the public API contract.
 
 pub mod pil_gray;
+pub mod pil_hsv;
