@@ -80,3 +80,35 @@ final class LanczosTests: XCTestCase {
         }
     }
 }
+
+final class DCTTests: XCTestCase {
+    private struct DCTCase: Decodable {
+        let input: [Double]
+        let output: [Double]
+    }
+    private struct DCTDoc: Decodable {
+        let n: Int
+        let cases: [String: DCTCase]
+    }
+
+    func testScipyReference() throws {
+        let path = "\(TestKit.SPEC_DIR)/dct_cases.json"
+        let data = try Data(contentsOf: URL(fileURLWithPath: path))
+        let doc = try JSONDecoder().decode(DCTDoc.self, from: data)
+        let tol = 1e-9
+        for (name, c) in doc.cases {
+            let got = dct1d(c.input)
+            XCTAssertEqual(got.count, doc.n, "\(name) length")
+            for k in 0..<doc.n {
+                XCTAssertEqual(got[k], c.output[k], accuracy: tol, "\(name) k=\(k)")
+            }
+        }
+    }
+
+    func testArangeFirstOutput() {
+        var x = [Double](repeating: 0, count: 32)
+        for i in 0..<32 { x[i] = Double(i) }
+        let y = dct1d(x)
+        XCTAssertEqual(y[0], 992.0, accuracy: 1e-9)
+    }
+}
