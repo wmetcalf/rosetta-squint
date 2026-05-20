@@ -5,3 +5,4 @@ export type { RgbImage, ImageHashErrorKind } from "./hash.js";
 export { hexToHash, hexToFlathash } from "./hex.js";
 export { averageHash } from "./averageHash.js";
 export { dhash } from "./dhash.js";
+export { phash } from "./phash.js";
