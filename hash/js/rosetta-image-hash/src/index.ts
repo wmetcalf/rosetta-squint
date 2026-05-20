@@ -2,3 +2,4 @@
 
 export { Hash, ImageHashError } from "./hash.js";
 export type { RgbImage, ImageHashErrorKind } from "./hash.js";
+export { hexToHash, hexToFlathash } from "./hex.js";
