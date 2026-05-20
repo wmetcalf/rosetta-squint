@@ -5,3 +5,4 @@
 pub mod pil_gray;
 pub mod pil_hsv;
 pub mod lanczos;
+pub mod dct;
