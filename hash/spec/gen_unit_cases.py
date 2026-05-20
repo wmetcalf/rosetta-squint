@@ -219,8 +219,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.check:
-        with tempfile.TemporaryDirectory() as tmp:
-            tmp_path = Path(tmp)
+        with tempfile.TemporaryDirectory():
             drift = []
             for name, gen in GENERATORS.items():
                 generated = gen()
