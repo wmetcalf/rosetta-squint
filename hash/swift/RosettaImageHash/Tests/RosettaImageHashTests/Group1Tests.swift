@@ -267,3 +267,26 @@ final class ImgRGBTests: XCTestCase {
 		XCTAssertEqual(out.data.count, 5 * 3 * 3)
 	}
 }
+
+final class ColorhashBinEncodeTests: XCTestCase {
+    func testB4QuirkyEncoding() {
+        // v=8 with B=4 must produce [T,T,F,F] (0xc), NOT [T,F,F,F] (standard binary 0x8).
+        let cases: [(Int, [Bool])] = [
+            (0,  [false, false, false, false]),
+            (1,  [false, false, false, true]),
+            (2,  [false, false, true,  false]),
+            (4,  [false, true,  true,  false]),
+            (7,  [false, true,  true,  true]),
+            (8,  [true,  true,  false, false]),
+            (15, [true,  true,  true,  true]),
+        ]
+        for (v, expected) in cases {
+            XCTAssertEqual(colorhashBinEncode(v, binbits: 4), expected, "v=\(v)")
+        }
+    }
+
+    func testB3SimpleCases() {
+        XCTAssertEqual(colorhashBinEncode(0, binbits: 3), [false, false, false])
+        XCTAssertEqual(colorhashBinEncode(7, binbits: 3), [true, true, true])
+    }
+}

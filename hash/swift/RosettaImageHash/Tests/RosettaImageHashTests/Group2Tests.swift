@@ -69,3 +69,20 @@ final class Group2WHashHaarTests: XCTestCase {
         }
     }
 }
+
+final class Group2ColorHashTests: XCTestCase {
+    func testByteExactAllFixturesAndBinbits() throws {
+        let cases = try TestKit.algorithmCases("colorhash")
+        var failures: [String] = []
+        for c in cases {
+            let img = try TestKit.loadPredecoded(c.fixture)
+            let h = try colorhash(img, binbits: c.size)
+            if h.hex != c.hex {
+                failures.append("fixture=\(c.fixture) binbits=\(c.size) got=\(h.hex) want=\(c.hex)")
+            }
+        }
+        if !failures.isEmpty {
+            XCTFail("\(failures.count) failures:\n  " + failures.joined(separator: "\n  "))
+        }
+    }
+}
