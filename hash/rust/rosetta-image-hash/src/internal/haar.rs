@@ -7,11 +7,12 @@
 //! Column-pass before row-pass evaluation order matches pywt's float
 //! addition order. Required for byte-exact parity.
 
-fn sqrt2_inv() -> f64 {
-    // sqrt(0.5) — exact value 0.7071067811865476 (one ULP higher than 1.0 / sqrt(2.0)).
-    const VALUE: f64 = 0.7071067811865476;
-    VALUE
-}
+/// sqrt(0.5) — one ULP higher than `std::f64::consts::FRAC_1_SQRT_2`.
+/// **Do not replace with the std constant.** Java and Go ports both confirmed
+/// `1.0 / 2.0_f64.sqrt()` accumulates a one-ULP error across 8-10 wavedec
+/// levels, flipping bits at the whash median boundary.
+#[allow(clippy::approx_constant)]
+const SQRT2_INV: f64 = 0.7071067811865476;
 
 pub struct WavedecResult {
     pub ca: Vec<Vec<f64>>,
@@ -133,7 +134,7 @@ fn dwt1d(x: &[f64]) -> (Vec<f64>, Vec<f64>) {
     let half = n / 2;
     let mut low = vec![0.0_f64; half];
     let mut high = vec![0.0_f64; half];
-    let s = sqrt2_inv();
+    let s = SQRT2_INV;
     for i in 0..half {
         let a = xx[2 * i];
         let b = xx[2 * i + 1];
@@ -147,7 +148,7 @@ fn idwt1d(low: &[f64], high: &[f64]) -> Vec<f64> {
     let half = low.len();
     let n = half * 2;
     let mut out = vec![0.0_f64; n];
-    let s = sqrt2_inv();
+    let s = SQRT2_INV;
     for i in 0..half {
         out[2 * i] = s * low[i] + s * high[i];
         out[2 * i + 1] = s * low[i] - s * high[i];
