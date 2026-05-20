@@ -168,3 +168,198 @@ binding, or anything else, as long as the output matches the reference.
 
 Reference: `dct_cases.json` — 1-D DCT of three N=32 inputs (`arange`, impulse,
 seeded random). Tolerance: max abs diff < 1e-9. Group-1 test: `test_dct_matches_scipy`.
+
+## Step 6 — Median for pHash threshold
+
+For an N×N block (N²-element flattened sort): `numpy.median(block)` semantics —
+for even N², `(sorted[N²/2 - 1] + sorted[N²/2]) / 2.0`. For N=8 that's
+`(sorted[31] + sorted[32]) / 2`.
+
+Reference: `dct_cases.json` doesn't cover this directly; ports add a sanity
+unit test (`test_median_64_elements`) over a small known input.
+
+## Step 7 — Bit packing → hex
+
+Python source (`imagehash._binary_array_to_hex`):
+
+```python
+bit_string = ''.join(str(b) for b in 1 * arr.flatten())
+width = int(numpy.ceil(len(bit_string) / 4))
+return '{:0>{width}x}'.format(int(bit_string, 2), width=width)
+```
+
+In plain language: flatten the boolean array **row-major** (numpy C order),
+produce one bit per element MSB-first, parse the resulting bit-string as a single
+big-endian unsigned integer, format as zero-padded hex with `width = ceil(M*N / 4)`.
+
+Worked example: the 4×4 pattern
+
+```
+1 0 1 0
+0 1 0 1
+1 1 1 1
+0 0 0 0
+```
+
+produces hex `"a5f0"`. Group-1 test: `test_bit_pack_to_hex_msb_first`.
+
+## Step 8 — `colorhash` quirky bin encoding
+
+For each bin value `v` (integer in `[0, 2^B)`) and `binbits` `B`, generate B bits:
+
+```python
+bit[i] = (v // 2**(B-i-1)) % 2**(B-i) > 0    for i in range(B)
+```
+
+Equivalent in C/Java/Rust/Go (operands are non-negative):
+
+```
+bit[i] = ((v >> (B-i-1)) & ((1 << (B-i)) - 1)) > 0    for i in 0..B
+```
+
+**This is not standard binary.** Worked table for B=4:
+
+| v | bits[0..3] | hex |
+|---|---|---|
+| 0 | 0,0,0,0 | 0 |
+| 1 | 0,0,0,1 | 1 |
+| 2 | 0,0,1,0 | 2 |
+| 4 | **0,1,1,0** | **6** *(not 4)* |
+| 7 | 0,1,1,1 | 7 |
+| 8 | 1,0,0,0 | 8 |
+| 15 | 1,1,1,1 | f |
+
+Group-1 test: `test_colorhash_bin_encoding`.
+
+## Step 9 — Error semantics
+
+Every algorithm validates inputs and raises a port-idiomatic error:
+
+| Condition | Algorithms | Error |
+|---|---|---|
+| `hash_size < 2` | ahash, dhash, phash | `ValueError`-equivalent |
+| `hash_size` not power of 2, or `level > ll_max_level` | whash | `ValueError`-equivalent |
+| `binbits < 1` | colorhash | `ValueError`-equivalent |
+| Invalid hex chars; non-square length for `hex_to_hash` | hex parsers | `ValueError`-equivalent |
+
+Port-idiomatic errors:
+- Java: `IllegalArgumentException`
+- Rust: `Result<_, ImageHashError>`
+- Go: `error` return value
+- JS/TS: `throw new Error(...)`
+- Swift: `throws`
+
+Image-type validation (e.g., "image is a PIL.Image") is **out of scope** — the
+port's type system handles that. Group-5 test exercises numerical-input errors.
+
+## Algorithm definitions
+
+Each algorithm composes the pipeline steps above.
+
+### `average_hash(img, hash_size=N)`
+
+1. Convert to grayscale (step 2) → uint8 array.
+2. Lanczos resize (step 4) to `(N, N)` → uint8 array.
+3. `avg = mean(pixels)` as float64 (numpy widens uint8 sum to int64; non-Python ports must accumulate in u32+ or float64, **not** u8).
+4. `bit[y][x] = pixels[y][x] > avg` (strict `>`).
+5. Pack bits to hex (step 7).
+
+### `dhash(img, hash_size=N)`
+
+1. Convert to grayscale (step 2).
+2. Lanczos resize (step 4) to **`(width=N+1, height=N)`**. After `numpy.asarray(image)` shape is `(H=N, W=N+1)`.
+3. `bit[y][x] = pixel[y][x+1] > pixel[y][x]` for `y in [0,N), x in [0,N)`.
+4. Pack bits to hex.
+
+### `phash(img, hash_size=N, highfreq_factor=4)`
+
+1. Convert to grayscale.
+2. Lanczos resize to `(N*4, N*4)`.
+3. 2-D DCT-II: `dct(dct(pixels, axis=0), axis=1)` — column-wise then row-wise.
+4. Take top-left `N×N` block: `dct[0:N, 0:N]`.
+5. `med = median(block)` (step 6).
+6. `bit = block > med` (strict `>`).
+7. Pack bits to hex.
+
+### `whash(img, hash_size=N)` — v1 only `mode='haar'`, `remove_max_haar_ll=True`
+
+Mirroring Python source exactly:
+
+1. `image_natural_scale = 2**int(log2(min(W, H)))`.
+2. `image_scale = max(image_natural_scale, hash_size)`.
+3. `ll_max_level = int(log2(image_scale))`, `level = int(log2(hash_size))`, `dwt_level = ll_max_level - level`.
+4. Validate: `hash_size` is power of 2 and `level <= ll_max_level`; else raise.
+5. `image = image.convert('L').resize((image_scale, image_scale), LANCZOS)` (steps 2 + 4).
+6. `pixels = numpy.asarray(image) / 255.0` → float64, shape `(image_scale, image_scale)`.
+7. `coeffs = pywt.wavedec2(pixels, 'haar', level=ll_max_level, mode='symmetric')`. This returns a Python list `[cA_n, (cH_n, cV_n, cD_n), (cH_{n-1}, cV_{n-1}, cD_{n-1}), …, (cH_1, cV_1, cD_1)]` — element 0 is a 2-D ndarray (shape `(1,1)` at full decomposition for power-of-2 input), every other element is a 3-tuple of 2-D ndarrays. Port equivalents model this as a list-of-(array-or-3-tuple).
+8. `coeffs[0] *= 0` — zero the LL band in place.
+9. `modified_pixels = pywt.waverec2(coeffs, 'haar', mode='symmetric')` — output shape equals step-6 input.
+10. `coeffs2 = pywt.wavedec2(modified_pixels, 'haar', level=dwt_level, mode='symmetric')`.
+11. `ll = coeffs2[0]` — shape `(N, N)`.
+12. `med = median(ll)`; `bit = ll > med`; pack to hex.
+
+`'symmetric'` boundary mode is pywt's default; explicit here so v2 (db4) doesn't
+accidentally inherit. For Haar specifically (filter length 2) the output size is
+always exactly N/2 per level regardless of boundary mode, but coefficient values
+near edges differ for longer wavelets.
+
+Haar filter coefficients: lowpass `[1/√2, 1/√2]`, highpass `[1/√2, -1/√2]`.
+
+### `colorhash(img, binbits=B)`
+
+For every pixel, compute `L` (step 2) and `(H, S, V)` (step 3).
+
+**Bin assignment, all using strict `<` / strict `>`:**
+
+| Pixel | Condition | Bin |
+|---|---|---|
+| black | `L < 32`             *(32 = 256 // 8)*       | black |
+| gray | else `S < 85`         *(85 = 256 // 3)*       | gray |
+| faint hue | else `S < 170`   *(170 = 256 * 2 // 3)* | `faint_bins[min(5, int(H * 6.0 / 255.0))]` |
+| bright hue | else `S > 170` | `bright_bins[min(5, int(H * 6.0 / 255.0))]` |
+| (neither) | `S == 170` (and not black/gray) | counted as colorful (denominator) but **lands in no histogram bin** |
+
+Boundary cases (each verified with a dedicated fixture):
+- `L == 32` → **not** black; falls into gray or colorful branch.
+- `S == 85` (with `L >= 32`) → **not** gray; falls into colorful branch.
+- `S == 170` (with `L >= 32`, `S >= 85`) → colorful denominator but neither faint nor bright.
+
+**Quantize each of 14 bins to an integer in `[0, 2^B)`:**
+
+```
+n = W * H  (total pixel count)
+c = max(1, colorful_count)
+values[0]  = min(2^B - 1, int(black_count       / n * 2^B))
+values[1]  = min(2^B - 1, int(gray_not_black_count / n * 2^B))
+for i in 0..6:
+    values[2 + i] = min(2^B - 1, int(faint_bins[i]  / c * 2^B))
+    values[8 + i] = min(2^B - 1, int(bright_bins[i] / c * 2^B))
+```
+
+Bit-encode each value via step 8 → flatten → hex of width `ceil(14*B / 4)`.
+
+### `hex_to_hash(hex)`
+
+Inverse of step 7 for square `hash_size × hash_size` shape:
+1. `hash_size = isqrt(len(hex) * 4)`. Raise if not exact (input not square).
+2. Parse hex as big-endian unsigned integer; expand to `hash_size² = N²` MSB-first bits.
+3. Reshape row-major into `(hash_size, hash_size)` boolean array.
+
+### `hex_to_flathash(hex, hashsize)`
+
+For colorhash-style flat shape `(14, hashsize)` where the caller supplies the second axis:
+1. Total bits = `14 * hashsize`.
+2. Parse hex as big-endian unsigned integer; expand to that many MSB-first bits.
+3. Reshape into a 2-D boolean array of shape `(14, hashsize)`.
+
+## Validation matrix
+
+Each port's test suite reads the following files and asserts byte-exact equality:
+
+| Test group | File(s) consumed | Number of assertions |
+|---|---|---|
+| Group 1 (pipeline steps) | `grayscale_cases.json`, `hsv_cases.json`, `dct_cases.json`, `haar_cases.json`, `lanczos_cases/*.bin` | ~120 |
+| Group 2 (algorithms, decoded input) | `goldens.json` + `decoded/*.rgb.bin` | ~500 |
+| Group 3 (algorithms, PNG input) | `goldens.json` + `fixtures/*.png` | ~500 (modulo exemptions) |
+| Group 4 (hex round-trip) | round-trip every Group-2 hash | ~500 |
+| Group 5 (distance / error semantics) | fixed bit patterns; invalid inputs | ~30 |
