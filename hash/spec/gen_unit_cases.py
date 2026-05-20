@@ -83,9 +83,29 @@ def gen_hsv_cases() -> dict:
             "cases": cases}
 
 
+def gen_dct_cases() -> dict:
+    """1-D DCT-II type 2, norm=None reference for N=32 on three inputs."""
+    inputs = {
+        "arange":   list(range(32)),
+        "impulse":  [1] + [0] * 31,
+    }
+    rng = np.random.default_rng(seed=20260519)
+    inputs["random_seeded"] = [float(x) for x in rng.normal(loc=128.0, scale=40.0, size=32)]
+
+    cases = {}
+    for name, x in inputs.items():
+        x_arr = np.asarray(x, dtype=np.float64)
+        y = sfp.dct(x_arr, type=2, norm=None)
+        cases[name] = {"input": x, "output": [float(v) for v in y]}
+    return {"description": "scipy.fftpack.dct(x, type=2, norm=None) for N=32. Tolerance: max abs diff < 1e-9.",
+            "n": 32,
+            "cases": cases}
+
+
 GENERATORS = {
     "grayscale_cases.json": gen_grayscale_cases,
     "hsv_cases.json":       gen_hsv_cases,
+    "dct_cases.json":       gen_dct_cases,
 }
 
 
