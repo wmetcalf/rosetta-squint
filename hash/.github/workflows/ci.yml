@@ -50,7 +50,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        port: [java, go, rust]
+        port: [java, go, rust, js]
     steps:
       - uses: actions/checkout@v4
 
@@ -93,3 +93,15 @@ jobs:
       - name: Rust — cargo test
         if: matrix.port == 'rust'
         run: cd rust/rosetta-image-hash && cargo test --no-fail-fast
+
+      # JS/TS
+      - name: Set up Node 20
+        if: matrix.port == 'js'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: js/rosetta-image-hash/package-lock.json
+      - name: JS — npm ci + test
+        if: matrix.port == 'js'
+        run: cd js/rosetta-image-hash && npm ci && npm test
