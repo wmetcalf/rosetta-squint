@@ -180,3 +180,90 @@ final class HaarTests: XCTestCase {
         }
     }
 }
+
+final class BitpackTests: XCTestCase {
+	func testPack4x4Pattern() {
+		let bits: [[Bool]] = [
+			[true, false, true, false],
+			[false, true, false, true],
+			[true, true, true, true],
+			[false, false, false, false],
+		]
+		XCTAssertEqual(Bitpack.pack(bits), "a5f0")
+	}
+
+	func testPackAllOnes8x8() {
+		let bits = [[Bool]](repeating: [Bool](repeating: true, count: 8), count: 8)
+		XCTAssertEqual(Bitpack.pack(bits), "ffffffffffffffff")
+	}
+
+	func testPackAllZeros8x8() {
+		let bits = [[Bool]](repeating: [Bool](repeating: false, count: 8), count: 8)
+		XCTAssertEqual(Bitpack.pack(bits), "0000000000000000")
+	}
+
+	func testPack14x3AllZeros() throws {
+		// colorhash binbits=3 -> 14*3 = 42 bits = 11 hex chars (left-padded 2 zero bits)
+		let bits = [[Bool]](repeating: [Bool](repeating: false, count: 3), count: 14)
+		XCTAssertEqual(Bitpack.pack(bits), "00000000000")
+	}
+
+	func testUnpackSquareInverse() throws {
+		let got = try Bitpack.unpackSquare("a5f0")
+		XCTAssertEqual(got.count, 4)
+		let expected: [[Bool]] = [
+			[true, false, true, false],
+			[false, true, false, true],
+			[true, true, true, true],
+			[false, false, false, false],
+		]
+		XCTAssertEqual(got, expected)
+	}
+
+	func testUnpackFlatZeros() throws {
+		let got = try Bitpack.unpackFlat("00000000000", secondAxis: 3)
+		XCTAssertEqual(got.count, 14)
+		XCTAssertEqual(got[0].count, 3)
+		for row in got {
+			for b in row { XCTAssertFalse(b) }
+		}
+	}
+
+	func testUnpackSquareRejectsNonSquare() {
+		XCTAssertThrowsError(try Bitpack.unpackSquare("12345"))
+	}
+
+	func testUnpackSquareRejectsInvalidChars() {
+		XCTAssertThrowsError(try Bitpack.unpackSquare("xyz!"))
+	}
+}
+
+final class ImgRGBTests: XCTestCase {
+	func testRGBPassesThrough() {
+		let img = RGBImage(width: 2, height: 1, data: [255, 0, 0, 0, 255, 0], channels: .rgb)
+		let out = ImgRGB.toRGB(img)
+		XCTAssertEqual(out.width, 2)
+		XCTAssertEqual(out.height, 1)
+		XCTAssertEqual(out.data, [255, 0, 0, 0, 255, 0])
+	}
+
+	func testRGBATransparentCompositesOnBlack() {
+		let img = RGBImage(width: 1, height: 1, data: [255, 255, 255, 0], channels: .rgba)
+		let out = ImgRGB.toRGB(img)
+		XCTAssertEqual(out.data, [0, 0, 0])
+	}
+
+	func testRGBAOpaquePassesThrough() {
+		let img = RGBImage(width: 1, height: 1, data: [100, 150, 200, 255], channels: .rgba)
+		let out = ImgRGB.toRGB(img)
+		XCTAssertEqual(out.data, [100, 150, 200])
+	}
+
+	func testShapePreserved() {
+		let img = RGBImage(width: 5, height: 3, data: [UInt8](repeating: 0, count: 5 * 3 * 3), channels: .rgb)
+		let out = ImgRGB.toRGB(img)
+		XCTAssertEqual(out.width, 5)
+		XCTAssertEqual(out.height, 3)
+		XCTAssertEqual(out.data.count, 5 * 3 * 3)
+	}
+}
