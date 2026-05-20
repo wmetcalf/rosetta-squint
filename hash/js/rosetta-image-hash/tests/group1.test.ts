@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
+import { dct1d } from "../src/internal/dct.js";
+
 import { resize as lanczosResize } from "../src/internal/lanczos.js";
 import { loadLanczosCase } from "./testkit.js";
 
@@ -46,6 +48,33 @@ describe("pilHsv", () => {
 
   it("saturation 170 boundary: RGB(255,85,85) has S=170", () => {
     expect(toHsv(255, 85, 85)[1]).toBe(170);
+  });
+});
+
+describe("dct", () => {
+  it("dct1d matches scipy reference", () => {
+    const path = join(SPEC_DIR, "dct_cases.json");
+    const doc = JSON.parse(readFileSync(path, "utf8")) as {
+      n: number;
+      cases: Record<string, { input: number[]; output: number[] }>;
+    };
+    const tol = 1e-9;
+    for (const [name, c] of Object.entries(doc.cases)) {
+      const got = dct1d(new Float64Array(c.input));
+      expect(got.length).toBe(doc.n);
+      for (let k = 0; k < doc.n; k++) {
+        if (Math.abs(got[k] - c.output[k]) > tol) {
+          throw new Error(`${name} k=${k}: got ${got[k]} want ${c.output[k]}`);
+        }
+      }
+    }
+  });
+
+  it("arange first output is 992", () => {
+    const x = new Float64Array(32);
+    for (let i = 0; i < 32; i++) x[i] = i;
+    const y = dct1d(x);
+    expect(Math.abs(y[0] - 992.0)).toBeLessThan(1e-9);
   });
 });
 
