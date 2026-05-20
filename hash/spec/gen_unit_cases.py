@@ -102,10 +102,51 @@ def gen_dct_cases() -> dict:
             "cases": cases}
 
 
+def gen_haar_cases() -> dict:
+    """Haar wavelet decomposition with 'symmetric' boundary mode on a known 16x16 float input.
+
+    Spec-relevant outputs:
+      - single-level decomposition: LL, LH, HL, HH at level 1
+      - multi-level (level=4) decomposition: coeffs[0] (LL_4) shape (1,1)
+      - reconstruction matches input exactly
+    """
+    rng = np.random.default_rng(seed=20260519)
+    x = rng.normal(loc=0.5, scale=0.2, size=(16, 16))
+    x = np.clip(x, 0.0, 1.0)
+
+    # Single level
+    cA, (cH, cV, cD) = pywt.dwt2(x, "haar", mode="symmetric")
+
+    # Multi-level full decomposition: level=4 -> coeffs[0] is shape (1,1)
+    coeffs = pywt.wavedec2(x, "haar", level=4, mode="symmetric")
+    multi_cA = coeffs[0]  # shape (1,1)
+    multi_details = [
+        [d.tolist() for d in level_tuple] for level_tuple in coeffs[1:]
+    ]
+
+    # Reconstruction roundtrip
+    reconstructed = pywt.waverec2(coeffs, "haar", mode="symmetric")
+
+    return {
+        "description": "Haar DWT with 'symmetric' boundary mode on a 16x16 float64 array (clipped to [0,1]).",
+        "input": x.tolist(),
+        "single_level": {
+            "cA": cA.tolist(), "cH": cH.tolist(), "cV": cV.tolist(), "cD": cD.tolist(),
+        },
+        "multi_level_4": {
+            "cA": multi_cA.tolist(),
+            "details_per_level_outer_to_inner": multi_details,
+            "reconstructed": reconstructed.tolist(),
+        },
+        "tolerance": "max abs diff < 1e-12 against pywt; reconstruction within 1e-12 of input"
+    }
+
+
 GENERATORS = {
     "grayscale_cases.json": gen_grayscale_cases,
     "hsv_cases.json":       gen_hsv_cases,
     "dct_cases.json":       gen_dct_cases,
+    "haar_cases.json":      gen_haar_cases,
 }
 
 
