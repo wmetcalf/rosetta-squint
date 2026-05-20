@@ -43,3 +43,23 @@ jobs:
         run: pip install -r requirements.txt
       - name: Run consistency check
         run: python consistency.py
+
+  port-tests:
+    name: Port tests (${{ matrix.port }})
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        port: [java]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Java 17
+        if: matrix.port == 'java'
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      - name: Java — mvn test
+        if: matrix.port == 'java'
+        run: cd java && mvn -B -ntp test
