@@ -7,3 +7,5 @@ pub mod pil_hsv;
 pub mod lanczos;
 pub mod dct;
 pub mod haar;
+pub mod bitpack;
+pub mod img_rgb;
