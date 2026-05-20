@@ -50,7 +50,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        port: [java]
+        port: [java, go]
     steps:
       - uses: actions/checkout@v4
       - name: Set up Java 17
@@ -63,3 +63,12 @@ jobs:
       - name: Java — mvn test
         if: matrix.port == 'java'
         run: cd java && mvn -B -ntp test
+      - name: Set up Go 1.22
+        if: matrix.port == 'go'
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache-dependency-path: go/imagehash/go.sum
+      - name: Go — go test
+        if: matrix.port == 'go'
+        run: cd go/imagehash && go test -count=1 ./...
