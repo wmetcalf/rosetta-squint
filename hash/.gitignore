@@ -17,6 +17,10 @@ node_modules/
 dist/
 *.tsbuildinfo
 
+# Swift / SwiftPM
+swift/**/.build/
+swift/**/.swiftpm/
+
 # OS
 .DS_Store
 Thumbs.db
