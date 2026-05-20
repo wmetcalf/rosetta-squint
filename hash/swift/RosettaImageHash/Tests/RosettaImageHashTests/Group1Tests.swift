@@ -58,3 +58,25 @@ final class PILHSVTests: XCTestCase {
         XCTAssertEqual(s, 170)
     }
 }
+
+final class LanczosTests: XCTestCase {
+    func testAllCases() throws {
+        let names = [
+            "downsample_64_to_32_gradient",
+            "upsample_16_to_32_gradient",
+            "identity_32_to_32_random",
+            "asymmetric_64x48_to_32x24",
+        ]
+        for name in names {
+            let c = try TestKit.loadLanczosCase(name)
+            let got = lanczosResize(c.src, srcW: c.srcW, srcH: c.srcH, dstW: c.dstW, dstH: c.dstH)
+            XCTAssertEqual(got.count, c.dstW * c.dstH, "\(name) length mismatch")
+            for y in 0..<c.dstH {
+                for x in 0..<c.dstW {
+                    let i = y * c.dstW + x
+                    XCTAssertEqual(got[i], c.dst[i], "\(name) pixel (\(y),\(x))")
+                }
+            }
+        }
+    }
+}
