@@ -69,34 +69,30 @@ func dwt2(_ x: [[Double]]) -> DWT2Result {
 func idwt2(cA: [[Double]], cH: [[Double]], cV: [[Double]], cD: [[Double]]) -> [[Double]] {
     let sh = cA.count
     let sw = cA[0].count
+    let outW = sw * 2
     let outH = sh * 2
 
-    var colLow = [[Double]](repeating: [], count: sw)
-    var colHigh = [[Double]](repeating: [], count: sw)
-    for xCol in 0..<sw {
-        var ll = [Double](repeating: 0, count: sh)
-        var lh = [Double](repeating: 0, count: sh)
-        var hl = [Double](repeating: 0, count: sh)
-        var hh = [Double](repeating: 0, count: sh)
-        for y in 0..<sh {
-            ll[y] = cA[y][xCol]
-            lh[y] = cV[y][xCol]
-            hl[y] = cH[y][xCol]
-            hh[y] = cD[y][xCol]
-        }
-        colLow[xCol] = idwt1d(low: ll, high: lh)
-        colHigh[xCol] = idwt1d(low: hl, high: hh)
+    // Row-pass first (inverse of column-pass-first in dwt2):
+    //   cA and cV share the column-low-pass origin -> combine along rows: idwt1d(cA[y], cV[y])
+    //   cH and cD share the column-high-pass origin -> combine along rows: idwt1d(cH[y], cD[y])
+    var rowLow = [[Double]](repeating: [], count: sh)
+    var rowHigh = [[Double]](repeating: [], count: sh)
+    for y in 0..<sh {
+        rowLow[y] = idwt1d(low: cA[y], high: cV[y])
+        rowHigh[y] = idwt1d(low: cH[y], high: cD[y])
     }
 
-    var out = [[Double]](repeating: [], count: outH)
-    for y in 0..<outH {
-        var low = [Double](repeating: 0, count: sw)
-        var high = [Double](repeating: 0, count: sw)
-        for xCol in 0..<sw {
-            low[xCol] = colLow[xCol][y]
-            high[xCol] = colHigh[xCol][y]
+    // Column-pass second: for each output column, combine rowLow's column with rowHigh's column.
+    var out = [[Double]](repeating: [Double](repeating: 0, count: outW), count: outH)
+    for xCol in 0..<outW {
+        var low = [Double](repeating: 0, count: sh)
+        var high = [Double](repeating: 0, count: sh)
+        for y in 0..<sh {
+            low[y] = rowLow[y][xCol]
+            high[y] = rowHigh[y][xCol]
         }
-        out[y] = idwt1d(low: low, high: high)
+        let col = idwt1d(low: low, high: high)
+        for y2 in 0..<outH { out[y2][xCol] = col[y2] }
     }
     return out
 }
