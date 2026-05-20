@@ -11,7 +11,10 @@ import java.util.List;
  * (a+b)/sqrt(2) / (a-b)/sqrt(2) pair without any boundary handling.
  */
 public final class HaarDwt {
-    private static final double SQRT2_INV = 1.0 / Math.sqrt(2.0);
+    // Use Math.sqrt(0.5) to match pywt's filter coefficient 0.7071067811865476
+    // (1.0/Math.sqrt(2.0) yields 0.7071067811865475 — one ULP lower — causing
+    // accumulated rounding mismatches in deep wavedec/waverec stacks).
+    private static final double SQRT2_INV = Math.sqrt(0.5);
     private static final double[] LOWPASS = {SQRT2_INV, SQRT2_INV};
     private static final double[] HIGHPASS = {SQRT2_INV, -SQRT2_INV};
 
@@ -32,66 +35,61 @@ public final class HaarDwt {
 
     public static Dwt2Result dwt2(double[][] x) {
         int h = x.length, w = x[0].length;
-        double[][] rowLow = new double[h][];
-        double[][] rowHigh = new double[h][];
-        for (int y = 0; y < h; y++) {
-            double[][] lh = dwt1dHaar(x[y]);
-            rowLow[y] = lh[0];
-            rowHigh[y] = lh[1];
-        }
-        int outW = rowLow[0].length;
+        // Match pywt's evaluation order: filter along axis=-2 (cols) FIRST,
+        // then along axis=-1 (rows). This is bit-exact only when the order
+        // of floating-point additions matches pywt.
         int outH = (h + 1) / 2;
+        int outW = (w + 1) / 2;
+        double[][] colLow = new double[outH][w];
+        double[][] colHigh = new double[outH][w];
+        for (int x_ = 0; x_ < w; x_++) {
+            double[] col = new double[h];
+            for (int y = 0; y < h; y++) col[y] = x[y][x_];
+            double[][] lh = dwt1dHaar(col);
+            for (int y = 0; y < outH; y++) {
+                colLow[y][x_] = lh[0][y];
+                colHigh[y][x_] = lh[1][y];
+            }
+        }
         double[][] cA = new double[outH][outW];
         double[][] cH = new double[outH][outW];
         double[][] cV = new double[outH][outW];
         double[][] cD = new double[outH][outW];
-        for (int x_ = 0; x_ < outW; x_++) {
-            double[] colLow = new double[h];
-            double[] colHigh = new double[h];
-            for (int y = 0; y < h; y++) {
-                colLow[y] = rowLow[y][x_];
-                colHigh[y] = rowHigh[y][x_];
-            }
-            double[][] lhLow = dwt1dHaar(colLow);
-            double[][] lhHigh = dwt1dHaar(colHigh);
-            for (int y = 0; y < outH; y++) {
-                cA[y][x_] = lhLow[0][y];
-                cH[y][x_] = lhLow[1][y];
-                cV[y][x_] = lhHigh[0][y];
-                cD[y][x_] = lhHigh[1][y];
-            }
+        for (int y = 0; y < outH; y++) {
+            double[][] lhL = dwt1dHaar(colLow[y]);
+            double[][] lhH = dwt1dHaar(colHigh[y]);
+            // colLow row -> low along cols (axis=-1) = cA; high along cols (axis=-1) = cV
+            // colHigh row -> low = cH; high = cD
+            cA[y] = lhL[0];
+            cV[y] = lhL[1];
+            cH[y] = lhH[0];
+            cD[y] = lhH[1];
         }
         return new Dwt2Result(cA, cH, cV, cD);
     }
 
     public static double[][] idwt2(double[][] cA, double[][] cH, double[][] cV, double[][] cD) {
+        // Inverse of cols-first dwt2: undo axis=-1 (rows) first to recover
+        // colLow (from cA,cV) and colHigh (from cH,cD), then undo axis=-2 (cols).
         int sh = cA.length, sw = cA[0].length;
         int outH = sh * 2;
-        int outW = sw;
-        double[][] rowLow = new double[outH][outW];
-        double[][] rowHigh = new double[outH][outW];
-        for (int x_ = 0; x_ < outW; x_++) {
-            double[] cAcol = new double[sh];
-            double[] cVcol = new double[sh];
-            double[] cHcol = new double[sh];
-            double[] cDcol = new double[sh];
-            for (int y = 0; y < sh; y++) {
-                cAcol[y] = cA[y][x_];
-                cVcol[y] = cV[y][x_];
-                cHcol[y] = cH[y][x_];
-                cDcol[y] = cD[y][x_];
-            }
-            double[] low = idwt1dHaar(cAcol, cHcol);
-            double[] high = idwt1dHaar(cVcol, cDcol);
-            for (int y = 0; y < outH; y++) {
-                rowLow[y][x_] = low[y];
-                rowHigh[y][x_] = high[y];
-            }
+        int outW = sw * 2;
+        double[][] colLow = new double[sh][outW];
+        double[][] colHigh = new double[sh][outW];
+        for (int y = 0; y < sh; y++) {
+            colLow[y] = idwt1dHaar(cA[y], cV[y]);   // low+high along cols → colLow
+            colHigh[y] = idwt1dHaar(cH[y], cD[y]);  // low+high along cols → colHigh
         }
-        int finalW = outW * 2;
-        double[][] out = new double[outH][finalW];
-        for (int y = 0; y < outH; y++) {
-            out[y] = idwt1dHaar(rowLow[y], rowHigh[y]);
+        double[][] out = new double[outH][outW];
+        for (int x_ = 0; x_ < outW; x_++) {
+            double[] cl = new double[sh];
+            double[] ch = new double[sh];
+            for (int y = 0; y < sh; y++) {
+                cl[y] = colLow[y][x_];
+                ch[y] = colHigh[y][x_];
+            }
+            double[] col = idwt1dHaar(cl, ch);
+            for (int y = 0; y < outH; y++) out[y][x_] = col[y];
         }
         return out;
     }
