@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
+import { dwt2, wavedec2, waverec2 } from "../src/internal/haar.js";
+
 import { dct1d } from "../src/internal/dct.js";
 
 import { resize as lanczosResize } from "../src/internal/lanczos.js";
@@ -102,4 +104,64 @@ describe("lanczos", () => {
       }
     });
   }
+});
+
+describe("haar", () => {
+  const tol = 1e-12;
+
+  function assertClose(expected: number[][], actual: number[][], label: string) {
+    expect(actual.length).toBe(expected.length);
+    for (let y = 0; y < expected.length; y++) {
+      expect(actual[y].length).toBe(expected[y].length);
+      for (let x = 0; x < expected[y].length; x++) {
+        const diff = Math.abs(expected[y][x] - actual[y][x]);
+        if (diff > tol) {
+          throw new Error(
+            `${label} (${y},${x}): expected ${expected[y][x]} got ${actual[y][x]} diff ${diff}`
+          );
+        }
+      }
+    }
+  }
+
+  function loadHaar() {
+    return JSON.parse(readFileSync(join(SPEC_DIR, "haar_cases.json"), "utf8")) as {
+      input: number[][];
+      single_level: { cA: number[][]; cH: number[][]; cV: number[][]; cD: number[][] };
+      multi_level_4: { cA: number[][]; reconstructed: number[][] };
+    };
+  }
+
+  it("single-level matches pywt", () => {
+    const doc = loadHaar();
+    const { cA, cH, cV, cD } = dwt2(doc.input);
+    assertClose(doc.single_level.cA, cA, "cA");
+    assertClose(doc.single_level.cH, cH, "cH");
+    assertClose(doc.single_level.cV, cV, "cV");
+    assertClose(doc.single_level.cD, cD, "cD");
+  });
+
+  it("multi-level LL is 1x1 and reconstruction equals input", () => {
+    const doc = loadHaar();
+    const dec = wavedec2(doc.input, 4);
+    expect(dec.cA.length).toBe(1);
+    expect(dec.cA[0].length).toBe(1);
+    assertClose(doc.multi_level_4.cA, dec.cA, "multi cA");
+    const recon = waverec2(dec);
+    assertClose(doc.multi_level_4.reconstructed, recon, "reconstructed");
+    assertClose(doc.input, recon, "round-trip == input");
+  });
+
+  it("zero LL of full decomp removes DC", () => {
+    const x: number[][] = [];
+    for (let i = 0; i < 4; i++) x.push([7.5, 7.5, 7.5, 7.5]);
+    const dec = wavedec2(x, 2);
+    dec.cA[0][0] = 0;
+    const recon = waverec2(dec);
+    for (let y = 0; y < 4; y++) {
+      for (let xCol = 0; xCol < 4; xCol++) {
+        expect(Math.abs(recon[y][xCol])).toBeLessThan(tol);
+      }
+    }
+  });
 });
