@@ -142,11 +142,68 @@ def gen_haar_cases() -> dict:
     }
 
 
+def _write_lanczos_case(name: str, src: np.ndarray, dst_size: tuple[int, int]) -> dict:
+    """Write a single Lanczos test case: input + output as raw bytes; entry for MANIFEST."""
+    src_img = Image.fromarray(src.astype(np.uint8), mode="L")
+    dst_img = src_img.resize(dst_size, Image.Resampling.LANCZOS)
+    dst_arr = np.asarray(dst_img, dtype=np.uint8)
+    out_path = LANCZOS_DIR / f"{name}.bin"
+    src_h, src_w = src.shape
+    dst_w, dst_h = dst_size
+    with open(out_path, "wb") as fh:
+        fh.write(struct.pack("<IIII", src_w, src_h, dst_w, dst_h))
+        fh.write(src.astype(np.uint8).tobytes())
+        fh.write(dst_arr.tobytes())
+    return {
+        "name": name,
+        "file": f"lanczos_cases/{name}.bin",
+        "src_size": [src_w, src_h],
+        "dst_size": [dst_w, dst_h],
+        "header_format": "uint32 LE: src_w, src_h, dst_w, dst_h",
+        "body_format":   "uint8 array of src_w*src_h, then uint8 array of dst_w*dst_h, row-major",
+    }
+
+
+def gen_lanczos_cases() -> dict:
+    """Lanczos reference vectors. Each case captures (input uint8 buffer, output uint8 buffer)
+    after PIL's LANCZOS resize on an 'L'-mode image. Format described in MANIFEST.json.
+    """
+    LANCZOS_DIR.mkdir(exist_ok=True)
+    rng = np.random.default_rng(seed=20260519)
+
+    cases = []
+    # 64 -> 32 horizontal gradient (the case where float reference diverges from PIL)
+    grad = np.tile(np.linspace(0, 255, 64, dtype=np.uint8), (64, 1))
+    cases.append(_write_lanczos_case("downsample_64_to_32_gradient", grad, (32, 32)))
+
+    # 16 -> 32 horizontal gradient (upsample, no kernel widening)
+    grad_small = np.tile(np.linspace(0, 255, 16, dtype=np.uint8), (16, 1))
+    cases.append(_write_lanczos_case("upsample_16_to_32_gradient", grad_small, (32, 32)))
+
+    # 32 -> 32 random uint8 (identity scale; kernel = max(1,1) = 1)
+    rand32 = rng.integers(0, 256, size=(32, 32), dtype=np.uint16).astype(np.uint8)
+    cases.append(_write_lanczos_case("identity_32_to_32_random", rand32, (32, 32)))
+
+    # 64x48 -> 32x24 asymmetric scale; stresses (W,H) handling
+    grad_asym = np.tile(np.linspace(0, 255, 64, dtype=np.uint8), (48, 1))
+    cases.append(_write_lanczos_case("asymmetric_64x48_to_32x24", grad_asym, (32, 24)))
+
+    manifest_path = LANCZOS_DIR / "MANIFEST.json"
+    manifest = {
+        "description": "Lanczos resize reference cases. Each .bin contains a (src_w, src_h, dst_w, dst_h) uint32_le header, then the src uint8 buffer (row-major, grayscale), then the dst uint8 buffer.",
+        "pil_version_note": "Produced with Pillow 10.4.0 LANCZOS filter on 'L'-mode images.",
+        "cases": cases,
+    }
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
+    return manifest
+
+
 GENERATORS = {
-    "grayscale_cases.json": gen_grayscale_cases,
-    "hsv_cases.json":       gen_hsv_cases,
-    "dct_cases.json":       gen_dct_cases,
-    "haar_cases.json":      gen_haar_cases,
+    "grayscale_cases.json":         gen_grayscale_cases,
+    "hsv_cases.json":               gen_hsv_cases,
+    "dct_cases.json":               gen_dct_cases,
+    "haar_cases.json":              gen_haar_cases,
+    "lanczos_cases/MANIFEST.json":  gen_lanczos_cases,
 }
 
 
