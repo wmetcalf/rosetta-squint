@@ -87,3 +87,23 @@ func TestWHashHaarGoldens(t *testing.T) {
 		})
 	}
 }
+
+func TestColorHashGoldens(t *testing.T) {
+	cases, err := testkit.AlgorithmCasesFromRoot("colorhash")
+	if err != nil {
+		t.Fatalf("load goldens: %v", err)
+	}
+	for _, c := range cases {
+		c := c
+		t.Run(fmt.Sprintf("%s-binbits-%d", c.Fixture, c.Size), func(t *testing.T) {
+			img := testkit.LoadPreDecodedFromRoot(t, c.Fixture)
+			h, err := imagehash.ColorHash(img, c.Size)
+			if err != nil {
+				t.Fatalf("ColorHash: %v", err)
+			}
+			if got := h.ToHex(); got != c.Hex {
+				t.Errorf("fixture=%s binbits=%d: got %q, want %q", c.Fixture, c.Size, got, c.Hex)
+			}
+		})
+	}
+}
