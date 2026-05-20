@@ -112,3 +112,71 @@ final class DCTTests: XCTestCase {
         XCTAssertEqual(y[0], 992.0, accuracy: 1e-9)
     }
 }
+
+final class HaarTests: XCTestCase {
+    private struct Bands: Decodable {
+        let cA: [[Double]]
+        let cH: [[Double]]
+        let cV: [[Double]]
+        let cD: [[Double]]
+    }
+    private struct MultiLevel: Decodable {
+        let cA: [[Double]]
+        let reconstructed: [[Double]]
+    }
+    private struct HaarDoc: Decodable {
+        let input: [[Double]]
+        let single_level: Bands
+        let multi_level_4: MultiLevel
+    }
+
+    private let tol = 1e-12
+
+    private func assertClose(_ expected: [[Double]], _ actual: [[Double]], _ label: String, file: StaticString = #file, line: UInt = #line) {
+        XCTAssertEqual(actual.count, expected.count, "\(label) rows", file: file, line: line)
+        for y in 0..<expected.count {
+            XCTAssertEqual(actual[y].count, expected[y].count, "\(label) row \(y) cols", file: file, line: line)
+            for x in 0..<expected[y].count {
+                XCTAssertEqual(actual[y][x], expected[y][x], accuracy: tol, "\(label) (\(y),\(x))", file: file, line: line)
+            }
+        }
+    }
+
+    private func loadHaar() throws -> HaarDoc {
+        let path = "\(TestKit.SPEC_DIR)/haar_cases.json"
+        let data = try Data(contentsOf: URL(fileURLWithPath: path))
+        return try JSONDecoder().decode(HaarDoc.self, from: data)
+    }
+
+    func testSingleLevel() throws {
+        let doc = try loadHaar()
+        let res = dwt2(doc.input)
+        assertClose(doc.single_level.cA, res.cA, "cA")
+        assertClose(doc.single_level.cH, res.cH, "cH")
+        assertClose(doc.single_level.cV, res.cV, "cV")
+        assertClose(doc.single_level.cD, res.cD, "cD")
+    }
+
+    func testMultiLevelAndReconstruction() throws {
+        let doc = try loadHaar()
+        let dec = wavedec2(doc.input, level: 4)
+        XCTAssertEqual(dec.cA.count, 1)
+        XCTAssertEqual(dec.cA[0].count, 1)
+        assertClose(doc.multi_level_4.cA, dec.cA, "multi cA")
+        let recon = waverec2(dec)
+        assertClose(doc.multi_level_4.reconstructed, recon, "reconstructed")
+        assertClose(doc.input, recon, "round-trip == input")
+    }
+
+    func testZeroLLRemovesDC() {
+        let x: [[Double]] = Array(repeating: [7.5, 7.5, 7.5, 7.5], count: 4)
+        var dec = wavedec2(x, level: 2)
+        dec.cA[0][0] = 0
+        let recon = waverec2(dec)
+        for y in 0..<4 {
+            for xCol in 0..<4 {
+                XCTAssertEqual(abs(recon[y][xCol]), 0, accuracy: tol)
+            }
+        }
+    }
+}
