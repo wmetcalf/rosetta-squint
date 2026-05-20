@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rosetta-image-hash.example/goldens.schema.json",
+  "title": "rosetta-image-hash goldens",
+  "type": "object",
+  "required": ["schema_version", "imagehash_version", "pillow_version", "numpy_version", "scipy_version", "pywavelets_version", "regenerated_at", "algorithms", "decoded_sha256"],
+  "properties": {
+    "schema_version":      { "type": "integer", "const": 1 },
+    "imagehash_version":   { "type": "string" },
+    "pillow_version":      { "type": "string" },
+    "numpy_version":       { "type": "string" },
+    "scipy_version":       { "type": "string" },
+    "pywavelets_version":  { "type": "string" },
+    "regenerated_at":      { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$" },
+    "algorithms": {
+      "type": "object",
+      "required": ["average_hash", "dhash", "phash", "whash_haar", "colorhash"],
+      "additionalProperties": false,
+      "properties": {
+        "average_hash": { "$ref": "#/$defs/algoSized" },
+        "dhash":        { "$ref": "#/$defs/algoSized" },
+        "phash":        { "$ref": "#/$defs/algoSized" },
+        "whash_haar":   { "$ref": "#/$defs/algoSizedNullable" },
+        "colorhash":    { "$ref": "#/$defs/algoBinbits" }
+      }
+    },
+    "decoded_sha256": {
+      "type": "object",
+      "additionalProperties": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "hexHash": { "type": "string", "pattern": "^[0-9a-f]+$" },
+    "algoSized": {
+      "type": "object",
+      "required": ["hash_sizes", "fixtures"],
+      "properties": {
+        "hash_sizes": { "type": "array", "items": { "type": "integer", "minimum": 2 } },
+        "fixtures":   { "type": "object", "additionalProperties": { "type": "object", "additionalProperties": { "$ref": "#/$defs/hexHash" } } }
+      }
+    },
+    "algoSizedNullable": {
+      "type": "object",
+      "required": ["hash_sizes", "fixtures"],
+      "properties": {
+        "hash_sizes": { "type": "array", "items": { "type": "integer", "minimum": 2 } },
+        "fixtures":   { "type": "object", "additionalProperties": { "type": "object", "additionalProperties": { "oneOf": [{ "$ref": "#/$defs/hexHash" }, { "type": "null" }] } } }
+      }
+    },
+    "algoBinbits": {
+      "type": "object",
+      "required": ["binbits", "fixtures"],
+      "properties": {
+        "binbits":  { "type": "array", "items": { "type": "integer", "minimum": 1 } },
+        "fixtures": { "type": "object", "additionalProperties": { "type": "object", "additionalProperties": { "$ref": "#/$defs/hexHash" } } }
+      }
+    }
+  }
+}
