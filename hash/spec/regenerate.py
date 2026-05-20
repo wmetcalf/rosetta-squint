@@ -17,7 +17,6 @@ import argparse
 import datetime as dt
 import hashlib
 import json
-import shutil
 import struct
 import sys
 import tempfile
@@ -150,11 +149,11 @@ def main(argv: list[str] | None = None) -> int:
 
             tmp_goldens = build_goldens(fixtures, tmp_sha)
             committed_goldens = json.loads(GOLDENS_PATH.read_text())
-            if goldens_minus_timestamp(committed_goldens) != goldens_minus_timestamp(tmp_goldens):
+            a = goldens_minus_timestamp(committed_goldens)
+            b = goldens_minus_timestamp(tmp_goldens)
+            if a != b:
                 print("Drift detected in goldens.json", file=sys.stderr)
                 # Show first 5 differing keys to aid diagnosis
-                a = goldens_minus_timestamp(committed_goldens)
-                b = goldens_minus_timestamp(tmp_goldens)
                 diff_keys = [k for k in set(a) | set(b) if a.get(k) != b.get(k)]
                 print("  differing top-level keys:", diff_keys[:5], file=sys.stderr)
                 return 1
