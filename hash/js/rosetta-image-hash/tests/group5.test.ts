@@ -55,3 +55,65 @@ describe("Hash semantics (Group 5)", () => {
     expect(() => new Hash([[true, false], [true]])).toThrow(ImageHashError);
   });
 });
+
+import { averageHash, colorhash, dhash, phash, whashHaar, hexToHash, hexToFlathash } from "../src/index.js";
+import type { RgbImage } from "../src/hash.js";
+
+function tinyImage(): RgbImage {
+  return { width: 8, height: 8, data: new Uint8Array(8 * 8 * 3), channels: 3 };
+}
+
+function smallImage(): RgbImage {
+  const data = new Uint8Array(32 * 32 * 3);
+  for (let i = 0; i < 32 * 32; i++) {
+    data[i * 3] = 128;
+    data[i * 3 + 1] = 64;
+    data[i * 3 + 2] = 192;
+  }
+  return { width: 32, height: 32, data, channels: 3 };
+}
+
+describe("error semantics (Group 5)", () => {
+  it("averageHash rejects hashSize < 2", () => {
+    expect(() => averageHash(tinyImage(), 1)).toThrow(ImageHashError);
+    expect(() => averageHash(tinyImage(), 0)).toThrow(ImageHashError);
+  });
+
+  it("dhash rejects hashSize < 2", () => {
+    expect(() => dhash(tinyImage(), 1)).toThrow(ImageHashError);
+  });
+
+  it("phash rejects hashSize < 2", () => {
+    expect(() => phash(tinyImage(), 1)).toThrow(ImageHashError);
+  });
+
+  it("whashHaar rejects hashSize < 2", () => {
+    expect(() => whashHaar(smallImage(), 1)).toThrow(ImageHashError);
+  });
+
+  it("whashHaar rejects non-power-of-two", () => {
+    expect(() => whashHaar(smallImage(), 3)).toThrow(ImageHashError);
+    try {
+      whashHaar(smallImage(), 3);
+    } catch (e) {
+      expect((e as ImageHashError).kind).toBe("NotPowerOfTwo");
+    }
+    expect(() => whashHaar(smallImage(), 5)).toThrow(ImageHashError);
+  });
+
+  it("colorhash rejects binbits < 1", () => {
+    expect(() => colorhash(tinyImage(), 0)).toThrow(ImageHashError);
+  });
+
+  it("hexToHash rejects non-square", () => {
+    expect(() => hexToHash("12345")).toThrow(ImageHashError);
+  });
+
+  it("hexToHash rejects invalid chars", () => {
+    expect(() => hexToHash("xyz!")).toThrow(ImageHashError);
+  });
+
+  it("hexToFlathash rejects hashSize < 1", () => {
+    expect(() => hexToFlathash("00", 0)).toThrow(ImageHashError);
+  });
+});
