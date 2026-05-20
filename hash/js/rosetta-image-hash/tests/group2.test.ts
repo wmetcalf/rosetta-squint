@@ -20,3 +20,20 @@ describe("average_hash goldens", () => {
     }
   });
 });
+
+describe("dhash goldens", () => {
+  it("byte-exact across all fixtures × sizes", () => {
+    const cases = algorithmCases("dhash");
+    const failures: string[] = [];
+    for (const c of cases) {
+      const img = loadPredecoded(c.fixture);
+      const h = rih.dhash(img, c.size);
+      if (h.toHex() !== c.hex) {
+        failures.push(`fixture=${c.fixture} size=${c.size} got=${h.toHex()} want=${c.hex}`);
+      }
+    }
+    if (failures.length > 0) {
+      throw new Error(`${failures.length} failures:\n  ${failures.join("\n  ")}`);
+    }
+  });
+});
