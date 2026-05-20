@@ -298,6 +298,8 @@ Mirroring Python source exactly:
 11. `ll = coeffs2[0]` — shape `(N, N)`.
 12. `med = median(ll)`; `bit = ll > med`; pack to hex.
 
+**Fixtures smaller than `hash_size`**: `goldens.json` stores `null` for `whash_haar` entries where the fixture's natural scale is smaller than the requested `hash_size` (which causes Python imagehash to assert). Ports must skip rather than fail on `null` entries when consuming the goldens. This is rare in the v1 corpus but the safety net exists.
+
 `'symmetric'` boundary mode is pywt's default; explicit here so v2 (db4) doesn't
 accidentally inherit. For Haar specifically (filter length 2) the output size is
 always exactly N/2 per level regardless of boundary mode, but coefficient values
