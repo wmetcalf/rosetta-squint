@@ -2,6 +2,9 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
+import { resize as lanczosResize } from "../src/internal/lanczos.js";
+import { loadLanczosCase } from "./testkit.js";
+
 import { toGray } from "../src/internal/pilGray.js";
 import { toHsv } from "../src/internal/pilHsv.js";
 import { SPEC_DIR } from "./testkit.js";
@@ -44,4 +47,30 @@ describe("pilHsv", () => {
   it("saturation 170 boundary: RGB(255,85,85) has S=170", () => {
     expect(toHsv(255, 85, 85)[1]).toBe(170);
   });
+});
+
+describe("lanczos", () => {
+  const cases = [
+    "downsample_64_to_32_gradient",
+    "upsample_16_to_32_gradient",
+    "identity_32_to_32_random",
+    "asymmetric_64x48_to_32x24",
+  ];
+  for (const name of cases) {
+    it(`byte-exact: ${name}`, () => {
+      const c = loadLanczosCase(name);
+      const got = lanczosResize(c.src, c.srcW, c.srcH, c.dstW, c.dstH);
+      expect(got.length).toBe(c.dstW * c.dstH);
+      for (let y = 0; y < c.dstH; y++) {
+        for (let x = 0; x < c.dstW; x++) {
+          const i = y * c.dstW + x;
+          if (got[i] !== c.dst[i]) {
+            throw new Error(
+              `${name} pixel (${y},${x}): got ${got[i]} want ${c.dst[i]}`
+            );
+          }
+        }
+      }
+    });
+  }
 });
