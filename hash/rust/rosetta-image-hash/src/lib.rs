@@ -15,6 +15,9 @@ pub use average::average_hash;
 mod dhash;
 pub use dhash::dhash;
 
+mod phash;
+pub use phash::{phash, phash_with_factor};
+
 use std::fmt;
 
 #[derive(Debug, thiserror::Error)]
