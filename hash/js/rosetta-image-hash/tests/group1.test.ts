@@ -1,4 +1,6 @@
 import { describe, it, expect } from "vitest";
+import { pack, unpackSquare, unpackFlat } from "../src/internal/bitpack.js";
+import { toRgb } from "../src/internal/imgRgb.js";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -163,5 +165,108 @@ describe("haar", () => {
         expect(Math.abs(recon[y][xCol])).toBeLessThan(tol);
       }
     }
+  });
+});
+
+describe("bitpack", () => {
+  it("pack 4x4 pattern = a5f0", () => {
+    const bits: boolean[][] = [
+      [true, false, true, false],
+      [false, true, false, true],
+      [true, true, true, true],
+      [false, false, false, false],
+    ];
+    expect(pack(bits)).toBe("a5f0");
+  });
+
+  it("pack all ones 8x8", () => {
+    const bits: boolean[][] = [];
+    for (let i = 0; i < 8; i++) bits.push(new Array(8).fill(true));
+    expect(pack(bits)).toBe("ffffffffffffffff");
+  });
+
+  it("pack all zeros 8x8", () => {
+    const bits: boolean[][] = [];
+    for (let i = 0; i < 8; i++) bits.push(new Array(8).fill(false));
+    expect(pack(bits)).toBe("0000000000000000");
+  });
+
+  it("unpackSquare is inverse of pack", () => {
+    const got = unpackSquare("a5f0");
+    expect(got.length).toBe(4);
+    const expected = [
+      [true, false, true, false],
+      [false, true, false, true],
+      [true, true, true, true],
+      [false, false, false, false],
+    ];
+    for (let y = 0; y < 4; y++) expect(got[y]).toEqual(expected[y]);
+  });
+
+  it("unpackFlat zeros", () => {
+    const got = unpackFlat("00000000000", 3);
+    expect(got.length).toBe(14);
+    expect(got[0].length).toBe(3);
+    for (let y = 0; y < 14; y++) {
+      for (let x = 0; x < 3; x++) expect(got[y][x]).toBe(false);
+    }
+  });
+
+  it("unpackSquare rejects non-square length", () => {
+    expect(() => unpackSquare("12345")).toThrow();
+  });
+
+  it("unpackSquare rejects invalid chars", () => {
+    expect(() => unpackSquare("xyz!")).toThrow();
+  });
+});
+
+describe("imgRgb", () => {
+  it("RGB (channels=3) passes through", () => {
+    const img = {
+      width: 2,
+      height: 1,
+      data: new Uint8Array([255, 0, 0, 0, 255, 0]),
+      channels: 3 as const,
+    };
+    const out = toRgb(img);
+    expect(out.width).toBe(2);
+    expect(out.height).toBe(1);
+    expect(Array.from(out.data)).toEqual([255, 0, 0, 0, 255, 0]);
+  });
+
+  it("RGBA transparent composites on black", () => {
+    const img = {
+      width: 1,
+      height: 1,
+      data: new Uint8Array([255, 255, 255, 0]),
+      channels: 4 as const,
+    };
+    const out = toRgb(img);
+    expect(Array.from(out.data)).toEqual([0, 0, 0]);
+  });
+
+  it("RGBA opaque passes RGB through", () => {
+    const img = {
+      width: 1,
+      height: 1,
+      data: new Uint8Array([100, 150, 200, 255]),
+      channels: 4 as const,
+    };
+    const out = toRgb(img);
+    expect(Array.from(out.data)).toEqual([100, 150, 200]);
+  });
+
+  it("shape preserved", () => {
+    const img = {
+      width: 5,
+      height: 3,
+      data: new Uint8Array(5 * 3 * 3),
+      channels: 3 as const,
+    };
+    const out = toRgb(img);
+    expect(out.width).toBe(5);
+    expect(out.height).toBe(3);
+    expect(out.data.length).toBe(5 * 3 * 3);
   });
 });
