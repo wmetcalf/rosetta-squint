@@ -8,3 +8,4 @@ export { dhash } from "./dhash.js";
 export { phash } from "./phash.js";
 export { whashHaar } from "./whashHaar.js";
 export { colorhash, colorhashBinEncode } from "./colorhash.js";
+export { decodePng } from "./decodePng.js";
