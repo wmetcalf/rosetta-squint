@@ -10,26 +10,24 @@ pub fn pack(bits: &[Vec<bool>]) -> String {
     let w = bits[0].len();
     let total = h * w;
     let width = (total + 3) / 4;
-    let mut bytes = vec![0u8; (total + 7) / 8];
-    let mut bi = 0;
+    // Python: int(bit_string, 2) — big-endian integer with leading-zero hex padding.
+    // Pad bits at the FRONT (high side) so total becomes a multiple of 4.
+    let pad = width * 4 - total;
+    let padded_total = total + pad;
+    let mut nibbles = vec![0u8; width];
+    let mut bi = pad; // skip leading pad bits (they are 0)
     for row in bits {
         for &b in row {
             if b {
-                bytes[bi / 8] |= 1 << (7 - (bi % 8));
+                nibbles[bi / 4] |= 1 << (3 - (bi % 4));
             }
             bi += 1;
         }
     }
+    debug_assert_eq!(bi, padded_total);
     let mut out = String::with_capacity(width);
-    for i in 0..width {
-        let bit_pos = i * 4;
-        let byte_idx = bit_pos / 8;
-        let nibble = if bit_pos % 8 == 0 {
-            bytes[byte_idx] >> 4
-        } else {
-            bytes[byte_idx] & 0x0F
-        };
-        out.push(char::from_digit(nibble as u32, 16).expect("nibble in 0..16"));
+    for n in nibbles {
+        out.push(char::from_digit(n as u32, 16).expect("nibble in 0..16"));
     }
     out
 }

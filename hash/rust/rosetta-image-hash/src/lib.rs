@@ -21,6 +21,9 @@ pub use phash::{phash, phash_with_factor};
 mod whash;
 pub use whash::whash_haar;
 
+mod colorhash;
+pub use colorhash::{colorhash, colorhash_bin_encode};
+
 use std::fmt;
 
 #[derive(Debug, thiserror::Error)]
