@@ -116,15 +116,16 @@ Pillow's `LANCZOS`/`ANTIALIAS` filter, called on a uint8 `'L'`-mode image.
 
 ### Byte-exact match requires fixed-point arithmetic
 
-Pillow's C implementation precomputes the kernel weights as 32-bit signed integers
-(`PRECISION_BITS = 32`) — see `precompute_coeffs` in `Resample.c`. A pure
-`float64` reference diverges from Pillow by ±1 in roughly 3% of pixels on a 64→32
-downsample.
+Pillow's C implementation precomputes kernel weights as 32-bit signed integers
+but the shift amount accounts for the 8-bit pixel range plus a 2-bit safety margin:
+`#define PRECISION_BITS (32 - 8 - 2)` = **22** in `src/libImaging/Resample.c`.
+A pure `float64` reference diverges from Pillow by ±1 in roughly 3% of pixels on
+a 64→32 downsample.
 
 To achieve byte-exact parity, every port reproduces:
 
 ```
-PRECISION_BITS = 32
+PRECISION_BITS = 22   # = 32 - 8 - 2 in Pillow's Resample.c
 
 for each output pixel xd:
     center = (xd + 0.5) * scale
@@ -140,6 +141,10 @@ for each output pixel xd:
         acc_i64 = sum(weights_i32[i] * src_uint8[xmin + i] for i in range(n))
         out_uint8 = clip((acc_i64 + (1 << (PRECISION_BITS - 1))) >> PRECISION_BITS, 0, 255)
 ```
+
+Note: with `PRECISION_BITS = 22`, the quantized weight `int(round(1.0 * (1 << 22)))`
+= 4194304 fits comfortably in int32. With 22-bit weights × uint8 pixels × ~7 taps,
+the accumulator stays well under int64 range.
 
 Vertical pass uses the same arithmetic, applied to the columns of the horizontal-pass output. **Both passes use the same fixed-point arithmetic; no intermediate float buffer exists** in PIL's C path.
 
