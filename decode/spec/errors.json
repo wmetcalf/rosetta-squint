@@ -135,6 +135,21 @@
       "format": "tiff",
       "expected_kind": "corruptInput",
       "expected_detail_substring": ""
+    },
+    "heic/invalid/bad-magic.heic": {
+      "format": null,
+      "expected_kind": "unsupportedFormat",
+      "expected_detail_substring": ""
+    },
+    "heic/invalid/truncated.heic": {
+      "format": "heic",
+      "expected_kind": "corruptInput",
+      "expected_detail_substring": ""
+    },
+    "heic/invalid/avif.heic": {
+      "format": null,
+      "expected_kind": "unsupportedFormat",
+      "expected_detail_substring": ""
     }
   }
 }
