@@ -1,19 +1,61 @@
 # rosetta-image-hash — Java port
 
-Byte-exact port of Python `imagehash==4.3.2` algorithms to Java 17.
+Byte-exact port of Python `imagehash==4.3.2` algorithms to Java 17+.
+
+The hex string produced here equals the hex Python `imagehash` produces for the same image, algorithm, and hash size.
+
+## Quick start
+
+```java
+import io.rosetta.imagehash.PHash;
+import io.rosetta.imagehash.Hex;
+import io.rosetta.imagehash.ImageHash;
+
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
+
+public class Demo {
+    public static void main(String[] args) throws Exception {
+        BufferedImage img = ImageIO.read(new File("photo.png"));
+
+        ImageHash h = PHash.compute(img, 8);
+        System.out.println(h);                              // "c3f8a1b27d0e4f96"
+
+        BufferedImage other = ImageIO.read(new File("other.png"));
+        int distance = h.subtract(PHash.compute(other, 8));
+
+        ImageHash restored = Hex.hexToHash(h.toString());
+        System.out.println(restored.equals(h));             // true
+    }
+}
+```
+
+Input is `BufferedImage` of any type — non-`TYPE_INT_RGB` inputs are normalized internally via `Graphics2D.drawImage` composite-on-black, matching PIL `convert('RGB')`.
 
 ## Build + test
 
 ```
-cd ~/rosetta-image-hash/java
-mvn test
+cd java
+mvn -B test                 # 53 tests, all passing on Linux x86-64
 ```
 
-Tests read fixtures and goldens from `../spec/`. Run `mvn` from this directory so the relative path resolves.
+Tests read fixtures and goldens from `../spec/`. Run `mvn` from this directory.
 
-## v1 algorithms
+## API
 
-`AverageHash`, `DHash`, `PHash`, `WHashHaar`, `ColorHash`, plus `Hex.hexToHash` and `Hex.hexToFlathash`. All entry points take `BufferedImage` of any type (non-`TYPE_INT_RGB` inputs are normalized via `Graphics2D.drawImage`, composite-on-black, matching PIL `convert('RGB')`).
+| Class.Method | Signature |
+|---|---|
+| `AverageHash.compute` | `(BufferedImage)` / `(BufferedImage, int hashSize)` |
+| `DHash.compute` | `(BufferedImage, int hashSize)` |
+| `PHash.compute` | `(BufferedImage, int hashSize)` / `(BufferedImage, int hashSize, int highfreqFactor)` |
+| `WHashHaar.compute` | `(BufferedImage, int hashSize)` — `hashSize` must be power of 2 |
+| `ColorHash.compute` | `(BufferedImage)` / `(BufferedImage, int binbits)` |
+| `ColorHash.binEncode` | `(int v, int binbits) -> boolean[]` |
+| `Hex.hexToHash` | `(String) -> ImageHash` |
+| `Hex.hexToFlathash` | `(String, int hashSize) -> ImageHash` |
+
+All `compute(...)` methods return `ImageHash`. `ImageHash` exposes `toString()` (hex), `subtract(ImageHash) -> int`, `equals(Object)`, `hashCode()`. Invalid sizes throw `IllegalArgumentException`.
 
 ## Test groups
 
@@ -27,7 +69,27 @@ Tests read fixtures and goldens from `../spec/`. Run `mvn` from this directory s
 
 ## Parity guarantee
 
-Every test in Groups 1–4 asserts byte-exact equality with Python `imagehash 4.3.2`. Any Group-3 failure that passes Group 2 is a PNG decoder discrepancy; see `DECODER_NOTES.md` for documented exemptions.
+Every test in Groups 1–4 asserts byte-exact equality with Python `imagehash 4.3.2`. Any Group-3 failure that passes Group 2 is a PNG decoder discrepancy; see `DECODER_NOTES.md`.
+
+## Maven dependency
+
+Not on Maven Central yet. After `mvn install` from this directory:
+
+```xml
+<dependency>
+  <groupId>io.rosetta</groupId>
+  <artifactId>rosetta-image-hash</artifactId>
+  <version>0.1.0-SNAPSHOT</version>
+</dependency>
+```
+
+Compile deps: JUnit 5 (test scope), Jackson (test scope only — reads goldens JSON). No runtime third-party deps.
+
+## See also
+
+- [USAGE.md](../USAGE.md) — examples for all 5 ports
+- [STATUS.md](../STATUS.md)
+- [`../spec/SPEC.md`](../spec/SPEC.md)
 
 ## License
 

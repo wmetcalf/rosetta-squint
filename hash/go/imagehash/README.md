@@ -1,19 +1,69 @@
 # rosetta-image-hash — Go port
 
-Byte-exact port of Python `imagehash==4.3.2` algorithms to Go 1.22.
+Byte-exact port of Python `imagehash==4.3.2` algorithms to Go 1.22+.
+
+The hex string produced here equals the hex Python `imagehash` produces for the same image, algorithm, and `hashSize`.
+
+## Quick start
+
+```go
+package main
+
+import (
+    "fmt"
+    "image"
+    _ "image/png"
+    "os"
+
+    "github.com/wmetcalf/rosetta-image-hash/go/imagehash"
+)
+
+func main() {
+    f, _ := os.Open("photo.png")
+    defer f.Close()
+    img, _, _ := image.Decode(f)
+
+    h, err := imagehash.PHash(img, 8)
+    if err != nil { panic(err) }
+    fmt.Println(h.ToHex())                            // "c3f8a1b27d0e4f96"
+
+    // Hamming distance
+    other, _ := imagehash.PHash(otherImage, 8)
+    distance, _ := h.Subtract(other)
+    _ = distance
+
+    // Round-trip from stored hex
+    restored, _ := imagehash.HexToHash(h.ToHex())
+    fmt.Println(restored.Equals(h))                   // true
+}
+```
+
+Input is `image.Image` from the stdlib. Any concrete type works (`*image.NRGBA`, `*image.RGBA`, `*image.Paletted`, `*image.Gray`, ...) — non-RGB inputs are normalized internally via `image/draw`, composited on opaque black, matching PIL `convert('RGB')`.
 
 ## Build + test
 
 ```
-cd ~/rosetta-image-hash/go/imagehash
-go test ./...
+cd go/imagehash
+go test ./...               # 53 tests, all passing on Linux x86-64
 ```
 
-Tests resolve fixtures and goldens from `../../spec/`. Run `go test` from this directory so the relative path holds.
+Tests resolve fixtures and goldens from `../../spec/`. Run `go test` from this directory.
 
-## v1 algorithms
+## API
 
-`AverageHash`, `DHash`, `PHash`, `WHashHaar`, `ColorHash`, plus `HexToHash` and `HexToFlathash`. All take `image.Image` (any concrete type — NRGBA, RGBA, Paletted, Gray, etc.) and return `(Hash, error)`. Non-`*image.NRGBA` inputs are normalized internally via `image/draw` (composited on opaque black, matching PIL `convert('RGB')`).
+| Function | Signature |
+|---|---|
+| `AverageHash` | `(img image.Image, hashSize int) (Hash, error)` |
+| `DHash` | `(img image.Image, hashSize int) (Hash, error)` |
+| `PHash` | `(img image.Image, hashSize int) (Hash, error)` |
+| `PHashWithFactor` | `(img image.Image, hashSize, highfreqFactor int) (Hash, error)` |
+| `WHashHaar` | `(img image.Image, hashSize int) (Hash, error)` — `hashSize` must be power of 2 |
+| `ColorHash` | `(img image.Image, binbits int) (Hash, error)` |
+| `ColorhashBinEncode` | `(v, binbits int) []bool` |
+| `HexToHash` | `(hex string) (Hash, error)` |
+| `HexToFlathash` | `(hex string, hashSize int) (Hash, error)` |
+
+`Hash` is a struct with methods `ToHex() string`, `Subtract(other Hash) (int, error)`, `Equals(other Hash) bool`. Construct directly via `NewHash(bits [][]bool) (Hash, error)` if needed.
 
 ## Test groups
 
@@ -31,7 +81,13 @@ Every test in Groups 1–4 asserts byte-exact equality with Python `imagehash 4.
 
 ## Dependencies
 
-Standard library only.
+Standard library only. No `go get` needed beyond what's already in `go.mod`.
+
+## See also
+
+- [USAGE.md](../../USAGE.md) — examples for all 5 ports
+- [STATUS.md](../../STATUS.md)
+- [`../../spec/SPEC.md`](../../spec/SPEC.md)
 
 ## License
 
