@@ -72,9 +72,40 @@ language conventions) `DecodeError` variants:
 | `corruptInput`       | Structurally invalid for the detected format                  |
 | `truncated`          | Stream ended before decoder expected                          |
 | `unsupportedFeature` | Valid input uses a format feature this port doesn't support   |
+| `imageTooLarge`      | Header-declared dimensions exceed `MAX_PIXELS` (see §3.1)     |
 
 Format sub-projects MUST document each error variant they can produce
 and provide at least one Group-4 (error semantics) test per variant.
+
+### §3.1 Decompression-bomb / dimension cap
+
+To protect against malicious inputs that declare gigantic dimensions in
+their header (a small file claiming `width=65536, height=65536` would
+otherwise drive an underlying decoder to allocate 12 GB+), every port
+MUST check the file-declared dimensions before invoking the underlying
+decoder and reject inputs whose pixel count exceeds `MAX_PIXELS`:
+
+```
+MAX_PIXELS = 268_435_456    // 256 * 1024 * 1024 = 256 mega-pixels
+```
+
+The cap is per-`width × height`, **not** per-byte and not per-channel.
+For comparison: PIL's `Image.MAX_IMAGE_PIXELS` default is ~89.5 MP. 256
+MP gives substantial headroom for legitimate large photos while still
+bounding worst-case memory at ~1 GB (RGBA, before any downstream
+processing).
+
+Ports MUST:
+
+1. Sniff dimensions from the file header (no full decode) before any
+   allocation proportional to width × height.
+2. Reject with `imageTooLarge` if `width * height > MAX_PIXELS`.
+3. Compute `width * height * channels` as a 64-bit value (or with
+   explicit overflow checks) — never as native int multiplication that
+   can wrap silently.
+
+Group 4 (error semantics) tests MUST include at least one fixture per
+format that triggers `imageTooLarge`.
 
 ---
 
@@ -94,7 +125,12 @@ Magic byte prefixes (recognized in v1 once the sub-project lands):
 | JPEG   | `ff d8 ff`                            | 3      |
 | WebP   | `52 49 46 46 ?? ?? ?? ?? 57 45 42 50` | 12     |
 | TIFF   | `49 49 2a 00` or `4d 4d 00 2a`        | 4      |
-| HEIC   | (ISOBMFF `ftyp` box with brand `heic`/`heix`/`mif1`) | variable |
+| HEIC   | (ISOBMFF `ftyp` box with brand `heic`/`heix`/`mif1`/`msf1`/`hevc`/`hevx`) | variable |
+
+The HEIC brand whitelist is intentionally narrow — `heim`/`heis`/`hevm`/
+`hevs` (multi-image / sequence brands) are rejected as `unsupportedFormat`
+in v1, which only supports single still images. `avif` brand (AV1 codec)
+is also rejected. Future sub-projects may broaden this.
 
 Sub-projects MUST keep these prefixes in sync with their
 `detectFormat()` implementation.

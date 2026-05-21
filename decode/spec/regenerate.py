@@ -32,11 +32,10 @@ from pathlib import Path
 import PIL
 from PIL import Image
 
-try:
-    import pillow_heif
-    pillow_heif.register_heif_opener()
-except ImportError:
-    pass
+# pillow-heif bundles libheif 1.21.x which produces ±1 px-different output
+# from system libheif 1.17.x. HEIC goldens are anchored to system libheif
+# via spec/regen_heic_via_system.py (ctypes wrapper). regenerate.py refuses
+# to handle HEIC; this is intentional. See SPEC.md §16.
 
 SPEC_DIR = Path(__file__).parent
 FIXTURES_DIR = SPEC_DIR / "fixtures"
@@ -125,6 +124,18 @@ def regenerate(only_format: str | None) -> dict:
             continue  # planned/deprecated formats are skipped
         if only_format and fmt_name != only_format:
             continue
+        if fmt_name == "heic":
+            # HEIC is intentionally not handled here — see comment at top.
+            # Use spec/regen_heic_via_system.py (ctypes wrapper around
+            # system libheif 1.17.6) instead, which produces the
+            # cross-port reference bytes.
+            if only_format == "heic":
+                raise RuntimeError(
+                    "Refusing to regenerate HEIC goldens via PIL/pillow-heif "
+                    "(libheif version mismatch with system port FFIs). "
+                    "Use spec/regen_heic_via_system.py instead."
+                )
+            continue
 
         out_dir = DECODED_DIR / fmt_name
         out_dir.mkdir(parents=True, exist_ok=True)
@@ -207,6 +218,22 @@ def main() -> int:
     args = parser.parse_args()
 
     new_goldens = regenerate(args.format)
+
+    # When --format is set, MERGE new entries into the existing goldens.json
+    # rather than replacing the file. Without this, regenerating one format
+    # silently wipes the other formats' entries — a footgun we hit in real
+    # use. Detect mode short-circuits to compare only the new entries.
+    if args.format and GOLDENS_PATH.exists():
+        existing = json.loads(GOLDENS_PATH.read_text())
+        existing_fix = existing.get("fixtures", {})
+        # Preserve non-target-format entries.
+        for k, v in existing_fix.items():
+            if v.get("format") != args.format:
+                new_goldens["fixtures"][k] = v
+        # Preserve the global pillow_version if we didn't actually run PIL.
+        # (HEIC short-circuits to no fixtures; keep prior version string.)
+        if not any(v.get("format") == args.format for v in new_goldens["fixtures"].values()):
+            new_goldens["pillow_version"] = existing.get("pillow_version", new_goldens["pillow_version"])
 
     if args.check:
         committed = json.loads(GOLDENS_PATH.read_text())
