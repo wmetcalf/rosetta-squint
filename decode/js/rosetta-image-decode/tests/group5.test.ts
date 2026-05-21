@@ -28,10 +28,25 @@ describe("Group 5 — invariants (PNG)", () => {
     }
   });
 
-  it("supported formats contains bmp + png", () => {
+  it("supported formats contains bmp + png + gif", () => {
     const supported = supportedFormats();
-    expect(supported).toHaveLength(2);
+    expect(supported).toHaveLength(3);
     expect(supported).toContain("bmp");
     expect(supported).toContain("png");
+    expect(supported).toContain("gif");
+  });
+});
+
+describe("Group 5 — invariants (GIF)", () => {
+  it("all decoded GIF images have valid shape", () => {
+    for (const rel of listValidFixtures("gif")) {
+      const bytes = readFixture(rel);
+      const img = decode(bytes);
+      expect(img.width, rel).toBeGreaterThan(0);
+      expect(img.height, rel).toBeGreaterThan(0);
+      expect(img.format, rel).toBe("gif");
+      expect(img.data.length, rel).toBe(img.width * img.height * img.channels);
+      expect([3, 4]).toContain(img.channels);
+    }
   });
 });
