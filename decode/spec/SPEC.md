@@ -353,8 +353,29 @@ skip the two-pass detection: always output RGBA.
 
 ### §12 GIF
 
-*(Populated by the GIF sub-project. Currently planned. See `formats.json`
-for status.)*
+**Reference behavior:** Pillow 11.0.0's built-in GIF plugin returns the first
+frame of a GIF89a file as a paletted image. We convert that to RGB or RGBA
+matching PIL's default `.convert('RGB')` or `.convert('RGBA')` semantics.
+
+**Output channels:**
+- GIF without Graphic Control Extension transparency → RGB (3 channels) via palette lookup
+- GIF with GCE transparency index → RGBA (4 channels); transparent pixels get alpha=0
+
+**Multi-frame:** v1 decodes the first frame only. Matches PIL's
+`Image.open(gif).convert(...).tobytes()` default. Multi-frame iteration
+deferred to v0.2.
+
+**Per-port reference library:**
+- Java: `javax.imageio.ImageIO`
+- Go: `image/gif` (stdlib)
+- Rust: `image` crate with gif feature
+- JS: `omggif ^1.0`
+- Swift: **pure-Swift** GIF89a decoder (no external deps)
+
+**Invalid input handling:**
+- Magic ≠ "GIF87a" or "GIF89a" → `unsupportedFormat`
+- Truncated header → `truncated`
+- Malformed LZW code stream → `corruptInput`
 
 ### §13 JPEG
 
