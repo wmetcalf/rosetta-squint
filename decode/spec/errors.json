@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "fixtures": {
+    "bmp/invalid/bad-signature.bmp": {
+      "format": null,
+      "expected_kind": "unsupportedFormat",
+      "expected_detail_substring": ""
+    },
+    "bmp/invalid/truncated-header.bmp": {
+      "format": "bmp",
+      "expected_kind": "truncated",
+      "expected_detail_substring": ""
+    },
+    "bmp/invalid/truncated-pixels.bmp": {
+      "format": "bmp",
+      "expected_kind": "truncated",
+      "expected_detail_substring": ""
+    },
+    "bmp/invalid/zero-width.bmp": {
+      "format": "bmp",
+      "expected_kind": "corruptInput",
+      "expected_detail_substring": "biWidth"
+    },
+    "bmp/invalid/planes-not-1.bmp": {
+      "format": "bmp",
+      "expected_kind": "corruptInput",
+      "expected_detail_substring": "biPlanes"
+    },
+    "bmp/invalid/embedded-jpeg.bmp": {
+      "format": "bmp",
+      "expected_kind": "unsupportedFeature",
+      "expected_detail_substring": "embedded JPEG"
+    },
+    "bmp/invalid/embedded-png.bmp": {
+      "format": "bmp",
+      "expected_kind": "unsupportedFeature",
+      "expected_detail_substring": "embedded PNG"
+    },
+    "bmp/invalid/rle8-overrun.bmp": {
+      "format": "bmp",
+      "expected_kind": "corruptInput",
+      "expected_detail_substring": "RLE"
+    },
+    "bmp/invalid/bitfields-zero-mask.bmp": {
+      "format": "bmp",
+      "expected_kind": "corruptInput",
+      "expected_detail_substring": "mask is zero"
+    },
+    "bmp/invalid/bitcount-3.bmp": {
+      "format": "bmp",
+      "expected_kind": "corruptInput",
+      "expected_detail_substring": "biBitCount"
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rosetta-image-decode.example/errors.schema.json",
+  "title": "rosetta-image-decode invalid-fixture registry",
+  "type": "object",
+  "required": ["schema_version", "fixtures"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "fixtures": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/errorEntry" }
+    }
+  },
+  "$defs": {
+    "errorEntry": {
+      "type": "object",
+      "required": ["format", "expected_kind", "expected_detail_substring"],
+      "additionalProperties": false,
+      "properties": {
+        "format": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "enum": ["bmp", "png", "gif", "jpeg", "webp", "tiff", "heic", "emf", "wmf"] }
+          ]
+        },
+        "expected_kind": {
+          "type": "string",
+          "enum": ["unsupportedFormat", "corruptInput", "truncated", "unsupportedFeature"]
+        },
+        "expected_detail_substring": { "type": "string" }
+      }
+    }
+  }
+}
