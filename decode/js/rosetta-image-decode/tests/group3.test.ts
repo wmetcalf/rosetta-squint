@@ -19,3 +19,16 @@ describe("Group 3 — format detection (BMP)", () => {
     expect(supportedFormats()).toContain("bmp");
   });
 });
+
+describe("Group 3 — format detection (PNG)", () => {
+  it("detects all valid PNG fixtures", () => {
+    for (const rel of listValidFixtures("png")) {
+      const bytes = readFixture(rel);
+      expect(detectFormat(bytes), rel).toBe("png");
+    }
+  });
+
+  it("supported formats contains png", () => {
+    expect(supportedFormats()).toContain("png");
+  });
+});

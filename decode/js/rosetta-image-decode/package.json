@@ -19,9 +19,12 @@
     "test": "vitest run",
     "test:watch": "vitest"
   },
-  "dependencies": {},
+  "dependencies": {
+    "pngjs": "^7"
+  },
   "devDependencies": {
     "@types/node": "^20",
+    "@types/pngjs": "^6",
     "typescript": "^5.5",
     "vitest": "^2"
   }

@@ -14,10 +14,24 @@ describe("Group 5 — invariants (BMP)", () => {
       expect([3, 4]).toContain(img.channels);
     }
   });
+});
 
-  it("supported formats contains only bmp", () => {
+describe("Group 5 — invariants (PNG)", () => {
+  it("all decoded PNG images have valid shape", () => {
+    for (const rel of listValidFixtures("png")) {
+      const bytes = readFixture(rel);
+      const img = decode(bytes);
+      expect(img.width, rel).toBeGreaterThan(0);
+      expect(img.height, rel).toBeGreaterThan(0);
+      expect(img.format, rel).toBe("png");
+      expect(img.data.length, rel).toBe(img.width * img.height * img.channels);
+    }
+  });
+
+  it("supported formats contains bmp + png", () => {
     const supported = supportedFormats();
-    expect(supported).toHaveLength(1);
-    expect(supported[0]).toBe("bmp");
+    expect(supported).toHaveLength(2);
+    expect(supported).toContain("bmp");
+    expect(supported).toContain("png");
   });
 });
