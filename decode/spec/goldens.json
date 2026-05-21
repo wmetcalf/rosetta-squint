@@ -210,6 +210,111 @@
       "sha256": "87693c2e17847c32ad19a1f7435e5bd07f5fb3de21de447df84f84e58b45cba7",
       "width": 16
     },
+    "gif/valid/16x16-rgb-opaque.gif": {
+      "channels": 3,
+      "format": "gif",
+      "height": 16,
+      "sha256": "56123993b4488fac3ebc0fcd98e944967f2f757ce337922fcbb571833468ca2f",
+      "width": 16
+    },
+    "gif/valid/16x16-transparent.gif": {
+      "channels": 4,
+      "format": "gif",
+      "height": 16,
+      "sha256": "0251350b39a4e3a17876440dfd53fb7b34d28260ad8d41833879f1c7f3dcaa18",
+      "width": 16
+    },
+    "gif/valid/1x1-rgb.gif": {
+      "channels": 3,
+      "format": "gif",
+      "height": 1,
+      "sha256": "7fa54a42524916a1648ec76ce75d295024840b7a3a4f4bbaf3e43155d0014767",
+      "width": 1
+    },
+    "gif/valid/32x32-rgb-opaque.gif": {
+      "channels": 3,
+      "format": "gif",
+      "height": 32,
+      "sha256": "e3ca12aa49493e8185304217d414f4ae3547190a1abe3be3eabc881485216599",
+      "width": 32
+    },
+    "gif/valid/8x8-pal16.gif": {
+      "channels": 3,
+      "format": "gif",
+      "height": 8,
+      "sha256": "b275d141e75406a7f0f4cb9290d40d69a9c627d0cb6325f69fee643a9bfe3505",
+      "width": 8
+    },
+    "gif/valid/8x8-pal2.gif": {
+      "channels": 3,
+      "format": "gif",
+      "height": 8,
+      "sha256": "07accede864f1a2bffbf93b35d168111a76a28efd5180e843f8144ab86b3ab83",
+      "width": 8
+    },
+    "gif/valid/8x8-pal256.gif": {
+      "channels": 3,
+      "format": "gif",
+      "height": 8,
+      "sha256": "792dddaf84e642adc41c6e6904a0812ae508b241d8d8eb3f23726597594ce7f8",
+      "width": 8
+    },
+    "gif/valid/8x8-rgb-opaque.gif": {
+      "channels": 3,
+      "format": "gif",
+      "height": 8,
+      "sha256": "aee83ce078663e3df7299a43af39cf9bcfbe47dcd26d3687fbba70899e078271",
+      "width": 8
+    },
+    "gif/valid/8x8-transparent.gif": {
+      "channels": 4,
+      "format": "gif",
+      "height": 8,
+      "sha256": "9fcb092678ba39317a8111106f9799fc044b2a1d4928539623a7fea4f34a8260",
+      "width": 8
+    },
+    "gif/valid/checkerboard-8.gif": {
+      "channels": 3,
+      "format": "gif",
+      "height": 8,
+      "sha256": "07accede864f1a2bffbf93b35d168111a76a28efd5180e843f8144ab86b3ab83",
+      "width": 8
+    },
+    "gif/valid/gradient-16.gif": {
+      "channels": 3,
+      "format": "gif",
+      "height": 16,
+      "sha256": "981c7bec4f952bbca7aa80dfe397432942ffafba3915b97977e49a96dd500d58",
+      "width": 16
+    },
+    "gif/valid/multi-frame.gif": {
+      "channels": 3,
+      "format": "gif",
+      "height": 16,
+      "sha256": "981c7bec4f952bbca7aa80dfe397432942ffafba3915b97977e49a96dd500d58",
+      "width": 16
+    },
+    "gif/valid/rect-24x16.gif": {
+      "channels": 3,
+      "format": "gif",
+      "height": 16,
+      "sha256": "e24ade02fbbe9cf8433b79dccf466aa5c2eb8031155ca9aa578f9dee06571b14",
+      "width": 24
+    },
+    "gif/valid/solid-red-16.gif": {
+      "channels": 3,
+      "format": "gif",
+      "height": 16,
+      "sha256": "fa8dc828bdf11c88a2f25d1ffc454a0dce698bd7ebe1338bd1402966b43b50c1",
+      "width": 16
+    },
+    "gif/valid/text-mock-32.gif": {
+      "channels": 3,
+      "format": "gif",
+      "height": 32,
+      "sha256": "8e4aea8e0f51cca3b215af39de2c0863a9cbad5b9164a35d426a6ef36eeebc74",
+      "width": 32
+    },
     "png/valid/all-black-256.png": {
       "channels": 3,
       "format": "png",
@@ -534,6 +639,6 @@
     }
   },
   "pillow_version": "11.0.0",
-  "regenerated_at": "2026-05-21T05:26:48Z",
+  "regenerated_at": "2026-05-21T14:04:31Z",
   "schema_version": 1
 }

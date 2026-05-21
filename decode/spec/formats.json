@@ -4,7 +4,7 @@
   "formats": {
     "bmp":  { "status": "supported", "subspec": "SPEC.md#§10-bmp", "reference_lib": "Pillow built-in BMP plugin", "reference_version": "11.0.0", "fixture_count": 30, "ports_implemented": ["java", "go", "rust", "js", "swift"] },
     "png":  { "status": "supported", "subspec": "SPEC.md#§11-png", "reference_lib": "Pillow built-in PNG plugin", "reference_version": "11.0.0", "fixture_count": 46, "ports_implemented": ["java", "go", "rust", "js", "swift"] },
-    "gif":  { "status": "planned", "subspec": null, "reference_lib": null, "reference_version": null, "fixture_count": 0, "ports_implemented": [] },
+    "gif":  { "status": "supported", "subspec": "SPEC.md#§12-gif", "reference_lib": "Pillow built-in GIF plugin", "reference_version": "11.0.0", "fixture_count": 15, "ports_implemented": [] },
     "jpeg": { "status": "planned", "subspec": null, "reference_lib": null, "reference_version": null, "fixture_count": 0, "ports_implemented": [] },
     "webp": { "status": "planned", "subspec": null, "reference_lib": null, "reference_version": null, "fixture_count": 0, "ports_implemented": [] },
     "tiff": { "status": "planned", "subspec": null, "reference_lib": null, "reference_version": null, "fixture_count": 0, "ports_implemented": [] },
