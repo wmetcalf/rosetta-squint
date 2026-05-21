@@ -1,9 +1,7 @@
 package imagedecode
 
 import (
-	"bytes"
-
-	libjpeg "github.com/pixiv/go-libjpeg/jpeg"
+	"github.com/wmetcalf/rosetta-image-decode/go/imagedecode/internal/libjpeg"
 )
 
 func decodeJpeg(b []byte) (DecodedImage, error) {
@@ -12,45 +10,28 @@ func decodeJpeg(b []byte) (DecodedImage, error) {
 		return DecodedImage{}, newError(UnsupportedFeature, Jpeg, true, "CMYK color space")
 	}
 
-	// Sniff dimensions from the SOF marker to guard against decompression bombs.
-	if w, h, ok := jpegDimensions(b); ok {
-		if err := checkDimensions(w, h, Jpeg); err != nil {
-			return DecodedImage{}, err
-		}
-	}
-
-	// DecodeIntoRGB forces out_color_space=JCS_RGB in libjpeg-turbo,
-	// so YCbCr→RGB conversion is done by libjpeg (matching Rust/JS goldens).
-	// Grayscale is also expanded to 3-channel RGB by libjpeg.
-	img, err := libjpeg.DecodeIntoRGB(bytes.NewReader(b), &libjpeg.DecoderOptions{
-		DCTMethod:              libjpeg.DCTISlow,
-		DisableFancyUpsampling: false,
-		DisableBlockSmoothing:  false,
-	})
+	// Use libjpeg.Header to get dimensions and guard against decompression bombs.
+	width, height, err := libjpeg.Header(b)
 	if err != nil {
-		return DecodedImage{}, newError(CorruptInput, Jpeg, true, "jpeg.DecodeIntoRGB failed: "+err.Error())
+		return DecodedImage{}, newError(CorruptInput, Jpeg, true, "libjpeg header: "+err.Error())
+	}
+	if err := checkDimensions(width, height, Jpeg); err != nil {
+		return DecodedImage{}, err
 	}
 
-	bnds := img.Bounds()
-	width := bnds.Dx()
-	height := bnds.Dy()
-
-	// rgb.Image.Pix is stored in R,G,B order with stride 3*width (no padding for our case,
-	// but we copy row-by-row to be safe with any non-zero Min bounds).
-	out := make([]byte, width*height*3)
-	idx := 0
-	for y := bnds.Min.Y; y < bnds.Max.Y; y++ {
-		rowStart := (y-bnds.Min.Y)*img.Stride + 0
-		for x := bnds.Min.X; x < bnds.Max.X; x++ {
-			offs := rowStart + (x-bnds.Min.X)*3
-			out[idx] = img.Pix[offs]
-			out[idx+1] = img.Pix[offs+1]
-			out[idx+2] = img.Pix[offs+2]
-			idx += 3
-		}
+	// DecodeRGB uses TJFLAG_ACCURATEDCT (JDCT_ISLOW) to match PIL output byte-exact.
+	// libjpeg-turbo forces YCbCr→RGB conversion and expands grayscale to 3-channel RGB.
+	decoded, err := libjpeg.DecodeRGB(b)
+	if err != nil {
+		return DecodedImage{}, newError(CorruptInput, Jpeg, true, "libjpeg decode: "+err.Error())
 	}
-
-	return DecodedImage{Width: width, Height: height, Data: out, Channels: RGB, Format: Jpeg}, nil
+	return DecodedImage{
+		Width:    decoded.Width,
+		Height:   decoded.Height,
+		Data:     decoded.Pixels,
+		Channels: RGB,
+		Format:   Jpeg,
+	}, nil
 }
 
 // jpegDimensions scans JPEG markers to find the first SOF (Start Of Frame) marker
