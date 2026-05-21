@@ -25,6 +25,11 @@ let package = Package(
             pkgConfig: "libtiff-4",
             providers: [.apt(["libtiff-dev"]), .brew(["libtiff"])]
         ),
+        .systemLibrary(
+            name: "Cheif",
+            pkgConfig: "libheif",
+            providers: [.apt(["libheif-dev"]), .brew(["libheif"])]
+        ),
         .target(
             name: "RosettaImageDecode",
             dependencies: [
@@ -32,6 +37,7 @@ let package = Package(
                 "Cjpeg",
                 "Cwebp",
                 "Ctiff",
+                "Cheif",
             ]
         ),
         .testTarget(

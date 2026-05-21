@@ -103,3 +103,26 @@ extension Group3DetectionTests {
         XCTAssertTrue(Decoder.supportedFormats().contains(.tiff))
     }
 }
+
+extension Group3DetectionTests {
+    func testDetectsAllValidHeic() throws {
+        for rel in try TestKit.listValidFixtures("heic") {
+            let bytes = try TestKit.readFixture(rel)
+            XCTAssertEqual(Decoder.detectFormat(bytes), .heic, rel)
+        }
+    }
+
+    func testRejectsHeicBadMagic() throws {
+        let bytes = try TestKit.readFixture("heic/invalid/bad-magic.heic")
+        XCTAssertNil(Decoder.detectFormat(bytes))
+    }
+
+    func testRejectsAvifAsHeic() throws {
+        let bytes = try TestKit.readFixture("heic/invalid/avif.heic")
+        XCTAssertNil(Decoder.detectFormat(bytes))
+    }
+
+    func testSupportedFormatsContainsHeic() {
+        XCTAssertTrue(Decoder.supportedFormats().contains(.heic))
+    }
+}

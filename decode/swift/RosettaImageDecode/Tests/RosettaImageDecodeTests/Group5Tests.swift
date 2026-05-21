@@ -110,12 +110,36 @@ extension Group5InvariantsTests {
 
     func testSupportedFormatsContainsBmpPngGifJpegWebpAndTiff() {
         let supported = Decoder.supportedFormats()
-        XCTAssertEqual(supported.count, 6)
         XCTAssertTrue(supported.contains(.bmp))
         XCTAssertTrue(supported.contains(.png))
         XCTAssertTrue(supported.contains(.gif))
         XCTAssertTrue(supported.contains(.jpeg))
         XCTAssertTrue(supported.contains(.webp))
         XCTAssertTrue(supported.contains(.tiff))
+    }
+}
+
+extension Group5InvariantsTests {
+    func testAllDecodedHeicImagesHaveValidShape() throws {
+        for rel in try TestKit.listValidFixtures("heic") {
+            let bytes = try TestKit.readFixture(rel)
+            let img = try Decoder.decode(bytes)
+            XCTAssertGreaterThan(img.width, 0, rel)
+            XCTAssertGreaterThan(img.height, 0, rel)
+            XCTAssertEqual(img.format, .heic, rel)
+            XCTAssertEqual(img.data.count, img.width * img.height * img.channels.bytesPerPixel, rel)
+        }
+    }
+
+    func testSupportedFormatsContainsBmpPngGifJpegWebpTiffAndHeic() {
+        let supported = Decoder.supportedFormats()
+        XCTAssertEqual(supported.count, 7)
+        XCTAssertTrue(supported.contains(.bmp))
+        XCTAssertTrue(supported.contains(.png))
+        XCTAssertTrue(supported.contains(.gif))
+        XCTAssertTrue(supported.contains(.jpeg))
+        XCTAssertTrue(supported.contains(.webp))
+        XCTAssertTrue(supported.contains(.tiff))
+        XCTAssertTrue(supported.contains(.heic))
     }
 }

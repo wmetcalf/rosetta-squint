@@ -17,6 +17,8 @@ public enum Decoder {
             return try WebPDecoder.decode(bytes: bytes)
         case .tiff:
             return try TIFFDecoder.decode(bytes: bytes)
+        case .heic:
+            return try HEICDecoder.decode(bytes: bytes)
         default:
             throw DecodeError.unsupportedFormat(magic: bytes.count >= 2 ? Array(bytes.prefix(2)) : Array(bytes))
         }
@@ -55,10 +57,19 @@ public enum Decoder {
            && bytes[2] == 0x00 && bytes[3] == 0x2A {
             return .tiff
         }
+        // HEIC: bytes[4..8) = "ftyp", bytes[8..12) = brand in HEIC-specific set
+        if bytes.count >= 12
+           && bytes[4] == 0x66 && bytes[5] == 0x74 && bytes[6] == 0x79 && bytes[7] == 0x70 {
+            let brand = String(bytes: bytes[8..<12], encoding: .ascii) ?? ""
+            let heicBrands: Set<String> = ["heic", "heix", "mif1", "msf1", "hevc", "hevx"]
+            if heicBrands.contains(brand) {
+                return .heic
+            }
+        }
         return nil
     }
 
     public static func supportedFormats() -> [Format] {
-        [.bmp, .png, .gif, .jpeg, .webp, .tiff]
+        [.bmp, .png, .gif, .jpeg, .webp, .tiff, .heic]
     }
 }

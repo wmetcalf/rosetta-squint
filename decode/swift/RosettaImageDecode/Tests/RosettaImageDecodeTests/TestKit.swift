@@ -42,6 +42,7 @@ enum TestKit {
         switch format {
         case "jpeg": validExtensions = [format, "jpg"]
         case "tiff": validExtensions = [format, "tif"]
+        case "heic": validExtensions = [format, "heif"]
         default: validExtensions = [format]
         }
         return items
