@@ -42,14 +42,75 @@ jobs:
       - name: Run consistency check
         run: python consistency.py
 
-  # port-tests intentionally absent in v1 — added by format sub-projects.
-  # When the BMP sub-project lands, it adds a job here:
-  #
-  # port-tests:
-  #   name: Port tests (${{ matrix.port }})
-  #   runs-on: ubuntu-22.04
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       port: [java, go, rust, js, swift]
-  #   steps: ...
+  port-tests:
+    name: Port tests (${{ matrix.port }})
+    runs-on: ubuntu-22.04
+    needs: [spec-drift, spec-only]
+    strategy:
+      fail-fast: false
+      matrix:
+        port: [java, go, rust, js, swift]
+    steps:
+      - uses: actions/checkout@v4
+
+      # Java
+      - name: Set up Java 17
+        if: matrix.port == 'java'
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      - name: Java — mvn test
+        if: matrix.port == 'java'
+        run: cd java/rosetta-image-decode && mvn -B -ntp test
+
+      # Go
+      - name: Set up Go 1.22
+        if: matrix.port == 'go'
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache-dependency-path: go/imagedecode/go.mod
+      - name: Go — go test
+        if: matrix.port == 'go'
+        run: cd go/imagedecode && go test -count=1 ./...
+
+      # Rust
+      - name: Set up Rust stable
+        if: matrix.port == 'rust'
+        uses: dtolnay/rust-toolchain@stable
+      - name: Cache cargo
+        if: matrix.port == 'rust'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            rust/rosetta-image-decode/target
+          key: cargo-${{ runner.os }}-${{ hashFiles('rust/rosetta-image-decode/Cargo.lock') }}
+      - name: Rust — cargo test
+        if: matrix.port == 'rust'
+        run: cd rust/rosetta-image-decode && cargo test --no-fail-fast
+
+      # JS
+      - name: Set up Node 20
+        if: matrix.port == 'js'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: js/rosetta-image-decode/package-lock.json
+      - name: JS — npm ci + test
+        if: matrix.port == 'js'
+        run: cd js/rosetta-image-decode && npm ci && npm test
+
+      # Swift
+      - name: Set up Swift 5.9
+        if: matrix.port == 'swift'
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: '5.9'
+      - name: Swift — swift test
+        if: matrix.port == 'swift'
+        run: cd swift/RosettaImageDecode && swift test
