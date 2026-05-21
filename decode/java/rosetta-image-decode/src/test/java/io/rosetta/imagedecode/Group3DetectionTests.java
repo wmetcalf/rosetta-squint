@@ -101,4 +101,20 @@ public class Group3DetectionTests {
     public void supportedFormatsContainsWebp() {
         assertTrue(Decoder.supportedFormats().contains(Format.WEBP));
     }
+
+    @Test
+    public void detectsAllValidTiffFixtures() throws IOException {
+        var fixtures = TestKit.listValidFixtures("tiff");
+        assertFalse(fixtures.isEmpty(), "should have TIFF fixtures");
+        for (String rel : fixtures) {
+            byte[] bytes = TestKit.readFixture(rel);
+            Optional<Format> fmt = Decoder.detectFormat(bytes);
+            assertEquals(Optional.of(Format.TIFF), fmt, "should detect TIFF for " + rel);
+        }
+    }
+
+    @Test
+    public void supportedFormatsContainsTiff() {
+        assertTrue(Decoder.supportedFormats().contains(Format.TIFF));
+    }
 }

@@ -18,6 +18,7 @@ public final class Decoder {
             case GIF -> io.rosetta.imagedecode.internal.GIFDecoder.decode(bytes);
             case JPEG -> io.rosetta.imagedecode.internal.JPEGDecoder.decode(bytes);
             case WEBP -> io.rosetta.imagedecode.internal.WebPDecoder.decode(bytes);
+            case TIFF -> io.rosetta.imagedecode.internal.TIFFDecoder.decode(bytes);
             default -> throw new DecodeException(DecodeException.Kind.UNSUPPORTED_FORMAT, fmt.get(), "");
         };
     }
@@ -43,10 +44,16 @@ public final class Decoder {
             && bytes[8] == 0x57 && bytes[9] == 0x45 && bytes[10] == 0x42 && bytes[11] == 0x50) {
             return Optional.of(Format.WEBP);
         }
+        // TIFF: little-endian "II\x2A\x00" or big-endian "MM\x00\x2A"
+        if (bytes.length >= 4
+            && ((bytes[0] == 0x49 && bytes[1] == 0x49 && bytes[2] == 0x2A && bytes[3] == 0x00)
+             || (bytes[0] == 0x4D && bytes[1] == 0x4D && bytes[2] == 0x00 && bytes[3] == 0x2A))) {
+            return Optional.of(Format.TIFF);
+        }
         return Optional.empty();
     }
 
     public static Set<Format> supportedFormats() {
-        return EnumSet.of(Format.BMP, Format.PNG, Format.GIF, Format.JPEG, Format.WEBP);
+        return EnumSet.of(Format.BMP, Format.PNG, Format.GIF, Format.JPEG, Format.WEBP, Format.TIFF);
     }
 }
