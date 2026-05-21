@@ -46,13 +46,15 @@ Two exceptions worth knowing:
 
 | Port | Tests | How to run |
 |---|---|---|
-| Rust | 42 | `cargo test` |
-| Go | ~38 | `go test ./...` |
+| Rust | 42 | `cargo test --no-fail-fast` |
+| Go | 38 | `go test -count=1 ./...` |
 | Java | 40 | `mvn -B -ntp test` |
 | JS/TS | 44 | `npm test` |
 | Swift | 48 | `swift test` |
 
-Total: ~212 tests across 5 ports. **No macOS or Windows runs.** **CI yaml exists but has never executed** (no GitHub remote).
+Total: 212 tests across 5 ports. **No macOS or Windows runs.** **CI yaml exists but has never executed** (no GitHub remote).
+
+Post-SecRev each port's Group 4 (error semantics) tests also cover the new `imageTooLarge` variant — the two synthetic `spec/fixtures/{bmp,png}/invalid/too-large.{bmp,png}` fixtures declare 65536×65536 in their headers and are rejected before any allocation.
 
 ---
 
@@ -108,10 +110,10 @@ go test -count=1 ./...
 ```
 
 Module deps:
-- `github.com/pixiv/go-libjpeg` — cgo binding to system libjpeg-turbo
-- `github.com/chai2010/webp` — cgo binding to system libwebp
+- `github.com/chai2010/webp` — cgo binding to system libwebp (actively maintained)
 - `github.com/strukturag/libheif v1.17.6` (pin must match system libheif version — earlier versions of the bindings reference symbols missing in libheif 1.17)
 - `golang.org/x/image/tiff` — pure Go, no system lib
+- JPEG via in-tree `internal/libjpeg` cgo wrapper around system libjpeg-turbo (TurboJPEG API; `TJFLAG_ACCURATEDCT` for JDCT_ISLOW byte-exact parity). Replaced unmaintained `pixiv/go-libjpeg` during SecRev pass — see [SECURITY.md](./SECURITY.md).
 
 Needs `libjpeg-turbo8-dev`, `libturbojpeg0-dev`, `libwebp-dev`, `libheif-dev`, `pkg-config`.
 
@@ -124,11 +126,12 @@ mvn -B -ntp test
 
 Requires JDK 17+. Maven coordinates:
 - `org.libjpeg-turbo:turbojpeg:2.1.5` — system-scope dependency at `/usr/share/java/turbojpeg.jar` (Ubuntu pkg `libturbojpeg-java`)
-- `org.sejda.imageio:webp-imageio:0.1.6` — pure-Java WebP plugin (bundles native libwebp loader)
-- `com.twelvemonkeys.imageio:imageio-tiff:3.10.1` — TIFF plugin
-- `net.java.dev.jna:jna:5.18.1` — used by our hand-written libheif JNA wrapper in `io.rosetta.imagedecode.internal.libheif`
+- `com.twelvemonkeys.imageio:imageio-tiff:3.10.1` — TIFF plugin (actively maintained)
+- `net.java.dev.jna:jna:5.18.1` — used by our hand-written libheif + libwebp JNA wrappers in `io.rosetta.imagedecode.internal.{libheif,libwebp}`
 
-PNG and GIF use `javax.imageio` (stdlib). The HEIC JNA wrapper dynamically loads `libheif.so.1` (Linux) or `libheif.dylib` (macOS); `libheif-dev` must be installed.
+PNG and GIF use `javax.imageio` (stdlib). The HEIC and WebP JNA wrappers dynamically load `libheif.so.1` and `libwebp.so.7` (Linux) or `.dylib` (macOS); `libheif-dev` and `libwebp-dev` must be installed.
+
+The previously-depended-on `org.sejda.imageio:webp-imageio:0.1.6` (unmaintained, bundled an old libwebp) was replaced during the SecRev pass with a JNA wrapper around system libwebp — see [SECURITY.md](./SECURITY.md).
 
 ### JavaScript / TypeScript
 
@@ -141,13 +144,12 @@ npm test
 Requires Node 18+. **No system libraries needed** — everything bundles natively or as WASM:
 
 - `pngjs ^7` — pure-JS PNG
-- `omggif ^1` — pure-JS GIF
 - `utif2 ^4.1.0` — pure-JS TIFF (CommonJS, imported via `createRequire` in our ESM context)
 - `@jsquash/jpeg ^1.6.0` — mozjpeg compiled to WASM
 - `@jsquash/webp ^1.5.0` — libwebp compiled to WASM
 - `libheif-js ^1.17.1` — libheif + libde265 compiled to WASM (this is the one that diverges ±1 px from system libheif; see top of doc)
 
-BMP is implemented inline in `src/internal/bmp.ts` (no library).
+BMP and GIF are implemented inline (no library). The GIF decoder at `src/internal/gif-decoder.ts` (~612 LOC, ported from the Swift port) replaced the unmaintained `omggif` package during the SecRev pass — see [SECURITY.md](./SECURITY.md).
 
 `decode()` is async because the WASM modules initialize asynchronously. All Group 2 tests `await decode(...)`.
 
@@ -187,7 +189,7 @@ python3 regenerate.py --check     # exits 1 if outputs would differ from committ
 python3 consistency.py            # schema validation + counts
 ```
 
-**Important:** `regenerate.py --format <fmt>` is destructive — it rewrites `goldens.json` with only that format's entries. To regenerate a single format without nuking the others, use the merge pattern from `spec/SPEC.md` (or just `git checkout spec/goldens.json` after to restore the rest).
+**`regenerate.py --format <fmt>`** is non-destructive as of the SecRev pass — single-format runs merge into the existing `goldens.json` rather than wiping the other formats' entries.
 
 HEIC goldens require an extra step because system libheif (not pillow-heif) is the reference — see the ctypes wrapper script and notes in `spec/SPEC.md` §16.
 
@@ -195,12 +197,28 @@ HEIC goldens require an extra step because system libheif (not pillow-heif) is t
 
 ## Known gaps & caveats
 
-- **No macOS testing.** All test runs are Linux x86-64. Swift on Mac is plausible-but-unverified.
+- **No macOS testing.** All test runs are Linux x86-64. Swift on Mac is plausible-but-unverified (Homebrew `pkg-config` providers declared but never exercised).
 - **No CI execution.** `.github/workflows/ci.yml` exists with proper apt-install steps per port matrix entry, but the repo is local-only and has never been pushed to GitHub.
-- **No live Python diff job.** Goldens are frozen at fixture-gen time; nothing runs PIL and a port side-by-side in the same process.
-- **No cross-port end-to-end diff job.** Cross-port equivalence is *implied* by every port matching the same goldens, but no test runs all 5 ports on the same input and diffs the outputs directly.
 - **HEIC has a JS tolerance** — see top of doc.
 - **No published packages.** Nothing on crates.io / Maven Central / npm / Swift Package Index.
+
+## Resolved in the SecRev v0.1.0 pass
+
+The following items were resolved during the security hardening pass (tag `security-v0.1.0`):
+
+- ✅ Decompression-bomb defense: `MAX_PIXELS = 268_435_456` (256 MP) cap enforced in all 5 ports before any size-proportional allocation
+- ✅ Java overflow-safe pixel buffer sizing via `Math.multiplyExact`
+- ✅ Java `DecodedImage` zero-copy access via `unsafeData()` / `asReadOnlyBuffer()`
+- ✅ Replaced unmaintained `pixiv/go-libjpeg` (Aug 2019) with in-tree libjpeg-turbo cgo wrapper
+- ✅ Replaced unmaintained `org.sejda.imageio:webp-imageio` (2019) with libwebp JNA wrapper
+- ✅ Replaced unmaintained `omggif` (Jul 2019) with in-tree pure-TS GIF decoder
+- ✅ `regenerate.py --format <fmt>` is now non-destructive (merges instead of wiping)
+- ✅ `regenerate.py` refuses to handle HEIC via pillow-heif (avoids libheif 1.21 vs system 1.17 ±1 px drift)
+- ✅ HEIC ftyp brand whitelist tightened and documented
+- ✅ Cross-port equivalence smoke-test script at `spec/cross_port_diff.sh`
+- ✅ `SECURITY.md` with threat model + native lib CVE references + minimum versions
+
+See [SECURITY.md](./SECURITY.md) for details.
 
 ---
 
