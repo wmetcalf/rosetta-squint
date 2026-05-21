@@ -1,6 +1,7 @@
 import { createRequire } from "node:module";
 import { DecodeError } from "../errors.js";
 import type { DecodedImage } from "../types.js";
+import { checkDimensions } from "./limits.js";
 
 // utif2 is CommonJS; use createRequire to import it from our ESM context.
 const require = createRequire(import.meta.url);
@@ -40,6 +41,17 @@ export function decodeTiff(bytes: Uint8Array): DecodedImage {
   }
 
   const ifd = ifds[0]!;
+
+  // utif2: UTIF.decode() populates TIFF tag arrays (t256 = ImageWidth, t257 = ImageLength)
+  // but does NOT set ifd.width / ifd.height until after UTIF.decodeImage().
+  // Read dimensions from the tag arrays to guard before any size-proportional allocation.
+  {
+    const tagW = (ifd as any).t256;
+    const tagH = (ifd as any).t257;
+    const w: number = Array.isArray(tagW) ? (tagW[0] as number) : (tagW as number);
+    const h: number = Array.isArray(tagH) ? (tagH[0] as number) : (tagH as number);
+    checkDimensions(w, h, "tiff");
+  }
 
   try {
     UTIF.decodeImage(ab, ifd);

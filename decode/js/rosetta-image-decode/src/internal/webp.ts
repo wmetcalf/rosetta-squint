@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { DecodeError } from "../errors.js";
 import type { DecodedImage } from "../types.js";
+import { checkDimensions } from "./limits.js";
 
 // @jsquash/webp: community-maintained libwebp WASM fork of squoosh's webp codec.
 import { init, default as webpDecode } from "@jsquash/webp/decode.js";
@@ -80,6 +81,7 @@ export async function decodeWebp(bytes: Uint8Array): Promise<DecodedImage> {
 
   const width = result.width;
   const height = result.height;
+  checkDimensions(width, height, "webp");
   const rgba = result.data; // Uint8ClampedArray, always RGBA from libwebp
 
   // Detect whether the source WebP had alpha; if not, strip the channel → RGB

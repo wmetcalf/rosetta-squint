@@ -1,5 +1,6 @@
 import { DecodeError } from "../errors.js";
 import type { Channels, DecodedImage } from "../types.js";
+import { checkDimensions } from "./limits.js";
 
 const BI_RGB = 0;
 const BI_RLE8 = 1;
@@ -154,6 +155,8 @@ function parseHeader(bytes: Uint8Array): BmpHeader {
 
   const topDown = biHeight < 0;
   const absHeight = Math.abs(biHeight);
+
+  checkDimensions(biWidth, absHeight, "bmp");
 
   return {
     width: biWidth,

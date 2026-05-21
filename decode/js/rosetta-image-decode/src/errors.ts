@@ -4,7 +4,8 @@ export type DecodeErrorKind =
   | "unsupportedFormat"
   | "corruptInput"
   | "truncated"
-  | "unsupportedFeature";
+  | "unsupportedFeature"
+  | "imageTooLarge";
 
 export class DecodeError extends Error {
   readonly kind: DecodeErrorKind;

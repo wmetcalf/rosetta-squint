@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { DecodeError } from "../errors.js";
 import type { DecodedImage } from "../types.js";
+import { checkDimensions } from "./limits.js";
 
 // @jsquash/jpeg: community-maintained mozjpeg WASM fork of squoosh's jpeg codec.
 // Uses the same mozjpeg C library as Rust's mozjpeg-sys, ensuring byte-exact output.
@@ -101,6 +102,8 @@ export async function decodeJpeg(bytes: Uint8Array): Promise<DecodedImage> {
   if (!result) {
     throw new DecodeError("corruptInput", "jpeg", "JPEG decode returned null");
   }
+
+  checkDimensions(result.width, result.height, "jpeg");
 
   // mozjpeg returns RGBA; strip the alpha channel to produce packed RGB
   const pixels = result.width * result.height;

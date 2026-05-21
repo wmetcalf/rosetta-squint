@@ -2,6 +2,7 @@ import { GifReader } from "omggif";
 
 import { DecodeError } from "../errors.js";
 import type { DecodedImage } from "../types.js";
+import { checkDimensions } from "./limits.js";
 
 export function decodeGif(bytes: Uint8Array): DecodedImage {
   let reader: GifReader;
@@ -17,6 +18,7 @@ export function decodeGif(bytes: Uint8Array): DecodedImage {
 
   const width = reader.width;
   const height = reader.height;
+  checkDimensions(width, height, "gif");
 
   // Detect transparency for first frame.
   let frameInfo;

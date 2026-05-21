@@ -1,6 +1,7 @@
 import { createRequire } from "node:module";
 import { DecodeError } from "../errors.js";
 import type { DecodedImage } from "../types.js";
+import { checkDimensions } from "./limits.js";
 
 // libheif-js 1.17.1 ships as CommonJS; use createRequire to import from ESM.
 const require = createRequire(import.meta.url);
@@ -37,6 +38,7 @@ export async function decodeHeic(bytes: Uint8Array): Promise<DecodedImage> {
   const img = images[0];
   const width: number = img.get_width();
   const height: number = img.get_height();
+  checkDimensions(width, height, "heic");
 
   // Check alpha via the underlying C API using the handle pointer.
   // libheif-js wraps handles as Emscripten objects; $$.ptr gives the raw pointer.

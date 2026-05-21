@@ -2,11 +2,28 @@ import { PNG } from "pngjs";
 
 import { DecodeError } from "../errors.js";
 import type { DecodedImage } from "../types.js";
+import { checkDimensions } from "./limits.js";
 
-// Byte offset of bit-depth in a PNG IHDR chunk:
-// 8 (magic) + 4 (chunk length) + 4 (chunk type "IHDR") + 4 (width) + 4 (height) = 24
+// PNG IHDR chunk layout (after the 8-byte signature):
+//   offset  8: chunk length (4 bytes, big-endian)
+//   offset 12: chunk type "IHDR" (4 bytes)
+//   offset 16: width (4 bytes, big-endian)
+//   offset 20: height (4 bytes, big-endian)
+//   offset 24: bit depth (1 byte)
+//   offset 25: color type (1 byte)
+const PNG_IHDR_WIDTH_OFFSET = 16;
+const PNG_IHDR_HEIGHT_OFFSET = 20;
 const PNG_IHDR_BITDEPTH_OFFSET = 24;
 const PNG_IHDR_COLORTYPE_OFFSET = 25;
+
+function readPngIhdrDimensions(bytes: Uint8Array): { width: number; height: number } | null {
+  if (bytes.length < PNG_IHDR_HEIGHT_OFFSET + 4) return null;
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  return {
+    width: view.getUint32(PNG_IHDR_WIDTH_OFFSET, false),
+    height: view.getUint32(PNG_IHDR_HEIGHT_OFFSET, false),
+  };
+}
 
 function readPngHeaderBitDepth(bytes: Uint8Array): { bitDepth: number; colorType: number } | null {
   if (bytes.length < PNG_IHDR_COLORTYPE_OFFSET + 1) return null;
@@ -17,6 +34,12 @@ function readPngHeaderBitDepth(bytes: Uint8Array): { bitDepth: number; colorType
 }
 
 export function decodePng(bytes: Uint8Array): DecodedImage {
+  // Check declared dimensions before invoking pngjs to catch decompression bombs early.
+  const ihdrDims = readPngIhdrDimensions(bytes);
+  if (ihdrDims !== null) {
+    checkDimensions(ihdrDims.width, ihdrDims.height, "png");
+  }
+
   const buf = Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const header = readPngHeaderBitDepth(bytes);
   const is16bit = header?.bitDepth === 16;
