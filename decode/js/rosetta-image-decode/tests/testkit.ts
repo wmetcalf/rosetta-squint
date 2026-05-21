@@ -38,6 +38,9 @@ export function listValidFixtures(format: string): string[] {
       if (format === "tiff") {
         return name.endsWith(".tif") || name.endsWith(".tiff");
       }
+      if (format === "heic") {
+        return name.endsWith(".heic") || name.endsWith(".heif");
+      }
       return name.endsWith(`.${format}`);
     })
     .map((name) => `${format}/valid/${name}`)

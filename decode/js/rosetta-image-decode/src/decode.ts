@@ -1,5 +1,6 @@
 import { decodeBmp } from "./internal/bmp.js";
 import { decodeGif } from "./internal/gif.js";
+import { decodeHeic } from "./internal/heic.js";
 import { decodeJpeg } from "./internal/jpeg.js";
 import { decodePng } from "./internal/png.js";
 import { decodeTiff } from "./internal/tiff.js";
@@ -25,6 +26,8 @@ export async function decode(bytes: Uint8Array): Promise<DecodedImage> {
       return await decodeWebp(bytes);
     case "tiff":
       return decodeTiff(bytes);
+    case "heic":
+      return await decodeHeic(bytes);
     default:
       throw new DecodeError("unsupportedFormat", fmt, "");
   }
@@ -67,9 +70,22 @@ export function detectFormat(bytes: Uint8Array): Format | null {
   ) {
     return "tiff";
   }
+  // HEIC/HEIF: ISO Base Media File Format with ftyp box at bytes 4..7
+  // Bytes 8..11 = major brand; only accept HEVC-based brands, reject avif.
+  if (
+    bytes.length >= 12 &&
+    bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70
+  ) {
+    const brand = String.fromCharCode(bytes[8]!, bytes[9]!, bytes[10]!, bytes[11]!);
+    if (["heic", "heix", "mif1", "msf1", "hevc", "hevx"].includes(brand)) {
+      return "heic";
+    }
+    // avif and other unrecognized ftyp brands → unsupportedFormat
+    return null;
+  }
   return null;
 }
 
 export function supportedFormats(): Format[] {
-  return ["bmp", "png", "gif", "jpeg", "webp", "tiff"];
+  return ["bmp", "png", "gif", "jpeg", "webp", "tiff", "heic"];
 }

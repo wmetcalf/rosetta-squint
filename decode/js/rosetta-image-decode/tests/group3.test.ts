@@ -104,3 +104,31 @@ describe("Group 3 — format detection (TIFF)", () => {
     expect(supportedFormats()).toContain("tiff");
   });
 });
+
+describe("Group 3 — format detection (HEIC)", () => {
+  it("detects all valid HEIC fixtures", () => {
+    for (const rel of listValidFixtures("heic")) {
+      const bytes = readFixture(rel);
+      expect(detectFormat(bytes), rel).toBe("heic");
+    }
+  });
+
+  it("rejects bad-magic HEIC (unknown ftyp brand)", () => {
+    const bytes = readFixture("heic/invalid/bad-magic.heic");
+    expect(detectFormat(bytes)).toBeNull();
+  });
+
+  it("rejects avif brand as unsupportedFormat", () => {
+    const bytes = readFixture("heic/invalid/avif.heic");
+    expect(detectFormat(bytes)).toBeNull();
+  });
+
+  it("detects truncated HEIC as heic format (truncation caught at decode time)", () => {
+    const bytes = readFixture("heic/invalid/truncated.heic");
+    expect(detectFormat(bytes)).toBe("heic");
+  });
+
+  it("supported formats contains heic", () => {
+    expect(supportedFormats()).toContain("heic");
+  });
+});
