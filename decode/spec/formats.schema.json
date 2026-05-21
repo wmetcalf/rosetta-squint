@@ -10,7 +10,7 @@
     "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
     "formats": {
       "type": "object",
-      "required": ["bmp", "png", "gif", "jpeg", "webp", "tiff", "heic", "emf", "wmf"],
+      "required": ["bmp", "png", "gif", "jpeg", "webp", "tiff", "heic"],
       "additionalProperties": false,
       "properties": {
         "bmp":  { "$ref": "#/$defs/formatEntry" },
@@ -19,9 +19,7 @@
         "jpeg": { "$ref": "#/$defs/formatEntry" },
         "webp": { "$ref": "#/$defs/formatEntry" },
         "tiff": { "$ref": "#/$defs/formatEntry" },
-        "heic": { "$ref": "#/$defs/formatEntry" },
-        "emf":  { "$ref": "#/$defs/formatEntry" },
-        "wmf":  { "$ref": "#/$defs/formatEntry" }
+        "heic": { "$ref": "#/$defs/formatEntry" }
       }
     }
   },

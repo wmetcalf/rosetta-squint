@@ -95,8 +95,6 @@ Magic byte prefixes (recognized in v1 once the sub-project lands):
 | WebP   | `52 49 46 46 ?? ?? ?? ?? 57 45 42 50` | 12     |
 | TIFF   | `49 49 2a 00` or `4d 4d 00 2a`        | 4      |
 | HEIC   | (ISOBMFF `ftyp` box with brand `heic`/`heix`/`mif1`) | variable |
-| EMF    | `01 00 00 00` at offset 0 + `20 45 4d 46` at offset 40 | structured |
-| WMF    | `d7 cd c6 9a` (placeable) or `01 00 09 00` (standard) | 4 |
 
 Sub-projects MUST keep these prefixes in sync with their
 `detectFormat()` implementation.
@@ -520,11 +518,6 @@ macOS: `brew install libheif`.
 - `ftyp` major brand ∈ HEIC set but file truncated or HEVC stream corrupt → `corruptInput`
 
 **Fixture corpus:** 10 valid synth fixtures (gradient RGB + RGBA, q50/q90/q100 lossless, various sizes) + 3 invalid (bad-magic, truncated, avif-brand). Encoded by `spec/synth_heic.py` using pillow-heif 1.3.0; decoded for goldens via ctypes wrapper around system libheif 1.17.6.
-
-### §17 EMF / WMF
-
-*(Populated by the EMF/WMF sub-project. Currently planned. See
-`formats.json` for status.)*
 
 ---
 
