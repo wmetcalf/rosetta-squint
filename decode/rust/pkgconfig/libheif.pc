@@ -1,8 +1,0 @@
-# pkg-config for pillow-heif's bundled libheif 1.21.2.
-# The goldens were generated with pillow-heif (libheif 1.21.2).
-# System libheif 1.17.6 produces ±1 pixel differences.
-Name: libheif
-Description: HEIF file reader and writer (pillow-heif bundled 1.21.2)
-Version: 1.21.2
-Libs: -L/home/coz/.local/lib/python3.12/site-packages/pillow_heif.libs -lheif-b515bc91
-Cflags: -I/usr/include/x86_64-linux-gnu
