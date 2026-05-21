@@ -20,6 +20,8 @@ func Decode(b []byte) (DecodedImage, error) {
 		return decodeWebp(b)
 	case Tiff:
 		return decodeTiff(b)
+	case Heic:
+		return decodeHeic(b)
 	default:
 		return DecodedImage{}, newError(UnsupportedFormat, f, true, "")
 	}
@@ -59,10 +61,19 @@ func DetectFormat(b []byte) (Format, bool) {
 	if len(b) >= 4 && b[0] == 0x4D && b[1] == 0x4D && b[2] == 0x00 && b[3] == 0x2A {
 		return Tiff, true
 	}
+	// HEIC/HEIF: ftyp box at offset 4; HEIC brands return Heic, avif and other brands → not detected
+	if len(b) >= 12 && b[4] == 'f' && b[5] == 't' && b[6] == 'y' && b[7] == 'p' {
+		brand := string(b[8:12])
+		switch brand {
+		case "heic", "heix", "mif1", "msf1", "hevc", "hevx":
+			return Heic, true
+		}
+		// avif and other ftyp brands → unsupportedFormat (not detected)
+	}
 	return 0, false
 }
 
 // SupportedFormats returns the list of formats this port can decode.
 func SupportedFormats() []Format {
-	return []Format{Bmp, Png, Gif, Jpeg, Webp, Tiff}
+	return []Format{Bmp, Png, Gif, Jpeg, Webp, Tiff, Heic}
 }

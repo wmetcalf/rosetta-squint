@@ -150,3 +150,26 @@ func TestGroup3SupportedFormatsContainsTiff(t *testing.T) {
 		t.Errorf("SupportedFormats should contain Tiff")
 	}
 }
+
+func TestGroup3DetectsAllValidHeicFixtures(t *testing.T) {
+	fixtures := listValidFixtures(t, "heic")
+	for _, rel := range fixtures {
+		b := readFixture(t, rel)
+		f, ok := DetectFormat(b)
+		if !ok || f != Heic {
+			t.Errorf("%s: expected Heic detection, got %v ok=%v", rel, f, ok)
+		}
+	}
+}
+
+func TestGroup3SupportedFormatsContainsHeic(t *testing.T) {
+	found := false
+	for _, f := range SupportedFormats() {
+		if f == Heic {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("SupportedFormats should contain Heic")
+	}
+}
