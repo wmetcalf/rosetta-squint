@@ -361,8 +361,11 @@ public final class BMPDecoder {
             }
         }
 
-        // Ensure buffer is exactly xsize * ysize (pad or truncate)
-        while (dataBuf.size() < xsize * ysize) dataBuf.add(0);
+        // Detect RLE overrun: if loop exited before buffer is full, the stream is corrupt.
+        if (dataBuf.size() < xsize * ysize) {
+            throw new DecodeException(DecodeException.Kind.CORRUPT_INPUT, Format.BMP,
+                "RLE stream ended with " + dataBuf.size() + " pixels, expected " + (xsize * ysize));
+        }
 
         // Build output pixels.
         // Pillow's set_as_raw with direction=-1 reverses rows:
