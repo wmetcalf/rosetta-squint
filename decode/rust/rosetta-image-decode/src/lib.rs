@@ -1,8 +1,9 @@
 //! rosetta-image-decode — byte-exact PIL-compatible image decoders.
 //!
-//! v0.1.0 supports BMP only. See SPEC.md in the shared /spec/ directory.
+//! v0.1.0 supports BMP + PNG. See SPEC.md in the shared /spec/ directory.
 
 mod bmp;
+mod png;
 mod decode;
 mod error;
 mod types;

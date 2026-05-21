@@ -21,3 +21,16 @@ fn rejects_bad_signature() {
 fn supported_formats_contains_bmp() {
     assert!(supported_formats().contains(&Format::Bmp));
 }
+
+#[test]
+fn detects_all_valid_png() {
+    for rel in testkit::list_valid_fixtures("png") {
+        let bytes = testkit::read_fixture(&rel);
+        assert_eq!(Some(Format::Png), detect_format(&bytes), "fixture {}", rel);
+    }
+}
+
+#[test]
+fn supported_formats_contains_png() {
+    assert!(supported_formats().contains(&Format::Png));
+}
