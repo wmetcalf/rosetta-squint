@@ -54,12 +54,27 @@ func listValidFixtures(t *testing.T, format string) []string {
 	if err != nil {
 		t.Fatalf("listValidFixtures %s: %v", format, err)
 	}
+	// JPEG fixtures use the .jpg extension even though the format name is "jpeg".
+	var validExts []string
+	if format == "jpeg" {
+		validExts = []string{".jpg", ".jpeg"}
+	} else {
+		validExts = []string{"." + format}
+	}
+
 	var out []string
 	for _, e := range entries {
 		if !e.Type().IsRegular() {
 			continue
 		}
-		if !strings.HasSuffix(e.Name(), "."+format) {
+		matched := false
+		for _, ext := range validExts {
+			if strings.HasSuffix(e.Name(), ext) {
+				matched = true
+				break
+			}
+		}
+		if !matched {
 			continue
 		}
 		out = append(out, fmt.Sprintf("%s/valid/%s", format, e.Name()))
