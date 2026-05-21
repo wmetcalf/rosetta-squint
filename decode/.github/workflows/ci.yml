@@ -64,7 +64,7 @@ jobs:
       # libjpeg-turbo for Java/Go/Swift JPEG decoders
       - name: Install libjpeg-turbo for Java
         if: matrix.port == 'java'
-        run: sudo apt-get update -qq && sudo apt-get install -y libturbojpeg libturbojpeg0-dev libturbojpeg-java libwebp-dev libsharpyuv-dev pkg-config
+        run: sudo apt-get update -qq && sudo apt-get install -y libturbojpeg libturbojpeg0-dev libturbojpeg-java libwebp-dev libsharpyuv-dev libtiff-dev pkg-config
 
       - name: Java — mvn test
         if: matrix.port == 'java'
@@ -79,7 +79,7 @@ jobs:
           cache-dependency-path: go/imagedecode/go.mod
       - name: Install libjpeg-turbo for Go
         if: matrix.port == 'go'
-        run: sudo apt-get update -qq && sudo apt-get install -y libjpeg-turbo8-dev libturbojpeg libturbojpeg0-dev libwebp-dev libsharpyuv-dev pkg-config
+        run: sudo apt-get update -qq && sudo apt-get install -y libjpeg-turbo8-dev libturbojpeg libturbojpeg0-dev libwebp-dev libsharpyuv-dev libtiff-dev pkg-config
 
       - name: Go — go test
         if: matrix.port == 'go'
@@ -122,7 +122,7 @@ jobs:
           swift-version: '5.9'
       - name: Install libjpeg-turbo for Swift
         if: matrix.port == 'swift'
-        run: sudo apt-get update -qq && sudo apt-get install -y libturbojpeg libturbojpeg0-dev libwebp-dev libsharpyuv-dev pkg-config
+        run: sudo apt-get update -qq && sudo apt-get install -y libturbojpeg libturbojpeg0-dev libwebp-dev libsharpyuv-dev libtiff-dev pkg-config
 
       - name: Swift — swift test
         if: matrix.port == 'swift'
