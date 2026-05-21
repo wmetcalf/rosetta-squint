@@ -10,6 +10,7 @@ repository = "https://github.com/wmetcalf/rosetta-image-decode"
 [dependencies]
 thiserror = "1"
 image = { version = "0.25", default-features = false, features = ["png", "gif"] }
+mozjpeg-sys = "2"
 
 [dev-dependencies]
 serde = { version = "1", features = ["derive"] }

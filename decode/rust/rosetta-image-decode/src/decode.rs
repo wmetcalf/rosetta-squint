@@ -12,6 +12,7 @@ pub fn decode(bytes: &[u8]) -> Result<DecodedImage, DecodeError> {
     match fmt {
         Format::Bmp => decode_bmp(bytes),
         Format::Gif => decode_gif(bytes),
+        Format::Jpeg => crate::jpeg::decode_jpeg(bytes),
         Format::Png => decode_png(bytes),
         other => Err(DecodeError::new(DecodeErrorKind::UnsupportedFormat, Some(other), "")),
     }
@@ -48,10 +49,17 @@ pub fn detect_format(bytes: &[u8]) -> Option<Format> {
     {
         return Some(Format::Gif);
     }
+    // JPEG: starts with FF D8 (SOI marker); third byte FF is typical but not required for detection
+    if bytes.len() >= 2
+        && bytes[0] == 0xFF
+        && bytes[1] == 0xD8
+    {
+        return Some(Format::Jpeg);
+    }
     None
 }
 
 /// Returns the list of formats this port can decode.
 pub fn supported_formats() -> Vec<Format> {
-    vec![Format::Bmp, Format::Gif, Format::Png]
+    vec![Format::Bmp, Format::Png, Format::Gif, Format::Jpeg]
 }

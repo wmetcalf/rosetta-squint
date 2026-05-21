@@ -53,3 +53,16 @@ fn rejects_bad_magic_gif() {
 fn supported_formats_contains_gif() {
     assert!(supported_formats().contains(&Format::Gif));
 }
+
+#[test]
+fn detects_all_valid_jpeg() {
+    for rel in testkit::list_valid_fixtures("jpeg") {
+        let bytes = testkit::read_fixture(&rel);
+        assert_eq!(Some(Format::Jpeg), detect_format(&bytes), "fixture {}", rel);
+    }
+}
+
+#[test]
+fn supported_formats_contains_jpeg() {
+    assert!(supported_formats().contains(&Format::Jpeg));
+}

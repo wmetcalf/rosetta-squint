@@ -4,6 +4,7 @@
 
 mod bmp;
 mod gif;
+mod jpeg;
 mod png;
 mod decode;
 mod error;

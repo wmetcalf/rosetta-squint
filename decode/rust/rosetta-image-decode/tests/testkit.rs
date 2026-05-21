@@ -41,13 +41,17 @@ pub fn read_golden(fixture_rel: &str) -> DecodedGolden {
 
 pub fn list_valid_fixtures(format: &str) -> Vec<String> {
     let dir = spec_path("fixtures").join(format).join("valid");
+    // JPEG fixtures use the .jpg extension rather than .jpeg
+    let ext_dot_format = format!(".{}", format);
     let mut out: Vec<String> = fs::read_dir(&dir)
         .unwrap_or_else(|e| panic!("list_valid_fixtures {}: {}", format, e))
         .filter_map(|e| e.ok())
         .filter(|e| e.path().is_file())
         .filter_map(|e| {
             let name = e.file_name().into_string().ok()?;
-            if name.ends_with(&format!(".{}", format)) {
+            let matches = name.ends_with(&ext_dot_format)
+                || (format == "jpeg" && name.ends_with(".jpg"));
+            if matches {
                 Some(format!("{}/valid/{}", format, name))
             } else {
                 None
