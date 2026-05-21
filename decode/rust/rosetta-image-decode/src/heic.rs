@@ -1,4 +1,5 @@
 use crate::error::{DecodeError, DecodeErrorKind};
+use crate::limits::check_dimensions;
 use crate::types::{Channels, DecodedImage, Format};
 use libheif_rs::{ColorSpace, HeifContext, LibHeif, RgbChroma};
 
@@ -18,6 +19,9 @@ pub(crate) fn decode_heic(bytes: &[u8]) -> Result<DecodedImage, DecodeError> {
             format!("primary_image_handle failed: {}", e),
         )
     })?;
+
+    // Enforce MAX_PIXELS before initiating the full decode.
+    check_dimensions(handle.width() as usize, handle.height() as usize, Format::Heic)?;
 
     let has_alpha = handle.has_alpha_channel();
     let chroma = if has_alpha {

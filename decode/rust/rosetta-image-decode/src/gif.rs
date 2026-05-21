@@ -1,4 +1,5 @@
 use crate::error::{DecodeError, DecodeErrorKind};
+use crate::limits::check_dimensions;
 use crate::types::{Channels, DecodedImage, Format};
 
 use image::ImageReader;
@@ -95,6 +96,7 @@ pub(crate) fn decode_gif(bytes: &[u8]) -> Result<DecodedImage, DecodeError> {
     };
 
     let (width, height) = (img.width() as usize, img.height() as usize);
+    check_dimensions(width, height, Format::Gif)?;
 
     // The image crate always returns RGBA8 for GIF palette images.
     // We replicate PIL's behaviour: use RGBA only if the first frame has a

@@ -1,4 +1,5 @@
 use crate::error::{DecodeError, DecodeErrorKind};
+use crate::limits::check_dimensions;
 use crate::types::{Channels, DecodedImage, Format};
 
 const BI_RGB: u32 = 0;
@@ -26,6 +27,7 @@ struct BmpHeader {
 
 pub(crate) fn decode_bmp(bytes: &[u8]) -> Result<DecodedImage, DecodeError> {
     let hdr = parse_bmp_header(bytes)?;
+    check_dimensions(hdr.width, hdr.height, Format::Bmp)?;
     match (hdr.compression, hdr.bit_count) {
         (BI_RGB, 24) => decode_rgb24(bytes, &hdr),
         (BI_RGB, 32) => decode_rgb32(bytes, &hdr),

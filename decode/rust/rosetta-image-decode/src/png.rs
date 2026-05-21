@@ -1,4 +1,5 @@
 use crate::error::{DecodeError, DecodeErrorKind};
+use crate::limits::check_dimensions;
 use crate::types::{Channels, DecodedImage, Format};
 
 use image::ColorType;
@@ -22,6 +23,16 @@ pub(crate) fn decode_png(bytes: &[u8]) -> Result<DecodedImage, DecodeError> {
             None,
             "not a PNG file",
         ));
+    }
+
+    // Read IHDR width/height from raw bytes (offset 8 = magic, then
+    // 4-byte chunk length + 4-byte "IHDR" + 4-byte width + 4-byte height).
+    // IHDR is always the first chunk in a valid PNG, at byte offset 8.
+    // Total minimum: 8 (magic) + 4 (len) + 4 (type) + 4 (width) + 4 (height) = 24 bytes.
+    if bytes.len() >= 24 {
+        let png_width = u32::from_be_bytes(bytes[16..20].try_into().unwrap()) as usize;
+        let png_height = u32::from_be_bytes(bytes[20..24].try_into().unwrap()) as usize;
+        check_dimensions(png_width, png_height, Format::Png)?;
     }
 
     let reader = image::ImageReader::with_format(

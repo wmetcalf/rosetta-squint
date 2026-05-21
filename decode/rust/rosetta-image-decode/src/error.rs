@@ -8,6 +8,7 @@ pub enum DecodeErrorKind {
     CorruptInput,
     Truncated,
     UnsupportedFeature,
+    ImageTooLarge,
 }
 
 impl DecodeErrorKind {
@@ -17,6 +18,7 @@ impl DecodeErrorKind {
             DecodeErrorKind::CorruptInput => "corruptInput",
             DecodeErrorKind::Truncated => "truncated",
             DecodeErrorKind::UnsupportedFeature => "unsupportedFeature",
+            DecodeErrorKind::ImageTooLarge => "imageTooLarge",
         }
     }
 }

@@ -5,6 +5,7 @@
 //! Decoded memory is freed via WebPFree (requires the "0_5" feature).
 
 use crate::error::{DecodeError, DecodeErrorKind};
+use crate::limits::check_dimensions;
 use crate::types::{Channels, DecodedImage, Format};
 
 use libwebp_sys::{
@@ -29,6 +30,8 @@ pub(crate) fn decode_webp(bytes: &[u8]) -> Result<DecodedImage, DecodeError> {
         let w = features.width as usize;
         let h = features.height as usize;
         let has_alpha = features.has_alpha != 0;
+
+        check_dimensions(w, h, Format::Webp)?;
 
         if has_alpha {
             let mut width: c_int = 0;

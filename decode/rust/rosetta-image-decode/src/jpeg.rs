@@ -8,6 +8,7 @@
 //! CorruptInput rather than process abort.
 
 use crate::error::{DecodeError, DecodeErrorKind};
+use crate::limits::check_dimensions;
 use crate::types::{Channels, DecodedImage, Format};
 
 use mozjpeg_sys::*;
@@ -71,6 +72,15 @@ fn decode_jpeg_inner(bytes: &[u8]) -> Result<DecodedImage, DecodeError> {
                 Some(Format::Jpeg),
                 "CMYK color space",
             ));
+        }
+
+        // Enforce MAX_PIXELS before allocating the output buffer.
+        // image_width / image_height are populated by jpeg_read_header.
+        let jpeg_w = cinfo.image_width as usize;
+        let jpeg_h = cinfo.image_height as usize;
+        if let Err(e) = check_dimensions(jpeg_w, jpeg_h, Format::Jpeg) {
+            jpeg_destroy_decompress(&mut cinfo);
+            return Err(e);
         }
 
         cinfo.out_color_space = J_COLOR_SPACE::JCS_RGB;

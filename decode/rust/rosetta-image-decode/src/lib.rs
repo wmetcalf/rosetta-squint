@@ -11,8 +11,10 @@ mod tiff;
 mod webp;
 mod decode;
 mod error;
+pub(crate) mod limits;
 mod types;
 
 pub use decode::{decode, detect_format, supported_formats};
 pub use error::{DecodeError, DecodeErrorKind};
+pub use limits::MAX_PIXELS;
 pub use types::{Channels, DecodedImage, Format};
