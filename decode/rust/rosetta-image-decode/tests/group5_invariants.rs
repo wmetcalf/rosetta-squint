@@ -59,12 +59,13 @@ fn all_decoded_jpeg_images_have_valid_shape() {
 #[test]
 fn supported_formats_contains_bmp_png_gif_jpeg() {
     let supported = supported_formats();
-    assert_eq!(supported.len(), 5);
+    assert_eq!(supported.len(), 6);
     assert!(supported.contains(&Format::Bmp));
     assert!(supported.contains(&Format::Png));
     assert!(supported.contains(&Format::Gif));
     assert!(supported.contains(&Format::Jpeg));
     assert!(supported.contains(&Format::Webp));
+    assert!(supported.contains(&Format::Tiff));
 }
 
 #[test]
@@ -75,6 +76,20 @@ fn all_decoded_webp_images_have_valid_shape() {
         assert!(img.width > 0, "{}", rel);
         assert!(img.height > 0, "{}", rel);
         assert_eq!(img.format, Format::Webp, "{}", rel);
+        let expected_bytes = img.width * img.height * img.channels.bytes_per_pixel();
+        assert_eq!(img.data.len(), expected_bytes, "{}", rel);
+    }
+}
+
+#[test]
+fn all_decoded_tiff_images_have_valid_shape() {
+    for rel in testkit::list_valid_fixtures("tiff") {
+        let bytes = testkit::read_fixture(&rel);
+        let img = decode(&bytes).unwrap_or_else(|e| panic!("{}: {}", rel, e));
+        assert!(img.width > 0, "{}", rel);
+        assert!(img.height > 0, "{}", rel);
+        assert_eq!(img.format, Format::Tiff, "{}", rel);
+        assert_eq!(img.channels, Channels::Rgb, "TIFF always RGB in v1: {}", rel);
         let expected_bytes = img.width * img.height * img.channels.bytes_per_pixel();
         assert_eq!(img.data.len(), expected_bytes, "{}", rel);
     }

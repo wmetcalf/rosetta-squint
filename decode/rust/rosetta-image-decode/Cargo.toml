@@ -9,7 +9,7 @@ repository = "https://github.com/wmetcalf/rosetta-image-decode"
 
 [dependencies]
 thiserror = "1"
-image = { version = "0.25", default-features = false, features = ["png", "gif"] }
+image = { version = "0.25", default-features = false, features = ["png", "gif", "tiff"] }
 mozjpeg-sys = "2"
 libwebp-sys2 = { version = "0.1.11", features = ["0_5"] }
 

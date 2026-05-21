@@ -6,6 +6,7 @@ mod bmp;
 mod gif;
 mod jpeg;
 mod png;
+mod tiff;
 mod webp;
 mod decode;
 mod error;

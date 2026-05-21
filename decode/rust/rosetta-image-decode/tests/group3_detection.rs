@@ -85,3 +85,22 @@ fn rejects_bad_magic_webp() {
 fn supported_formats_contains_webp() {
     assert!(supported_formats().contains(&Format::Webp));
 }
+
+#[test]
+fn detects_all_valid_tiff() {
+    for rel in testkit::list_valid_fixtures("tiff") {
+        let bytes = testkit::read_fixture(&rel);
+        assert_eq!(Some(Format::Tiff), detect_format(&bytes), "fixture {}", rel);
+    }
+}
+
+#[test]
+fn rejects_bad_magic_tiff() {
+    let bytes = testkit::read_fixture("tiff/invalid/bad-magic.tif");
+    assert!(detect_format(&bytes).is_none());
+}
+
+#[test]
+fn supported_formats_contains_tiff() {
+    assert!(supported_formats().contains(&Format::Tiff));
+}

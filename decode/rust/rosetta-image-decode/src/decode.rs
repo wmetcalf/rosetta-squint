@@ -1,6 +1,7 @@
 use crate::bmp::decode_bmp;
 use crate::gif::decode_gif;
 use crate::png::decode_png;
+use crate::tiff::decode_tiff;
 use crate::error::{DecodeError, DecodeErrorKind};
 use crate::types::{DecodedImage, Format};
 use crate::webp::decode_webp;
@@ -15,6 +16,7 @@ pub fn decode(bytes: &[u8]) -> Result<DecodedImage, DecodeError> {
         Format::Gif => decode_gif(bytes),
         Format::Jpeg => crate::jpeg::decode_jpeg(bytes),
         Format::Png => decode_png(bytes),
+        Format::Tiff => decode_tiff(bytes),
         Format::Webp => decode_webp(bytes),
         other => Err(DecodeError::new(DecodeErrorKind::UnsupportedFormat, Some(other), "")),
     }
@@ -65,10 +67,17 @@ pub fn detect_format(bytes: &[u8]) -> Option<Format> {
     {
         return Some(Format::Webp);
     }
+    // TIFF: little-endian (II + 0x002A) or big-endian (MM + 0x2A00)
+    if bytes.len() >= 4
+        && ((bytes[0] == 0x49 && bytes[1] == 0x49 && bytes[2] == 0x2A && bytes[3] == 0x00)
+            || (bytes[0] == 0x4D && bytes[1] == 0x4D && bytes[2] == 0x00 && bytes[3] == 0x2A))
+    {
+        return Some(Format::Tiff);
+    }
     None
 }
 
 /// Returns the list of formats this port can decode.
 pub fn supported_formats() -> Vec<Format> {
-    vec![Format::Bmp, Format::Png, Format::Gif, Format::Jpeg, Format::Webp]
+    vec![Format::Bmp, Format::Png, Format::Gif, Format::Jpeg, Format::Webp, Format::Tiff]
 }

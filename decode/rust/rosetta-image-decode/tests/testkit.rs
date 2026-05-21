@@ -50,7 +50,8 @@ pub fn list_valid_fixtures(format: &str) -> Vec<String> {
         .filter_map(|e| {
             let name = e.file_name().into_string().ok()?;
             let matches = name.ends_with(&ext_dot_format)
-                || (format == "jpeg" && name.ends_with(".jpg"));
+                || (format == "jpeg" && name.ends_with(".jpg"))
+                || (format == "tiff" && name.ends_with(".tif"));
             if matches {
                 Some(format!("{}/valid/{}", format, name))
             } else {
