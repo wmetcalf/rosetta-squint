@@ -65,13 +65,20 @@ The Rust, Go, Java, and Swift ports all FFI into native C libraries. The version
 
 Bundled libheif version in `libheif-js@1.17.1` diverges from system libheif 1.17.6 by ±1–2 px per pixel on lossy fixtures — this is a known parity issue, not a security one. See `js/rosetta-image-decode/DECODER_NOTES.md`.
 
-### Java sejda webp-imageio is unmaintained
+### Java WebP — was sejda, now libwebp JNA wrapper
 
-`org.sejda.imageio:webp-imageio:0.1.6` was last released in 2019 and bundles an old native libwebp. **Production deployments should switch to a JNA wrapper around the system libwebp** (the project ships a libheif JNA wrapper in `io.rosetta.imagedecode.internal.libheif` as a reference pattern).
+**Resolved** (commit 8daa21d). The Java WebP decoder previously depended on `org.sejda.imageio:webp-imageio:0.1.6` (2019), which bundled its own outdated native libwebp inside the JAR — bypassing system security patches including the CVE-2023-4863 fix. Replaced with a hand-rolled JNA wrapper in `io.rosetta.imagedecode.internal.libwebp` that calls system libwebp directly (mirrors the libheif JNA wrapper pattern).
 
-### Go pixiv/go-libjpeg is unmaintained
+### Go pixiv/go-libjpeg is unmaintained but functional
 
-`github.com/pixiv/go-libjpeg` has had no commits since August 2019. The cgo binding itself is thin, but bit-rot is possible. Production deployments may want to vendor it or write an in-tree replacement.
+`github.com/pixiv/go-libjpeg v0.0.0-20190822045933-3da21a74767d` has had no commits since August 2019. **We've kept it intentionally** for the following reasons:
+
+- The cgo binding is ~600 LOC, thin enough that bit-rot is unlikely.
+- It links to the system libjpeg-turbo, so CVE patches in system libjpeg-turbo apply automatically — no bundled-old-lib problem like the Java WebP case had.
+- Go's stdlib `image/jpeg` is pure Go but does NOT match libjpeg-turbo byte-exact (different IDCT precision). Switching away from libjpeg-turbo would break cross-port byte-exact parity.
+- Our Group 2 tests would catch any regression from a Go version bump or libjpeg-turbo update.
+
+Production deployments may still want to vendor the dependency or write an in-tree replacement if they're uncomfortable with the upstream maintenance status.
 
 ## Reporting a vulnerability
 
