@@ -379,8 +379,42 @@ deferred to v0.2.
 
 ### §13 JPEG
 
-*(Populated by the JPEG sub-project. Currently planned. See `formats.json`
-for status.)*
+**Reference behavior:** libjpeg-turbo (the C library Pillow 11.0.0 uses internally), configured with:
+- `dct_method = JDCT_ISLOW` (deterministic across architectures)
+- `out_color_space = JCS_RGB`
+- Default chroma upsampling (fancy upsampling enabled — libjpeg-turbo's default)
+
+**Output channels:** Always RGB (3 channels). JPEG has no alpha channel. Grayscale JPEGs (Y-only) output RGB via channel replication.
+
+**Color spaces supported in v1:**
+- YCbCr (most common) → RGB ✓
+- Grayscale → RGB (replicate) ✓
+- CMYK → `unsupportedFeature(format=jpeg, feature="CMYK color space")` (defer to v0.2)
+- YCCK (Adobe) → `unsupportedFeature` (defer)
+
+**Chroma subsampling supported:**
+- 4:4:4 (no subsampling) ✓
+- 4:2:2 (horizontal 2:1) ✓
+- 4:2:0 (horizontal + vertical 2:1) ✓
+
+**Progressive vs baseline:** Both supported transparently (libjpeg-turbo handles).
+
+**Cross-architecture parity:** libjpeg-turbo with ISLOW is bit-exact across x86, ARM, MIPS, etc.
+
+**Per-port reference library:**
+- Java: `org.libjpeg-turbo:turbojpeg` (Maven)
+- Go: `github.com/pixiv/go-libjpeg` (cgo)
+- Rust: `mozjpeg-sys` (compiles from source)
+- JS: `@squoosh/jpeg` (WASM-compiled mozjpeg)
+- Swift: C interop with system libjpeg-turbo via SwiftPM systemLibrary
+
+**System dependency:** Most ports require `libjpeg-turbo` installed (Linux: `apt install libjpeg-turbo8-dev libturbojpeg0-dev`). Rust + JS bundle the C code internally.
+
+**Invalid input handling:**
+- Magic ≠ `0xFF 0xD8 0xFF` → `unsupportedFormat`
+- Corrupt JPEG markers → `corruptInput`
+- Truncated → `truncated` or `corruptInput` (depends on per-port lib behavior)
+- CMYK color space → `unsupportedFeature(format=jpeg, feature="CMYK color space")`
 
 ### §14 WebP
 
