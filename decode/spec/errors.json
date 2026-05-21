@@ -105,6 +105,21 @@
       "format": "jpeg",
       "expected_kind": "corruptInput",
       "expected_detail_substring": ""
+    },
+    "webp/invalid/bad-magic.webp": {
+      "format": null,
+      "expected_kind": "unsupportedFormat",
+      "expected_detail_substring": ""
+    },
+    "webp/invalid/truncated.webp": {
+      "format": "webp",
+      "expected_kind": "corruptInput",
+      "expected_detail_substring": ""
+    },
+    "webp/invalid/corrupt-vp8.webp": {
+      "format": "webp",
+      "expected_kind": "corruptInput",
+      "expected_detail_substring": ""
     }
   }
 }
