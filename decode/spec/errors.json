@@ -80,6 +80,31 @@
       "format": "gif",
       "expected_kind": "corruptInput",
       "expected_detail_substring": ""
+    },
+    "jpeg/invalid/bad-magic.jpg": {
+      "format": null,
+      "expected_kind": "unsupportedFormat",
+      "expected_detail_substring": ""
+    },
+    "jpeg/invalid/truncated-header.jpg": {
+      "format": "jpeg",
+      "expected_kind": "corruptInput",
+      "expected_detail_substring": ""
+    },
+    "jpeg/invalid/truncated-data.jpg": {
+      "format": "jpeg",
+      "expected_kind": "corruptInput",
+      "expected_detail_substring": ""
+    },
+    "jpeg/invalid/cmyk.jpg": {
+      "format": "jpeg",
+      "expected_kind": "unsupportedFeature",
+      "expected_detail_substring": "CMYK"
+    },
+    "jpeg/invalid/corrupt-quantization.jpg": {
+      "format": "jpeg",
+      "expected_kind": "corruptInput",
+      "expected_detail_substring": ""
     }
   }
 }
