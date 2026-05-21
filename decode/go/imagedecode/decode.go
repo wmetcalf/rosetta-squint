@@ -16,6 +16,8 @@ func Decode(b []byte) (DecodedImage, error) {
 		return decodeGif(b)
 	case Jpeg:
 		return decodeJpeg(b)
+	case Webp:
+		return decodeWebp(b)
 	default:
 		return DecodedImage{}, newError(UnsupportedFormat, f, true, "")
 	}
@@ -42,10 +44,15 @@ func DetectFormat(b []byte) (Format, bool) {
 	if len(b) >= 2 && b[0] == 0xFF && b[1] == 0xD8 {
 		return Jpeg, true
 	}
+	if len(b) >= 12 &&
+		b[0] == 0x52 && b[1] == 0x49 && b[2] == 0x46 && b[3] == 0x46 &&
+		b[8] == 0x57 && b[9] == 0x45 && b[10] == 0x42 && b[11] == 0x50 {
+		return Webp, true
+	}
 	return 0, false
 }
 
 // SupportedFormats returns the list of formats this port can decode.
 func SupportedFormats() []Format {
-	return []Format{Bmp, Png, Gif, Jpeg}
+	return []Format{Bmp, Png, Gif, Jpeg, Webp}
 }

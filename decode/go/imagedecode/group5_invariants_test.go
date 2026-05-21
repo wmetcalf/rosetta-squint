@@ -27,12 +27,12 @@ func TestGroup5AllDecodedImagesHaveValidShape(t *testing.T) {
 	}
 }
 
-func TestGroup5SupportedFormatsBmpPngGifJpeg(t *testing.T) {
+func TestGroup5SupportedFormatsBmpPngGifJpegWebp(t *testing.T) {
 	supported := SupportedFormats()
-	if len(supported) != 4 {
-		t.Errorf("expected 4 supported formats, got %d", len(supported))
+	if len(supported) != 5 {
+		t.Errorf("expected 5 supported formats, got %d", len(supported))
 	}
-	hasBmp, hasPng, hasGif, hasJpeg := false, false, false, false
+	hasBmp, hasPng, hasGif, hasJpeg, hasWebp := false, false, false, false, false
 	for _, f := range supported {
 		if f == Bmp {
 			hasBmp = true
@@ -46,9 +46,12 @@ func TestGroup5SupportedFormatsBmpPngGifJpeg(t *testing.T) {
 		if f == Jpeg {
 			hasJpeg = true
 		}
+		if f == Webp {
+			hasWebp = true
+		}
 	}
-	if !hasBmp || !hasPng || !hasGif || !hasJpeg {
-		t.Errorf("expected Bmp + Png + Gif + Jpeg in supportedFormats, got %v", supported)
+	if !hasBmp || !hasPng || !hasGif || !hasJpeg || !hasWebp {
+		t.Errorf("expected Bmp + Png + Gif + Jpeg + Webp in supportedFormats, got %v", supported)
 	}
 }
 
@@ -113,6 +116,31 @@ func TestGroup5AllDecodedJpegImagesHaveValidShape(t *testing.T) {
 		}
 		if img.Format != Jpeg {
 			t.Errorf("%s: format should be Jpeg, got %v", rel, img.Format)
+		}
+		expectedBytes := img.Width * img.Height * img.Channels.BytesPerPixel()
+		if len(img.Data) != expectedBytes {
+			t.Errorf("%s: data length %d != expected %d", rel, len(img.Data), expectedBytes)
+		}
+		if img.Channels != RGB && img.Channels != RGBA {
+			t.Errorf("%s: invalid channels %v", rel, img.Channels)
+		}
+	}
+}
+
+func TestGroup5AllDecodedWebpImagesHaveValidShape(t *testing.T) {
+	fixtures := listValidFixtures(t, "webp")
+	for _, rel := range fixtures {
+		b := readFixture(t, rel)
+		img, err := Decode(b)
+		if err != nil {
+			t.Errorf("%s: unexpected error: %v", rel, err)
+			continue
+		}
+		if img.Width <= 0 || img.Height <= 0 {
+			t.Errorf("%s: bad dimensions %dx%d", rel, img.Width, img.Height)
+		}
+		if img.Format != Webp {
+			t.Errorf("%s: format should be Webp, got %v", rel, img.Format)
 		}
 		expectedBytes := img.Width * img.Height * img.Channels.BytesPerPixel()
 		if len(img.Data) != expectedBytes {
