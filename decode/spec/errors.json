@@ -73,7 +73,7 @@
     },
     "gif/invalid/truncated-header.gif": {
       "format": "gif",
-      "expected_kind": "truncated",
+      "expected_kind": "corruptInput",
       "expected_detail_substring": ""
     },
     "gif/invalid/truncated-data.gif": {
