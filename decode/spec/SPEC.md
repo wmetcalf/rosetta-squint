@@ -312,8 +312,44 @@ skip the two-pass detection: always output RGBA.
 
 ### §11 PNG
 
-*(Populated by the PNG sub-project. Currently planned. See `formats.json`
-for status.)*
+**Reference behavior:** Pillow 11.0.0's built-in PNG plugin (`PIL/PngImagePlugin.py` + libpng via `libImaging/PngImagePlugin.c`).
+
+**Decoded pixel output by color type:**
+
+| Color type | Output mode | Channels |
+|---|---|---|
+| 0 (grayscale, no alpha) | RGB | 3 (replicate gray value across R, G, B) |
+| 2 (RGB) | RGB | 3 |
+| 3 (paletted, no tRNS) | RGB | 3 (look up palette per pixel) |
+| 3 (paletted + tRNS) | RGBA | 4 (palette index → palette RGB; tRNS gives alpha per palette entry) |
+| 4 (grayscale + alpha) | RGBA | 4 |
+| 6 (RGB + alpha) | RGBA | 4 |
+
+**Bit depth handling:**
+- 1, 2, 4-bit: expanded to 8-bit (palette indices for color type 3; gray values scaled to [0, 255] for color type 0)
+- 8-bit: native
+- 16-bit: downsampled to 8-bit per PIL default (high byte kept)
+
+**Ancillary chunk policy:** read but NOT applied to pixel data.
+- gAMA, cHRM, sRGB, iCCP — color management opt-in only; not applied here.
+- pHYs, tIME — informational, ignored.
+- tEXt, zTXt, iTXt — metadata, ignored.
+
+**Interlacing:** Adam7 interlaced PNGs are de-interlaced as part of the PNG decode (handled by libpng or equivalent in each port's library).
+
+**Invalid input handling:**
+- File shorter than 8 bytes or doesn't start with `89 50 4E 47 0D 0A 1A 0A` → `unsupportedFormat`
+- IHDR truncated or invalid color-type/bit-depth combo → `corruptInput`
+- Missing IEND chunk → behavior is library-dependent; documented per-port in DECODER_NOTES.md
+- CRC mismatch in any chunk → `corruptInput("CRC mismatch in <chunk>")`
+- APNG (multi-frame) → currently decode first frame only; multi-frame deferred to v0.2.
+
+**Per-port reference library:**
+- **Java**: `javax.imageio.ImageIO` (JDK built-in)
+- **Go**: `image/png` (stdlib)
+- **Rust**: `image` crate with png feature
+- **JS/TS**: `pngjs` ^7
+- **Swift**: `swift-png` 4.x (pinned `..<4.4.0` for Swift 5.9 compatibility)
 
 ### §12 GIF
 
