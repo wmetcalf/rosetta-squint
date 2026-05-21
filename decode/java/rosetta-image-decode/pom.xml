@@ -28,12 +28,7 @@
       <scope>system</scope>
       <systemPath>/usr/share/java/turbojpeg.jar</systemPath>
     </dependency>
-    <dependency>
-      <groupId>org.sejda.imageio</groupId>
-      <artifactId>webp-imageio</artifactId>
-      <version>0.1.6</version>
-    </dependency>
-    <dependency>
+<dependency>
       <groupId>com.twelvemonkeys.imageio</groupId>
       <artifactId>imageio-tiff</artifactId>
       <version>3.10.1</version>
