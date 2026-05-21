@@ -68,3 +68,21 @@ describe("Group 3 — format detection (JPEG)", () => {
     expect(supportedFormats()).toContain("jpeg");
   });
 });
+
+describe("Group 3 — format detection (WebP)", () => {
+  it("detects all valid WebP fixtures", () => {
+    for (const rel of listValidFixtures("webp")) {
+      const bytes = readFixture(rel);
+      expect(detectFormat(bytes), rel).toBe("webp");
+    }
+  });
+
+  it("rejects bad magic WebP", () => {
+    const bytes = readFixture("webp/invalid/bad-magic.webp");
+    expect(detectFormat(bytes)).toBeNull();
+  });
+
+  it("supported formats contains webp", () => {
+    expect(supportedFormats()).toContain("webp");
+  });
+});

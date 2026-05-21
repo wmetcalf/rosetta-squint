@@ -28,13 +28,28 @@ describe("Group 5 — invariants (PNG)", () => {
     }
   });
 
-  it("supported formats contains bmp + png + gif + jpeg", () => {
+  it("supported formats contains bmp + png + gif + jpeg + webp", () => {
     const supported = supportedFormats();
-    expect(supported).toHaveLength(4);
+    expect(supported).toHaveLength(5);
     expect(supported).toContain("bmp");
     expect(supported).toContain("png");
     expect(supported).toContain("gif");
     expect(supported).toContain("jpeg");
+    expect(supported).toContain("webp");
+  });
+});
+
+describe("Group 5 — invariants (WebP)", () => {
+  it("all decoded WebP images have valid shape", async () => {
+    for (const rel of listValidFixtures("webp")) {
+      const bytes = readFixture(rel);
+      const img = await decode(bytes);
+      expect(img.width, rel).toBeGreaterThan(0);
+      expect(img.height, rel).toBeGreaterThan(0);
+      expect(img.format, rel).toBe("webp");
+      expect(img.data.length, rel).toBe(img.width * img.height * img.channels);
+      expect([3, 4]).toContain(img.channels);
+    }
   });
 });
 
