@@ -276,6 +276,15 @@ Each algorithm composes the pipeline steps above.
 3. `bit[y][x] = pixel[y][x+1] > pixel[y][x]` for `y in [0,N), x in [0,N)`.
 4. Pack bits to hex.
 
+### `dhash_vertical(img, hash_size=N)` — pre-3.0 back-compat
+
+Same as `dhash` but compares **vertically adjacent** pixels instead of horizontally adjacent. Python `imagehash` exposes this to preserve the pre-3.0 (buggy) dhash direction for users with stored hashes from that era. New callers should always use `dhash`.
+
+1. Convert to grayscale.
+2. Lanczos resize to **`(width=N, height=N+1)`**. After `numpy.asarray(image)` shape is `(H=N+1, W=N)`.
+3. `bit[y][x] = pixel[y+1][x] > pixel[y][x]` for `y in [0,N), x in [0,N)`.
+4. Pack bits to hex.
+
 ### `phash(img, hash_size=N, highfreq_factor=4)`
 
 1. Convert to grayscale.
@@ -285,6 +294,16 @@ Each algorithm composes the pipeline steps above.
 5. `med = median(block)` (step 6).
 6. `bit = block > med` (strict `>`).
 7. Pack bits to hex.
+
+### `phash_simple(img, hash_size=N, highfreq_factor=4)`
+
+Identical to `phash` except the threshold is the **mean** of the DCT block (not the median). Steps 1–4 unchanged.
+
+5. `m = mean(block)` — float64.
+6. `bit = block > m` (strict `>`).
+7. Pack bits to hex.
+
+`phash_simple` exists as an alternative threshold strategy; produces visibly different hashes for the same input.
 
 ### `whash(img, hash_size=N)` — v1 only `mode='haar'`, `remove_max_haar_ll=True`
 
@@ -311,6 +330,23 @@ always exactly N/2 per level regardless of boundary mode, but coefficient values
 near edges differ for longer wavelets.
 
 Haar filter coefficients: lowpass `[1/√2, 1/√2]`, highpass `[1/√2, -1/√2]`.
+
+### `whash(img, hash_size=N, mode='db4')` — Daubechies-4 variant
+
+Same pipeline as `whash_haar` (steps 1–12 above) but using the Daubechies-4 wavelet basis everywhere `'haar'` appears. Filter coefficients differ:
+
+- Daubechies-4 lowpass `h0 = (1+√3)/(4√2)`, `h1 = (3+√3)/(4√2)`, `h2 = (3−√3)/(4√2)`, `h3 = (1−√3)/(4√2)`
+- Highpass `g_k = (−1)^k · h_{3−k}` (quadrature mirror)
+
+The db4 filter has length 4 (vs. 2 for Haar) so:
+- Output size after one decomposition level is `(N + 3) // 2` per dimension when using `'symmetric'` mode (PyWavelets' default), **not** exactly `N/2` like Haar. Ports must compute the per-level output shape via PyWavelets' `pywt.dwt_coeff_len(input_len, filter_len, 'symmetric')` semantics.
+- Edge handling uses `'symmetric'` mode: the input is reflected (without repeating the boundary value) before convolution. `[a, b, c, d]` extended becomes `[…, d, c, b, a, a, b, c, d, d, c, b, a, …]`. Sample exactly as PyWavelets does.
+- `wavedec2` recursively applies `dwt2` `dwt_level` times to the LL band only. The recursive output structure matches `whash_haar`: `[cA_n, (cH_n, cV_n, cD_n), …, (cH_1, cV_1, cD_1)]`.
+- `waverec2` is `wavedec2`'s inverse using db4 synthesis filters.
+
+The LL-zeroing trick from step 8 of `whash_haar` applies identically.
+
+**Fixtures with `null` goldens** for `whash_db4`: same rule as `whash_haar` — when `hash_size` exceeds the fixture's natural decomposition depth, the Python reference asserts and we record `null`. Ports skip those entries.
 
 ### `colorhash(img, binbits=B)`
 

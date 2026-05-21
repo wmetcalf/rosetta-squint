@@ -35,10 +35,13 @@ DECODED_DIR = SPEC_DIR / "decoded"
 GOLDENS_PATH = SPEC_DIR / "goldens.json"
 
 ALGO_HASH_SIZES = {
-    "average_hash": [4, 8, 16],
-    "dhash":        [4, 8, 16],
-    "phash":        [4, 8, 16],
-    "whash_haar":   [8, 16],
+    "average_hash":    [4, 8, 16],
+    "dhash":           [4, 8, 16],
+    "dhash_vertical":  [4, 8, 16],
+    "phash":           [4, 8, 16],
+    "phash_simple":    [4, 8, 16],
+    "whash_haar":      [8, 16],
+    "whash_db4":       [8, 16],
 }
 COLORHASH_BINBITS = [3, 4]
 
@@ -80,8 +83,12 @@ def compute_goldens(fixtures: list[Path]) -> dict:
             algorithms["average_hash"]["fixtures"].setdefault(fix.name, {})[str(size)] = str(imagehash.average_hash(img, hash_size=size))
         for size in ALGO_HASH_SIZES["dhash"]:
             algorithms["dhash"]["fixtures"].setdefault(fix.name, {})[str(size)] = str(imagehash.dhash(img, hash_size=size))
+        for size in ALGO_HASH_SIZES["dhash_vertical"]:
+            algorithms["dhash_vertical"]["fixtures"].setdefault(fix.name, {})[str(size)] = str(imagehash.dhash_vertical(img, hash_size=size))
         for size in ALGO_HASH_SIZES["phash"]:
             algorithms["phash"]["fixtures"].setdefault(fix.name, {})[str(size)] = str(imagehash.phash(img, hash_size=size))
+        for size in ALGO_HASH_SIZES["phash_simple"]:
+            algorithms["phash_simple"]["fixtures"].setdefault(fix.name, {})[str(size)] = str(imagehash.phash_simple(img, hash_size=size))
         for size in ALGO_HASH_SIZES["whash_haar"]:
             # whash needs hash_size <= image_natural_scale; skip if it would assert
             try:
@@ -89,6 +96,11 @@ def compute_goldens(fixtures: list[Path]) -> dict:
             except AssertionError:
                 # Fixture too small for this hash_size; emit explicit null sentinel
                 algorithms["whash_haar"]["fixtures"].setdefault(fix.name, {})[str(size)] = None
+        for size in ALGO_HASH_SIZES["whash_db4"]:
+            try:
+                algorithms["whash_db4"]["fixtures"].setdefault(fix.name, {})[str(size)] = str(imagehash.whash(img, hash_size=size, mode="db4", remove_max_haar_ll=True))
+            except (AssertionError, ValueError):
+                algorithms["whash_db4"]["fixtures"].setdefault(fix.name, {})[str(size)] = None
         for binbits in COLORHASH_BINBITS:
             algorithms["colorhash"]["fixtures"].setdefault(fix.name, {})[str(binbits)] = str(imagehash.colorhash(img, binbits=binbits))
 
