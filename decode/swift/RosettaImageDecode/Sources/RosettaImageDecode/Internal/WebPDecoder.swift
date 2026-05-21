@@ -13,6 +13,8 @@ internal enum WebPDecoder {
             throw DecodeError.corruptInput(format: .webp, detail: "WebPGetInfo failed")
         }
 
+        try Limits.checkDimensions(width: Int(width), height: Int(height), format: .webp)
+
         // Detect alpha from container header
         let hasAlpha = detectWebpAlpha(bytes)
 

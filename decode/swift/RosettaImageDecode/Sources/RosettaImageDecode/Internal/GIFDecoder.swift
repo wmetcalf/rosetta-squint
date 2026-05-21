@@ -248,6 +248,7 @@ private struct GIFParser {
         guard let packed = readByte(), let bg = readByte(), let _ = readByte() else {
             throw DecodeError.corruptInput(format: .gif, detail: "truncated logical screen descriptor")
         }
+        try Limits.checkDimensions(width: w, height: h, format: .gif)
         lsdWidth = w
         lsdHeight = h
         hasGlobalColorTable = (packed >> 7) & 1 == 1

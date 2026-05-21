@@ -25,6 +25,10 @@ internal enum HEICDecoder {
         }
         defer { heif_image_handle_release(handle) }
 
+        let handleWidth = Int(heif_image_handle_get_width(handle))
+        let handleHeight = Int(heif_image_handle_get_height(handle))
+        try Limits.checkDimensions(width: handleWidth, height: handleHeight, format: .heic)
+
         let hasAlpha = heif_image_handle_has_alpha_channel(handle) != 0
         let chroma: heif_chroma = hasAlpha ? heif_chroma_interleaved_RGBA : heif_chroma_interleaved_RGB
         let bpp = hasAlpha ? 4 : 3

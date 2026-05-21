@@ -23,6 +23,8 @@ internal enum TIFFDecoder {
             throw DecodeError.corruptInput(format: .tiff, detail: "zero dimensions in TIFF")
         }
 
+        try Limits.checkDimensions(width: Int(width), height: Int(height), format: .tiff)
+
         let pixels = Int(width) * Int(height)
         // TIFFReadRGBAImageOriented with ORIENTATION_TOPLEFT delivers rows top-down,
         // so no manual flip is needed.

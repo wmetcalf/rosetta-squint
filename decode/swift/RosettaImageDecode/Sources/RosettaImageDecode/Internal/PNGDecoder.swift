@@ -2,7 +2,18 @@ import Foundation
 import PNG
 
 internal enum PNGDecoder {
+    // Sniff IHDR dimensions from raw bytes before invoking swift-png.
+    // PNG layout: 8-byte signature + 4-byte chunk length + 4-byte "IHDR" +
+    //             4-byte width (BE) + 4-byte height (BE) = offsets 16-23.
+    private static func sniffIHDR(bytes: [UInt8]) throws {
+        guard bytes.count >= 24 else { return }  // too short to sniff — let swift-png reject
+        let w = Int(bytes[16]) << 24 | Int(bytes[17]) << 16 | Int(bytes[18]) << 8 | Int(bytes[19])
+        let h = Int(bytes[20]) << 24 | Int(bytes[21]) << 16 | Int(bytes[22]) << 8 | Int(bytes[23])
+        try Limits.checkDimensions(width: w, height: h, format: .png)
+    }
+
     static func decode(bytes: [UInt8]) throws -> DecodedImage {
+        try sniffIHDR(bytes: bytes)
         var blob = PNGBlob(data: bytes)
         let image: PNG.Image
         do {

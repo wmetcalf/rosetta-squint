@@ -31,6 +31,8 @@ internal enum JPEGDecoder {
             throw DecodeError.corruptInput(format: .jpeg, detail: "tjDecompressHeader3: \(msg)")
         }
 
+        try Limits.checkDimensions(width: Int(width), height: Int(height), format: .jpeg)
+
         // Reject CMYK / YCCK (colorspace is an Int32 from the C enum)
         if colorspace == Int32(TJCS_CMYK.rawValue) || colorspace == Int32(TJCS_YCCK.rawValue) {
             throw DecodeError.unsupportedFeature(format: .jpeg, feature: "CMYK color space")

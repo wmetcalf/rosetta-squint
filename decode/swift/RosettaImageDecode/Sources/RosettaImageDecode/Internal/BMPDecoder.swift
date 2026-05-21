@@ -170,6 +170,8 @@ internal enum BMPDecoder {
         let topDown  = biHeight < 0
         let absHeight = abs(biHeight)
 
+        try Limits.checkDimensions(width: biWidth, height: absHeight, format: .bmp)
+
         return Header(
             width: biWidth,
             height: absHeight,
