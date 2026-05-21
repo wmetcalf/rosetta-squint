@@ -127,3 +127,26 @@ func TestGroup3SupportedFormatsContainsWebp(t *testing.T) {
 		t.Errorf("SupportedFormats should contain Webp")
 	}
 }
+
+func TestGroup3DetectsAllValidTiffFixtures(t *testing.T) {
+	fixtures := listValidFixtures(t, "tiff")
+	for _, rel := range fixtures {
+		b := readFixture(t, rel)
+		f, ok := DetectFormat(b)
+		if !ok || f != Tiff {
+			t.Errorf("%s: expected Tiff detection, got %v ok=%v", rel, f, ok)
+		}
+	}
+}
+
+func TestGroup3SupportedFormatsContainsTiff(t *testing.T) {
+	found := false
+	for _, f := range SupportedFormats() {
+		if f == Tiff {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("SupportedFormats should contain Tiff")
+	}
+}

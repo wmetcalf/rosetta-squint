@@ -55,9 +55,12 @@ func listValidFixtures(t *testing.T, format string) []string {
 		t.Fatalf("listValidFixtures %s: %v", format, err)
 	}
 	// JPEG fixtures use the .jpg extension even though the format name is "jpeg".
+	// TIFF fixtures use the .tif extension even though the format name is "tiff".
 	var validExts []string
 	if format == "jpeg" {
 		validExts = []string{".jpg", ".jpeg"}
+	} else if format == "tiff" {
+		validExts = []string{".tif", ".tiff"}
 	} else {
 		validExts = []string{"." + format}
 	}
