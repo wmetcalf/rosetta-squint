@@ -56,7 +56,7 @@ describe("Hash semantics (Group 5)", () => {
   });
 });
 
-import { averageHash, colorhash, dhash, phash, whashHaar, hexToHash, hexToFlathash } from "../src/index.js";
+import { averageHash, colorhash, dhash, dhashVertical, phash, phashSimple, whashHaar, whashDb4, hexToHash, hexToFlathash } from "../src/index.js";
 import type { RgbImage } from "../src/hash.js";
 
 function tinyImage(): RgbImage {
@@ -83,12 +83,33 @@ describe("error semantics (Group 5)", () => {
     expect(() => dhash(tinyImage(), 1)).toThrow(ImageHashError);
   });
 
+  it("dhashVertical rejects hashSize < 2", () => {
+    expect(() => dhashVertical(tinyImage(), 1)).toThrow(ImageHashError);
+  });
+
   it("phash rejects hashSize < 2", () => {
     expect(() => phash(tinyImage(), 1)).toThrow(ImageHashError);
   });
 
+  it("phashSimple rejects hashSize < 2", () => {
+    expect(() => phashSimple(tinyImage(), 1)).toThrow(ImageHashError);
+  });
+
   it("whashHaar rejects hashSize < 2", () => {
     expect(() => whashHaar(smallImage(), 1)).toThrow(ImageHashError);
+  });
+
+  it("whashDb4 rejects hashSize < 2", () => {
+    expect(() => whashDb4(smallImage(), 1)).toThrow(ImageHashError);
+  });
+
+  it("whashDb4 rejects non-power-of-two", () => {
+    expect(() => whashDb4(smallImage(), 3)).toThrow(ImageHashError);
+    try {
+      whashDb4(smallImage(), 3);
+    } catch (e) {
+      expect((e as ImageHashError).kind).toBe("NotPowerOfTwo");
+    }
   });
 
   it("whashHaar rejects non-power-of-two", () => {

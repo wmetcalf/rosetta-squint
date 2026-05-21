@@ -89,6 +89,57 @@ describe("colorhash goldens", () => {
   });
 });
 
+describe("phash_simple goldens", () => {
+  it("byte-exact across all fixtures × sizes", () => {
+    const cases = algorithmCases("phash_simple");
+    const failures: string[] = [];
+    for (const c of cases) {
+      const img = loadPredecoded(c.fixture);
+      const h = rih.phashSimple(img, c.size);
+      if (h.toHex() !== c.hex) {
+        failures.push(`fixture=${c.fixture} size=${c.size} got=${h.toHex()} want=${c.hex}`);
+      }
+    }
+    if (failures.length > 0) {
+      throw new Error(`${failures.length} failures:\n  ${failures.join("\n  ")}`);
+    }
+  });
+});
+
+describe("dhash_vertical goldens", () => {
+  it("byte-exact across all fixtures × sizes", () => {
+    const cases = algorithmCases("dhash_vertical");
+    const failures: string[] = [];
+    for (const c of cases) {
+      const img = loadPredecoded(c.fixture);
+      const h = rih.dhashVertical(img, c.size);
+      if (h.toHex() !== c.hex) {
+        failures.push(`fixture=${c.fixture} size=${c.size} got=${h.toHex()} want=${c.hex}`);
+      }
+    }
+    if (failures.length > 0) {
+      throw new Error(`${failures.length} failures:\n  ${failures.join("\n  ")}`);
+    }
+  });
+});
+
+describe("whash_db4 goldens", () => {
+  it("byte-exact across all fixtures × sizes", () => {
+    const cases = algorithmCases("whash_db4");
+    const failures: string[] = [];
+    for (const c of cases) {
+      const img = loadPredecoded(c.fixture);
+      const h = rih.whashDb4(img, c.size);
+      if (h.toHex() !== c.hex) {
+        failures.push(`fixture=${c.fixture} size=${c.size} got=${h.toHex()} want=${c.hex}`);
+      }
+    }
+    if (failures.length > 0) {
+      throw new Error(`${failures.length} failures:\n  ${failures.join("\n  ")}`);
+    }
+  });
+});
+
 describe("colorhash bin encoding (Group 1)", () => {
   it("B=4 quirky encoding (v=8 → 0xc, NOT 0x8)", () => {
     const cases: [number, boolean[]][] = [

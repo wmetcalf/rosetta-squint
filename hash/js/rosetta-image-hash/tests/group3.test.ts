@@ -50,8 +50,11 @@ describe("PNG end-to-end (Group 3)", () => {
 		const failures: string[] = [];
 		run("average_hash", exempt, rih.averageHash, "average_hash", failures);
 		run("dhash", exempt, rih.dhash, "dhash", failures);
+		run("dhash_vertical", exempt, rih.dhashVertical, "dhash_vertical", failures);
 		run("phash", exempt, rih.phash, "phash", failures);
+		run("phash_simple", exempt, rih.phashSimple, "phash_simple", failures);
 		run("whash_haar", exempt, rih.whashHaar, "whash_haar", failures);
+		run("whash_db4", exempt, rih.whashDb4, "whash_db4", failures);
 		run("colorhash", exempt, rih.colorhash, "colorhash", failures);
 		if (failures.length > 0) {
 			throw new Error(`${failures.length} Group-3 failures:\n  ${failures.join("\n  ")}`);
