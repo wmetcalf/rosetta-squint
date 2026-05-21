@@ -85,4 +85,20 @@ public class Group3DetectionTests {
     public void supportedFormatsContainsJpeg() {
         assertTrue(Decoder.supportedFormats().contains(Format.JPEG));
     }
+
+    @Test
+    public void detectsAllValidWebpFixtures() throws IOException {
+        var fixtures = TestKit.listValidFixtures("webp");
+        assertFalse(fixtures.isEmpty(), "should have WebP fixtures");
+        for (String rel : fixtures) {
+            byte[] bytes = TestKit.readFixture(rel);
+            Optional<Format> fmt = Decoder.detectFormat(bytes);
+            assertEquals(Optional.of(Format.WEBP), fmt, "should detect WEBP for " + rel);
+        }
+    }
+
+    @Test
+    public void supportedFormatsContainsWebp() {
+        assertTrue(Decoder.supportedFormats().contains(Format.WEBP));
+    }
 }

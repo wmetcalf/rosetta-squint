@@ -28,13 +28,14 @@ public class Group5InvariantsTests {
     }
 
     @Test
-    public void supportedFormatsContainsBmpPngGifJpeg() {
+    public void supportedFormatsContainsBmpPngGifJpegWebp() {
         var supported = Decoder.supportedFormats();
-        assertEquals(4, supported.size());
+        assertEquals(5, supported.size());
         assertTrue(supported.contains(Format.BMP));
         assertTrue(supported.contains(Format.PNG));
         assertTrue(supported.contains(Format.GIF));
         assertTrue(supported.contains(Format.JPEG));
+        assertTrue(supported.contains(Format.WEBP));
     }
 
     @Test
@@ -88,6 +89,26 @@ public class Group5InvariantsTests {
                 int expectedBytes = img.width() * img.height() * img.channels().bytesPerPixel();
                 assertEquals(expectedBytes, img.data().length, rel + ": data length matches shape");
                 assertTrue(img.channels() == Channels.RGB || img.channels() == Channels.RGBA, rel + ": channels in {RGB, RGBA}");
+            } catch (DecodeException e) {
+                fail(rel + ": unexpected decode failure: " + e.kind() + ": " + e.detail());
+            }
+        }
+    }
+
+    @Test
+    public void allDecodedWebpImagesHaveValidShape() throws IOException {
+        List<String> fixtures = TestKit.listValidFixtures("webp");
+        for (String rel : fixtures) {
+            byte[] bytes = TestKit.readFixture(rel);
+            try {
+                DecodedImage img = Decoder.decode(bytes);
+                assertTrue(img.width() > 0, rel + ": width should be positive");
+                assertTrue(img.height() > 0, rel + ": height should be positive");
+                assertEquals(Format.WEBP, img.format(), rel + ": format should be WEBP");
+                int expectedBytes = img.width() * img.height() * img.channels().bytesPerPixel();
+                assertEquals(expectedBytes, img.data().length, rel + ": data length matches shape");
+                assertTrue(img.channels() == Channels.RGB || img.channels() == Channels.RGBA,
+                        rel + ": channels in {RGB, RGBA}");
             } catch (DecodeException e) {
                 fail(rel + ": unexpected decode failure: " + e.kind() + ": " + e.detail());
             }

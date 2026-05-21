@@ -17,6 +17,7 @@ public final class Decoder {
             case PNG -> io.rosetta.imagedecode.internal.PNGDecoder.decode(bytes);
             case GIF -> io.rosetta.imagedecode.internal.GIFDecoder.decode(bytes);
             case JPEG -> io.rosetta.imagedecode.internal.JPEGDecoder.decode(bytes);
+            case WEBP -> io.rosetta.imagedecode.internal.WebPDecoder.decode(bytes);
             default -> throw new DecodeException(DecodeException.Kind.UNSUPPORTED_FORMAT, fmt.get(), "");
         };
     }
@@ -37,10 +38,15 @@ public final class Decoder {
         if (bytes.length >= 2 && bytes[0] == (byte) 0xFF && bytes[1] == (byte) 0xD8) {
             return Optional.of(Format.JPEG);
         }
+        if (bytes.length >= 12
+            && bytes[0] == 0x52 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x46
+            && bytes[8] == 0x57 && bytes[9] == 0x45 && bytes[10] == 0x42 && bytes[11] == 0x50) {
+            return Optional.of(Format.WEBP);
+        }
         return Optional.empty();
     }
 
     public static Set<Format> supportedFormats() {
-        return EnumSet.of(Format.BMP, Format.PNG, Format.GIF, Format.JPEG);
+        return EnumSet.of(Format.BMP, Format.PNG, Format.GIF, Format.JPEG, Format.WEBP);
     }
 }
