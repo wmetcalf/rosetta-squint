@@ -28,10 +28,30 @@ public class Group5InvariantsTests {
     }
 
     @Test
-    public void supportedFormatsContainsOnlyBMP() {
+    public void supportedFormatsContainsBmpAndPng() {
         var supported = Decoder.supportedFormats();
-        assertEquals(1, supported.size());
+        assertEquals(2, supported.size());
         assertTrue(supported.contains(Format.BMP));
+        assertTrue(supported.contains(Format.PNG));
+    }
+
+    @Test
+    public void allDecodedPngImagesHaveValidShape() throws IOException {
+        List<String> fixtures = TestKit.listValidFixtures("png");
+        for (String rel : fixtures) {
+            byte[] bytes = TestKit.readFixture(rel);
+            try {
+                DecodedImage img = Decoder.decode(bytes);
+                assertTrue(img.width() > 0, rel);
+                assertTrue(img.height() > 0, rel);
+                assertEquals(Format.PNG, img.format(), rel);
+                int expectedBytes = img.width() * img.height() * img.channels().bytesPerPixel();
+                assertEquals(expectedBytes, img.data().length, rel);
+                assertTrue(img.channels() == Channels.RGB || img.channels() == Channels.RGBA, rel);
+            } catch (DecodeException e) {
+                fail(rel + ": unexpected decode failure: " + e.kind() + ": " + e.detail());
+            }
+        }
     }
 
     @Test

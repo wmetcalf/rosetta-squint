@@ -37,4 +37,20 @@ public class Group3DetectionTests {
     public void supportedFormatsContainsBMP() {
         assertTrue(Decoder.supportedFormats().contains(Format.BMP));
     }
+
+    @Test
+    public void detectsAllValidPngFixtures() throws IOException {
+        var fixtures = TestKit.listValidFixtures("png");
+        assertFalse(fixtures.isEmpty(), "should have PNG fixtures");
+        for (String rel : fixtures) {
+            byte[] bytes = TestKit.readFixture(rel);
+            Optional<Format> fmt = Decoder.detectFormat(bytes);
+            assertEquals(Optional.of(Format.PNG), fmt, "should detect PNG for " + rel);
+        }
+    }
+
+    @Test
+    public void supportedFormatsContainsPng() {
+        assertTrue(Decoder.supportedFormats().contains(Format.PNG));
+    }
 }
