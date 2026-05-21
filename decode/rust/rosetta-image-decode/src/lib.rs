@@ -4,6 +4,7 @@
 
 mod bmp;
 mod gif;
+mod heic;
 mod jpeg;
 mod png;
 mod tiff;

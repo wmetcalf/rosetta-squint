@@ -1,5 +1,6 @@
 use crate::bmp::decode_bmp;
 use crate::gif::decode_gif;
+use crate::heic::decode_heic;
 use crate::png::decode_png;
 use crate::tiff::decode_tiff;
 use crate::error::{DecodeError, DecodeErrorKind};
@@ -14,6 +15,7 @@ pub fn decode(bytes: &[u8]) -> Result<DecodedImage, DecodeError> {
     match fmt {
         Format::Bmp => decode_bmp(bytes),
         Format::Gif => decode_gif(bytes),
+        Format::Heic => decode_heic(bytes),
         Format::Jpeg => crate::jpeg::decode_jpeg(bytes),
         Format::Png => decode_png(bytes),
         Format::Tiff => decode_tiff(bytes),
@@ -74,10 +76,22 @@ pub fn detect_format(bytes: &[u8]) -> Option<Format> {
     {
         return Some(Format::Tiff);
     }
+    // HEIC: ISO Base Media File (bytes 4-8 == "ftyp"), brand at bytes 8-12 must be
+    // a HEVC/HEIF brand; AVIF brand is explicitly excluded (v1 scope).
+    if bytes.len() >= 12 && &bytes[4..8] == b"ftyp" {
+        let brand = &bytes[8..12];
+        match brand {
+            b"avif" | b"avis" => return None, // AVIF — not supported in v1
+            b"heic" | b"heix" | b"mif1" | b"msf1" | b"hevc" | b"hevx" => {
+                return Some(Format::Heic)
+            }
+            _ => {} // unknown brand → fall through (not detected)
+        }
+    }
     None
 }
 
 /// Returns the list of formats this port can decode.
 pub fn supported_formats() -> Vec<Format> {
-    vec![Format::Bmp, Format::Png, Format::Gif, Format::Jpeg, Format::Webp, Format::Tiff]
+    vec![Format::Bmp, Format::Png, Format::Gif, Format::Jpeg, Format::Webp, Format::Tiff, Format::Heic]
 }

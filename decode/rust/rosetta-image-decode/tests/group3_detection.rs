@@ -104,3 +104,30 @@ fn rejects_bad_magic_tiff() {
 fn supported_formats_contains_tiff() {
     assert!(supported_formats().contains(&Format::Tiff));
 }
+
+#[test]
+fn detects_all_valid_heic() {
+    for rel in testkit::list_valid_fixtures("heic") {
+        let bytes = testkit::read_fixture(&rel);
+        assert_eq!(Some(Format::Heic), detect_format(&bytes), "fixture {}", rel);
+    }
+}
+
+#[test]
+fn rejects_bad_magic_heic() {
+    // bad-magic.heic has an unrecognized ftyp brand — must not be detected as HEIC
+    let bytes = testkit::read_fixture("heic/invalid/bad-magic.heic");
+    assert!(detect_format(&bytes).is_none());
+}
+
+#[test]
+fn rejects_avif_as_heic() {
+    // avif.heic has brand "avif" — must not be detected as HEIC in v1 scope
+    let bytes = testkit::read_fixture("heic/invalid/avif.heic");
+    assert!(detect_format(&bytes).is_none());
+}
+
+#[test]
+fn supported_formats_contains_heic() {
+    assert!(supported_formats().contains(&Format::Heic));
+}
