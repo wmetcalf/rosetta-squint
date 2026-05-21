@@ -15,11 +15,17 @@ let package = Package(
             pkgConfig: "libturbojpeg",
             providers: [.apt(["libturbojpeg0-dev"]), .brew(["jpeg-turbo"])]
         ),
+        .systemLibrary(
+            name: "Cwebp",
+            pkgConfig: "libwebp",
+            providers: [.apt(["libwebp-dev"]), .brew(["webp"])]
+        ),
         .target(
             name: "RosettaImageDecode",
             dependencies: [
                 .product(name: "PNG", package: "swift-png"),
                 "Cjpeg",
+                "Cwebp",
             ]
         ),
         .testTarget(

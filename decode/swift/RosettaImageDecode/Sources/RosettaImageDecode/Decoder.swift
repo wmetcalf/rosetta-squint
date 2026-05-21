@@ -13,6 +13,8 @@ public enum Decoder {
             return try GIFDecoder.decode(bytes: bytes)
         case .jpeg:
             return try JPEGDecoder.decode(bytes: bytes)
+        case .webp:
+            return try WebPDecoder.decode(bytes: bytes)
         default:
             throw DecodeError.unsupportedFormat(magic: bytes.count >= 2 ? Array(bytes.prefix(2)) : Array(bytes))
         }
@@ -34,10 +36,15 @@ public enum Decoder {
         if bytes.count >= 2 && bytes[0] == 0xFF && bytes[1] == 0xD8 {
             return .jpeg
         }
+        if bytes.count >= 12
+           && bytes[0] == 0x52 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x46
+           && bytes[8] == 0x57 && bytes[9] == 0x45 && bytes[10] == 0x42 && bytes[11] == 0x50 {
+            return .webp
+        }
         return nil
     }
 
     public static func supportedFormats() -> [Format] {
-        [.bmp, .png, .gif, .jpeg]
+        [.bmp, .png, .gif, .jpeg, .webp]
     }
 }

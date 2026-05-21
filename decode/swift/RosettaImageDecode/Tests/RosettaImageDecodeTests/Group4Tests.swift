@@ -113,3 +113,31 @@ extension Group4ErrorTests {
         }
     }
 }
+
+extension Group4ErrorTests {
+    func testInvalidWebpFixtures() throws {
+        let errors = try TestKit.readErrors()
+        var failures: [String] = []
+        for (key, expected) in errors {
+            guard key.hasPrefix("webp/") else { continue }
+            let input = try TestKit.readFixture(key)
+            do {
+                _ = try Decoder.decode(input)
+                failures.append("\(key): decode succeeded, expected \(expected.expected_kind)")
+            } catch let e as DecodeError {
+                if e.kindString != expected.expected_kind {
+                    failures.append("\(key): kind \(e.kindString) != \(expected.expected_kind)")
+                    continue
+                }
+                if !expected.expected_detail_substring.isEmpty && !e.detail.contains(expected.expected_detail_substring) {
+                    failures.append("\(key): detail '\(e.detail)' does not contain '\(expected.expected_detail_substring)'")
+                }
+            } catch {
+                failures.append("\(key): unexpected error type \(type(of: error)): \(error)")
+            }
+        }
+        if !failures.isEmpty {
+            XCTFail("\(failures.count) Group-4 WebP failures:\n  \(failures.joined(separator: "\n  "))")
+        }
+    }
+}
