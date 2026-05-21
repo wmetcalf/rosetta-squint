@@ -1,0 +1,16 @@
+[project]
+name = "rosetta-image-decode-spec"
+version = "0.1.0"
+description = "Bit-level reference spec and golden values for rosetta-image-decode ports"
+requires-python = ">=3.11,<3.13"
+
+dependencies = [
+    "Pillow==11.0.0",
+    "jsonschema>=4.21,<5.0",
+]
+
+[project.optional-dependencies]
+dev = []
+
+[tool.setuptools]
+packages = []
