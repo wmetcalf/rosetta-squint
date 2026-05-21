@@ -69,16 +69,13 @@ Bundled libheif version in `libheif-js@1.17.1` diverges from system libheif 1.17
 
 **Resolved** (commit 8daa21d). The Java WebP decoder previously depended on `org.sejda.imageio:webp-imageio:0.1.6` (2019), which bundled its own outdated native libwebp inside the JAR — bypassing system security patches including the CVE-2023-4863 fix. Replaced with a hand-rolled JNA wrapper in `io.rosetta.imagedecode.internal.libwebp` that calls system libwebp directly (mirrors the libheif JNA wrapper pattern).
 
-### Go pixiv/go-libjpeg is unmaintained but functional
+### Go JPEG — was pixiv/go-libjpeg, now in-tree cgo wrapper
 
-`github.com/pixiv/go-libjpeg v0.0.0-20190822045933-3da21a74767d` has had no commits since August 2019. **We've kept it intentionally** for the following reasons:
+**Resolved** (commit 116d756). The Go JPEG decoder previously depended on `github.com/pixiv/go-libjpeg` (last commit August 2019, 6 years stale). For an image decoder processing untrusted input, an unmaintained binding is unacceptable regardless of how thin it is. Replaced with a hand-rolled in-tree cgo wrapper in `go/imagedecode/internal/libjpeg` that links to system libjpeg-turbo via TurboJPEG API. `TJFLAG_ACCURATEDCT` preserves byte-exact parity with PIL/JDCT_ISLOW.
 
-- The cgo binding is ~600 LOC, thin enough that bit-rot is unlikely.
-- It links to the system libjpeg-turbo, so CVE patches in system libjpeg-turbo apply automatically — no bundled-old-lib problem like the Java WebP case had.
-- Go's stdlib `image/jpeg` is pure Go but does NOT match libjpeg-turbo byte-exact (different IDCT precision). Switching away from libjpeg-turbo would break cross-port byte-exact parity.
-- Our Group 2 tests would catch any regression from a Go version bump or libjpeg-turbo update.
+### JS GIF — was omggif, now in-tree pure-TS decoder
 
-Production deployments may still want to vendor the dependency or write an in-tree replacement if they're uncomfortable with the upstream maintenance status.
+**Resolved** (commit d2ebd53). The JS GIF decoder previously depended on `omggif` (last commit July 2019, 6 years stale). Replaced with a hand-rolled pure-TS decoder at `js/rosetta-image-decode/src/internal/gif-decoder.ts` (~612 LOC, ported from the Swift port's validated GIF89a decoder). Includes LZW decompression, 4-pass interlacing, and the transparent-palette-RGB-preservation semantics required for PIL parity.
 
 ## Reporting a vulnerability
 
