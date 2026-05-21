@@ -1,11 +1,11 @@
-import { describe, it, expect } from "vitest";
+import { describe, it } from "vitest";
 import { decode } from "../src/index.js";
 import { listValidFixtures, readFixture, readGolden } from "./testkit.js";
 
-describe("Group 2 — byte-exact goldens (BMP)", () => {
-  it("matches all 30 BMP fixtures byte-exact", async () => {
-    const fixtures = listValidFixtures("bmp");
-    expect(fixtures.length).toBe(30);
+describe("Group 2 — byte-exact goldens (JPEG)", () => {
+  it("matches all JPEG fixtures byte-exact", async () => {
+    const fixtures = listValidFixtures("jpeg");
+    if (fixtures.length === 0) throw new Error("no JPEG fixtures");
     const failures: string[] = [];
     for (const rel of fixtures) {
       const input = readFixture(rel);
@@ -43,7 +43,7 @@ describe("Group 2 — byte-exact goldens (BMP)", () => {
       }
     }
     if (failures.length > 0) {
-      throw new Error(`${failures.length} failures:\n  ${failures.join("\n  ")}`);
+      throw new Error(`${failures.length} JPEG failures:\n  ${failures.join("\n  ")}`);
     }
   });
 });

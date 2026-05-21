@@ -50,3 +50,21 @@ describe("Group 3 — format detection (GIF)", () => {
     expect(supportedFormats()).toContain("gif");
   });
 });
+
+describe("Group 3 — format detection (JPEG)", () => {
+  it("detects all valid JPEG fixtures", () => {
+    for (const rel of listValidFixtures("jpeg")) {
+      const bytes = readFixture(rel);
+      expect(detectFormat(bytes), rel).toBe("jpeg");
+    }
+  });
+
+  it("rejects bad magic JPEG", () => {
+    const bytes = readFixture("jpeg/invalid/bad-magic.jpg");
+    expect(detectFormat(bytes)).toBeNull();
+  });
+
+  it("supported formats contains jpeg", () => {
+    expect(supportedFormats()).toContain("jpeg");
+  });
+});

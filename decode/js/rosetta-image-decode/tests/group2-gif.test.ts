@@ -3,14 +3,14 @@ import { decode } from "../src/index.js";
 import { listValidFixtures, readFixture, readGolden } from "./testkit.js";
 
 describe("Group 2 — byte-exact goldens (GIF)", () => {
-  it("matches all GIF fixtures byte-exact", () => {
+  it("matches all GIF fixtures byte-exact", async () => {
     const fixtures = listValidFixtures("gif");
     if (fixtures.length === 0) throw new Error("no GIF fixtures");
     const failures: string[] = [];
     for (const rel of fixtures) {
       const input = readFixture(rel);
       try {
-        const got = decode(input);
+        const got = await decode(input);
         const want = readGolden(rel);
         if (got.width !== want.width || got.height !== want.height || got.channels !== want.channels) {
           failures.push(`${rel}: shape ${got.width}x${got.height}c${got.channels} != ${want.width}x${want.height}c${want.channels}`);

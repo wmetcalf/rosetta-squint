@@ -31,7 +31,12 @@ export function listValidFixtures(format: string): string[] {
   const dir = join(SPEC_DIR, "fixtures", format, "valid");
   return readdirSync(dir)
     .filter((name) => statSync(join(dir, name)).isFile())
-    .filter((name) => name.endsWith(`.${format}`))
+    .filter((name) => {
+      if (format === "jpeg") {
+        return name.endsWith(".jpg") || name.endsWith(".jpeg");
+      }
+      return name.endsWith(`.${format}`);
+    })
     .map((name) => `${format}/valid/${name}`)
     .sort();
 }

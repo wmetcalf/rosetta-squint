@@ -11,8 +11,14 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist", "README.md", "LICENSE"],
-  "engines": { "node": ">=18" },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
   "license": "BSD-2-Clause",
   "scripts": {
     "build": "tsc",
@@ -20,6 +26,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@jsquash/jpeg": "^1.6.0",
     "omggif": "^1.0",
     "pngjs": "^7"
   },
