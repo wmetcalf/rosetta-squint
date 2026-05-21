@@ -42,9 +42,11 @@ public final class TestKit {
     /** Returns a list of (relative_path) of every valid fixture under fixtures/<format>/valid/. */
     public static List<String> listValidFixtures(String format) throws IOException {
         Path dir = SPEC_DIR.resolve("fixtures").resolve(format).resolve("valid");
+        // JPEG fixtures use the .jpg extension on disk.
+        final String ext = format.equals("jpeg") ? ".jpg" : ("." + format);
         try (var stream = Files.list(dir)) {
             return stream.filter(Files::isRegularFile)
-                .filter(p -> p.getFileName().toString().endsWith("." + format))
+                .filter(p -> p.getFileName().toString().endsWith(ext))
                 .map(p -> format + "/valid/" + p.getFileName().toString())
                 .sorted()
                 .toList();

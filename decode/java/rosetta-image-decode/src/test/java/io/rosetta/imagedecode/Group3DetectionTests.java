@@ -69,4 +69,20 @@ public class Group3DetectionTests {
     public void supportedFormatsContainsGif() {
         assertTrue(Decoder.supportedFormats().contains(Format.GIF));
     }
+
+    @Test
+    public void detectsAllValidJpegFixtures() throws IOException {
+        var fixtures = TestKit.listValidFixtures("jpeg");
+        assertFalse(fixtures.isEmpty(), "should have JPEG fixtures");
+        for (String rel : fixtures) {
+            byte[] bytes = TestKit.readFixture(rel);
+            Optional<Format> fmt = Decoder.detectFormat(bytes);
+            assertEquals(Optional.of(Format.JPEG), fmt, "should detect JPEG for " + rel);
+        }
+    }
+
+    @Test
+    public void supportedFormatsContainsJpeg() {
+        assertTrue(Decoder.supportedFormats().contains(Format.JPEG));
+    }
 }

@@ -16,6 +16,7 @@ public final class Decoder {
             case BMP -> io.rosetta.imagedecode.internal.BMPDecoder.decode(bytes);
             case PNG -> io.rosetta.imagedecode.internal.PNGDecoder.decode(bytes);
             case GIF -> io.rosetta.imagedecode.internal.GIFDecoder.decode(bytes);
+            case JPEG -> io.rosetta.imagedecode.internal.JPEGDecoder.decode(bytes);
             default -> throw new DecodeException(DecodeException.Kind.UNSUPPORTED_FORMAT, fmt.get(), "");
         };
     }
@@ -33,10 +34,13 @@ public final class Decoder {
             && (bytes[4] == 0x37 || bytes[4] == 0x39) && bytes[5] == 0x61) {
             return Optional.of(Format.GIF);
         }
+        if (bytes.length >= 2 && bytes[0] == (byte) 0xFF && bytes[1] == (byte) 0xD8) {
+            return Optional.of(Format.JPEG);
+        }
         return Optional.empty();
     }
 
     public static Set<Format> supportedFormats() {
-        return EnumSet.of(Format.BMP, Format.PNG, Format.GIF);
+        return EnumSet.of(Format.BMP, Format.PNG, Format.GIF, Format.JPEG);
     }
 }

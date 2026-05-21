@@ -17,7 +17,7 @@ public class Group4ErrorTests {
 
         for (Map.Entry<String, TestKit.ExpectedError> entry : errors.entrySet()) {
             String key = entry.getKey();
-            if (!key.startsWith("bmp/") && !key.startsWith("png/") && !key.startsWith("gif/")) continue;
+            if (!key.startsWith("bmp/") && !key.startsWith("png/") && !key.startsWith("gif/") && !key.startsWith("jpeg/")) continue;
             TestKit.ExpectedError expected = entry.getValue();
 
             byte[] bytes;
