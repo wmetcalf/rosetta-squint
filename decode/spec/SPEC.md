@@ -418,8 +418,27 @@ deferred to v0.2.
 
 ### §14 WebP
 
-*(Populated by the WebP sub-project. Currently planned. See `formats.json`
-for status.)*
+**Reference behavior:** libwebp via Pillow 11.0.0's PIL WebP plugin.
+
+**Output channels:**
+- Lossy/lossless without alpha → RGB (3 channels)
+- Lossy/lossless with alpha → RGBA (4 channels)
+
+**Variants supported in v1:** lossy (VP8) + lossless (VP8L), with or without alpha. Out of scope: animated WebP iteration (first frame only); extended WebP metadata (XMP, ICC, EXIF).
+
+**Per-port reference library:**
+- Java: webp-imageio Maven artifact or custom JNI
+- Go: `github.com/chai2010/webp` cgo
+- Rust: `libwebp-sys2` (compiles libwebp from source)
+- JS: `@jsquash/webp` WASM
+- Swift: Cwebp systemLibrary
+
+**System dep (most ports):** libwebp + libwebp-dev. Rust and JS bundle libwebp internally.
+
+**Invalid input handling:**
+- Magic ≠ `RIFF...WEBP` → unsupportedFormat
+- Truncated → corruptInput
+- Corrupt VP8/VP8L chunk → corruptInput
 
 ### §15 TIFF
 
