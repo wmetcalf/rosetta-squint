@@ -58,3 +58,26 @@ func TestGroup3SupportedFormatsContainsPng(t *testing.T) {
 		t.Errorf("SupportedFormats should contain Png")
 	}
 }
+
+func TestGroup3DetectsAllValidGifFixtures(t *testing.T) {
+	fixtures := listValidFixtures(t, "gif")
+	for _, rel := range fixtures {
+		b := readFixture(t, rel)
+		f, ok := DetectFormat(b)
+		if !ok || f != Gif {
+			t.Errorf("%s: expected Gif detection, got %v ok=%v", rel, f, ok)
+		}
+	}
+}
+
+func TestGroup3SupportedFormatsContainsGif(t *testing.T) {
+	found := false
+	for _, f := range SupportedFormats() {
+		if f == Gif {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("SupportedFormats should contain Gif")
+	}
+}
