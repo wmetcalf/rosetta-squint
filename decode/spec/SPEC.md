@@ -442,8 +442,37 @@ deferred to v0.2.
 
 ### §15 TIFF
 
-*(Populated by the TIFF sub-project. Currently planned. See `formats.json`
-for status.)*
+**Reference behavior:** libtiff via Pillow 11.0.0's PIL TIFF plugin.
+
+**v1 supported subset:**
+- Baseline TIFF only (uncompressed, LZW, Deflate)
+- 8-bit samples per channel
+- RGB and Grayscale photometric interpretations
+- Strip-based organization (not tiled)
+- Single image per file (no multi-page)
+
+**Output channels:**
+- RGB photometric → RGB (3 channels)
+- Grayscale photometric → RGB (3 channels, replicated)
+
+**Out of scope (v1):**
+- CCITT G3/G4 (fax compression)
+- JPEG-in-TIFF
+- BigTIFF
+- Tiled organization
+- 16-bit samples
+- CMYK
+- Multi-page
+- EXIF orientation auto-rotation
+
+**Magic bytes:** `49 49 2A 00` (little-endian) or `4D 4D 00 2A` (big-endian).
+
+**Per-port reference library:**
+- Java: TwelveMonkeys ImageIO TIFF plugin (`com.twelvemonkeys.imageio:imageio-tiff:3.10.1`)
+- Go: `golang.org/x/image/tiff` (pure-Go); fall back to cgo if byte-exact diverges
+- Rust: `image` crate with tiff feature; fall back to libtiff-sys if diverges
+- JS: `utif2` npm package
+- Swift: C interop with libtiff via Ctiff systemLibrary
 
 ### §16 HEIC
 
