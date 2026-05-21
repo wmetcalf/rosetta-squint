@@ -35,6 +35,9 @@ export function listValidFixtures(format: string): string[] {
       if (format === "jpeg") {
         return name.endsWith(".jpg") || name.endsWith(".jpeg");
       }
+      if (format === "tiff") {
+        return name.endsWith(".tif") || name.endsWith(".tiff");
+      }
       return name.endsWith(`.${format}`);
     })
     .map((name) => `${format}/valid/${name}`)

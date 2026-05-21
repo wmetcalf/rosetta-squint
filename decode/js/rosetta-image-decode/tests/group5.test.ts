@@ -28,14 +28,15 @@ describe("Group 5 — invariants (PNG)", () => {
     }
   });
 
-  it("supported formats contains bmp + png + gif + jpeg + webp", () => {
+  it("supported formats contains bmp + png + gif + jpeg + webp + tiff", () => {
     const supported = supportedFormats();
-    expect(supported).toHaveLength(5);
+    expect(supported).toHaveLength(6);
     expect(supported).toContain("bmp");
     expect(supported).toContain("png");
     expect(supported).toContain("gif");
     expect(supported).toContain("jpeg");
     expect(supported).toContain("webp");
+    expect(supported).toContain("tiff");
   });
 });
 
@@ -75,6 +76,20 @@ describe("Group 5 — invariants (JPEG)", () => {
       expect(img.width, rel).toBeGreaterThan(0);
       expect(img.height, rel).toBeGreaterThan(0);
       expect(img.format, rel).toBe("jpeg");
+      expect(img.data.length, rel).toBe(img.width * img.height * img.channels);
+      expect(img.channels, rel).toBe(3);
+    }
+  });
+});
+
+describe("Group 5 — invariants (TIFF)", () => {
+  it("all decoded TIFF images have valid shape", async () => {
+    for (const rel of listValidFixtures("tiff")) {
+      const bytes = readFixture(rel);
+      const img = await decode(bytes);
+      expect(img.width, rel).toBeGreaterThan(0);
+      expect(img.height, rel).toBeGreaterThan(0);
+      expect(img.format, rel).toBe("tiff");
       expect(img.data.length, rel).toBe(img.width * img.height * img.channels);
       expect(img.channels, rel).toBe(3);
     }

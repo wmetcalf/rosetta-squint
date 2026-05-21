@@ -29,7 +29,8 @@
     "@jsquash/jpeg": "^1.6.0",
     "@jsquash/webp": "^1.5.0",
     "omggif": "^1.0",
-    "pngjs": "^7"
+    "pngjs": "^7",
+    "utif2": "^4.1.0"
   },
   "devDependencies": {
     "@types/node": "^20",

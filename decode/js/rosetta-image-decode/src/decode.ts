@@ -2,6 +2,7 @@ import { decodeBmp } from "./internal/bmp.js";
 import { decodeGif } from "./internal/gif.js";
 import { decodeJpeg } from "./internal/jpeg.js";
 import { decodePng } from "./internal/png.js";
+import { decodeTiff } from "./internal/tiff.js";
 import { decodeWebp } from "./internal/webp.js";
 import { DecodeError } from "./errors.js";
 import type { DecodedImage, Format } from "./types.js";
@@ -22,6 +23,8 @@ export async function decode(bytes: Uint8Array): Promise<DecodedImage> {
       return await decodeJpeg(bytes);
     case "webp":
       return await decodeWebp(bytes);
+    case "tiff":
+      return decodeTiff(bytes);
     default:
       throw new DecodeError("unsupportedFormat", fmt, "");
   }
@@ -54,9 +57,19 @@ export function detectFormat(bytes: Uint8Array): Format | null {
   ) {
     return "webp";
   }
+  if (
+    bytes.length >= 4 && (
+      // Little-endian TIFF: II + 42
+      (bytes[0] === 0x49 && bytes[1] === 0x49 && bytes[2] === 0x2a && bytes[3] === 0x00) ||
+      // Big-endian TIFF: MM + 42
+      (bytes[0] === 0x4d && bytes[1] === 0x4d && bytes[2] === 0x00 && bytes[3] === 0x2a)
+    )
+  ) {
+    return "tiff";
+  }
   return null;
 }
 
 export function supportedFormats(): Format[] {
-  return ["bmp", "png", "gif", "jpeg", "webp"];
+  return ["bmp", "png", "gif", "jpeg", "webp", "tiff"];
 }

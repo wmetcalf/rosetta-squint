@@ -86,3 +86,21 @@ describe("Group 3 — format detection (WebP)", () => {
     expect(supportedFormats()).toContain("webp");
   });
 });
+
+describe("Group 3 — format detection (TIFF)", () => {
+  it("detects all valid TIFF fixtures", () => {
+    for (const rel of listValidFixtures("tiff")) {
+      const bytes = readFixture(rel);
+      expect(detectFormat(bytes), rel).toBe("tiff");
+    }
+  });
+
+  it("rejects bad magic TIFF", () => {
+    const bytes = readFixture("tiff/invalid/bad-magic.tif");
+    expect(detectFormat(bytes)).toBeNull();
+  });
+
+  it("supported formats contains tiff", () => {
+    expect(supportedFormats()).toContain("tiff");
+  });
+});
