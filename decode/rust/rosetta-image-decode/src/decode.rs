@@ -1,4 +1,5 @@
 use crate::bmp::decode_bmp;
+use crate::gif::decode_gif;
 use crate::png::decode_png;
 use crate::error::{DecodeError, DecodeErrorKind};
 use crate::types::{DecodedImage, Format};
@@ -10,6 +11,7 @@ pub fn decode(bytes: &[u8]) -> Result<DecodedImage, DecodeError> {
     })?;
     match fmt {
         Format::Bmp => decode_bmp(bytes),
+        Format::Gif => decode_gif(bytes),
         Format::Png => decode_png(bytes),
         other => Err(DecodeError::new(DecodeErrorKind::UnsupportedFormat, Some(other), "")),
     }
@@ -35,10 +37,21 @@ pub fn detect_format(bytes: &[u8]) -> Option<Format> {
     {
         return Some(Format::Png);
     }
+    // GIF87a or GIF89a
+    if bytes.len() >= 6
+        && bytes[0] == b'G'
+        && bytes[1] == b'I'
+        && bytes[2] == b'F'
+        && bytes[3] == b'8'
+        && (bytes[4] == b'7' || bytes[4] == b'9')
+        && bytes[5] == b'a'
+    {
+        return Some(Format::Gif);
+    }
     None
 }
 
 /// Returns the list of formats this port can decode.
 pub fn supported_formats() -> Vec<Format> {
-    vec![Format::Bmp, Format::Png]
+    vec![Format::Bmp, Format::Gif, Format::Png]
 }

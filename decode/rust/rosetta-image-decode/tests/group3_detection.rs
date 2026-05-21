@@ -34,3 +34,22 @@ fn detects_all_valid_png() {
 fn supported_formats_contains_png() {
     assert!(supported_formats().contains(&Format::Png));
 }
+
+#[test]
+fn detects_all_valid_gif() {
+    for rel in testkit::list_valid_fixtures("gif") {
+        let bytes = testkit::read_fixture(&rel);
+        assert_eq!(Some(Format::Gif), detect_format(&bytes), "fixture {}", rel);
+    }
+}
+
+#[test]
+fn rejects_bad_magic_gif() {
+    let bytes = testkit::read_fixture("gif/invalid/bad-magic.gif");
+    assert!(detect_format(&bytes).is_none());
+}
+
+#[test]
+fn supported_formats_contains_gif() {
+    assert!(supported_formats().contains(&Format::Gif));
+}

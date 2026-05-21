@@ -3,6 +3,7 @@
 //! v0.1.0 supports BMP + PNG. See SPEC.md in the shared /spec/ directory.
 
 mod bmp;
+mod gif;
 mod png;
 mod decode;
 mod error;
