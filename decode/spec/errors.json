@@ -120,6 +120,21 @@
       "format": "webp",
       "expected_kind": "corruptInput",
       "expected_detail_substring": ""
+    },
+    "tiff/invalid/bad-magic.tif": {
+      "format": null,
+      "expected_kind": "unsupportedFormat",
+      "expected_detail_substring": ""
+    },
+    "tiff/invalid/truncated.tif": {
+      "format": "tiff",
+      "expected_kind": "corruptInput",
+      "expected_detail_substring": ""
+    },
+    "tiff/invalid/corrupt-tag.tif": {
+      "format": "tiff",
+      "expected_kind": "corruptInput",
+      "expected_detail_substring": ""
     }
   }
 }
