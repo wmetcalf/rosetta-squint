@@ -742,6 +742,76 @@
       "sha256": "63e7e46b0ec87320c8471261860a4318ab5e377b3381faedd81340b1a548058b",
       "width": 1200
     },
+    "tiff/valid/16x16-grayscale-lzw.tif": {
+      "channels": 3,
+      "format": "tiff",
+      "height": 16,
+      "sha256": "b6cdefcaacf12c201d5edec043277e784140f1e931b9a06f9022434dedd0806a",
+      "width": 16
+    },
+    "tiff/valid/16x16-rgb-lzw.tif": {
+      "channels": 3,
+      "format": "tiff",
+      "height": 16,
+      "sha256": "6cd3573adf64dc9cc4fdfc380eda0d0354526d01069dcffef576252a53d4965c",
+      "width": 16
+    },
+    "tiff/valid/16x16-rgb-none.tif": {
+      "channels": 3,
+      "format": "tiff",
+      "height": 16,
+      "sha256": "6cd3573adf64dc9cc4fdfc380eda0d0354526d01069dcffef576252a53d4965c",
+      "width": 16
+    },
+    "tiff/valid/1x1-rgb.tif": {
+      "channels": 3,
+      "format": "tiff",
+      "height": 1,
+      "sha256": "709e80c88487a2411e1ee4dfb9f22a861492d20c4765150c0c794abd70f8147c",
+      "width": 1
+    },
+    "tiff/valid/8x8-grayscale-none.tif": {
+      "channels": 3,
+      "format": "tiff",
+      "height": 8,
+      "sha256": "b4537c66948bcd133b2347a55d64e9ee45ba1740fd7bd9304983e238825109bd",
+      "width": 8
+    },
+    "tiff/valid/8x8-rgb-deflate.tif": {
+      "channels": 3,
+      "format": "tiff",
+      "height": 8,
+      "sha256": "19df3d17fa4eb7d472b44a5f0eb53c2e98b373ac37a76e562ee5eb00debc7743",
+      "width": 8
+    },
+    "tiff/valid/8x8-rgb-lzw.tif": {
+      "channels": 3,
+      "format": "tiff",
+      "height": 8,
+      "sha256": "19df3d17fa4eb7d472b44a5f0eb53c2e98b373ac37a76e562ee5eb00debc7743",
+      "width": 8
+    },
+    "tiff/valid/8x8-rgb-none.tif": {
+      "channels": 3,
+      "format": "tiff",
+      "height": 8,
+      "sha256": "19df3d17fa4eb7d472b44a5f0eb53c2e98b373ac37a76e562ee5eb00debc7743",
+      "width": 8
+    },
+    "tiff/valid/larger-photo-128.tif": {
+      "channels": 3,
+      "format": "tiff",
+      "height": 128,
+      "sha256": "9670fb889d37dab0390cd8fd006f308821c03aa6f3a3989fd3b06d9a942e071b",
+      "width": 128
+    },
+    "tiff/valid/rect-24x16-deflate.tif": {
+      "channels": 3,
+      "format": "tiff",
+      "height": 16,
+      "sha256": "4952d73bb7abb0dcac6881a1acf747fa414a2e0b6a459aefa677ac552f295a81",
+      "width": 24
+    },
     "webp/valid/16x16-lossless.webp": {
       "channels": 3,
       "format": "webp",
@@ -828,6 +898,6 @@
     }
   },
   "pillow_version": "11.0.0",
-  "regenerated_at": "2026-05-21T15:23:12Z",
+  "regenerated_at": "2026-05-21T16:38:06Z",
   "schema_version": 1
 }

@@ -68,10 +68,17 @@ def main() -> int:
             errors.append(f"fixtures/{fmt_dir.name}: not a known format")
             continue
         fmt_name = fmt_dir.name
+        # Build the set of accepted extensions for this format.
+        # JPEG fixtures use .jpg; TIFF fixtures use .tif.
+        fmt_extensions = {f".{fmt_name}"}
+        if fmt_name == "jpeg":
+            fmt_extensions.add(".jpg")
+        if fmt_name == "tiff":
+            fmt_extensions.add(".tif")
         for fixture in sorted(fmt_dir.rglob("*")):
             if not fixture.is_file() or fixture.name.startswith("."):
                 continue
-            if fixture.suffix.lower() != f".{fmt_name}":
+            if fixture.suffix.lower() not in fmt_extensions:
                 continue  # skip non-image files (e.g. LICENSE.md in fixture dirs)
             rel = str(fixture.relative_to(FIXTURES_DIR)).replace("\\", "/")
             if rel in error_fixtures:

@@ -7,7 +7,7 @@
     "gif":  { "status": "supported", "subspec": "SPEC.md#§12-gif", "reference_lib": "Pillow built-in GIF plugin", "reference_version": "11.0.0", "fixture_count": 15, "ports_implemented": ["java", "go", "rust", "js", "swift"] },
     "jpeg": { "status": "supported", "subspec": "SPEC.md#§13-jpeg", "reference_lib": "libjpeg-turbo (via Pillow)", "reference_version": "11.0.0", "fixture_count": 15, "ports_implemented": ["java", "go", "rust", "js", "swift"] },
     "webp": { "status": "supported", "subspec": "SPEC.md#§14-webp", "reference_lib": "libwebp (via Pillow)", "reference_version": "11.0.0", "fixture_count": 12, "ports_implemented": ["java", "go", "rust", "js", "swift"] },
-    "tiff": { "status": "planned", "subspec": null, "reference_lib": null, "reference_version": null, "fixture_count": 0, "ports_implemented": [] },
+    "tiff": { "status": "supported", "subspec": "SPEC.md#§15-tiff", "reference_lib": "libtiff (via Pillow)", "reference_version": "11.0.0", "fixture_count": 10, "ports_implemented": [] },
     "heic": { "status": "planned", "subspec": null, "reference_lib": null, "reference_version": null, "fixture_count": 0, "ports_implemented": [] },
     "emf":  { "status": "planned", "subspec": null, "reference_lib": null, "reference_version": null, "fixture_count": 0, "ports_implemented": [] },
     "wmf":  { "status": "planned", "subspec": null, "reference_lib": null, "reference_version": null, "fixture_count": 0, "ports_implemented": [] }

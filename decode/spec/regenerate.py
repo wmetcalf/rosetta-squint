@@ -123,10 +123,13 @@ def regenerate(only_format: str | None) -> dict:
         out_dir = DECODED_DIR / fmt_name
         out_dir.mkdir(parents=True, exist_ok=True)
 
-        # JPEG files use .jpg extension; all others match fmt_name directly
+        # JPEG files use .jpg extension; TIFF files use .tif extension;
+        # all others match fmt_name directly.
         fmt_extensions = {fmt_name}
         if fmt_name == "jpeg":
             fmt_extensions.add("jpg")
+        if fmt_name == "tiff":
+            fmt_extensions.add("tif")
 
         for fixture in sorted(fmt_dir.rglob("*")):
             if not fixture.is_file() or fixture.name.startswith("."):
