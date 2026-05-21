@@ -123,10 +123,15 @@ def regenerate(only_format: str | None) -> dict:
         out_dir = DECODED_DIR / fmt_name
         out_dir.mkdir(parents=True, exist_ok=True)
 
+        # JPEG files use .jpg extension; all others match fmt_name directly
+        fmt_extensions = {fmt_name}
+        if fmt_name == "jpeg":
+            fmt_extensions.add("jpg")
+
         for fixture in sorted(fmt_dir.rglob("*")):
             if not fixture.is_file() or fixture.name.startswith("."):
                 continue
-            if fixture.suffix.lower() != f".{fmt_name}":
+            if fixture.suffix.lower().lstrip(".") not in fmt_extensions:
                 continue  # skip non-image files (e.g. LICENSE.md in fixture dirs)
             rel = fixture_to_relpath(fixture)
             if rel in error_fixtures:

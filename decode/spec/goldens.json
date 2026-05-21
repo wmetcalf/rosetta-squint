@@ -315,6 +315,111 @@
       "sha256": "8e4aea8e0f51cca3b215af39de2c0863a9cbad5b9164a35d426a6ef36eeebc74",
       "width": 32
     },
+    "jpeg/valid/16x16-grayscale.jpg": {
+      "channels": 3,
+      "format": "jpeg",
+      "height": 16,
+      "sha256": "78fb1cd81a7b3bff5ccfb13330df6e6404d9584bafd41d87f7dc1722d3848a48",
+      "width": 16
+    },
+    "jpeg/valid/16x16-progressive.jpg": {
+      "channels": 3,
+      "format": "jpeg",
+      "height": 16,
+      "sha256": "9b2bf6151d94cafba276047947cd409c0a0e610266a96a4ec178f8e780c0c688",
+      "width": 16
+    },
+    "jpeg/valid/16x16-quality-50.jpg": {
+      "channels": 3,
+      "format": "jpeg",
+      "height": 16,
+      "sha256": "e92a86f6c2adb5b012128c41de0efc9fde9355a97f2855a1c7e5ff049fdd721a",
+      "width": 16
+    },
+    "jpeg/valid/16x16-quality-95.jpg": {
+      "channels": 3,
+      "format": "jpeg",
+      "height": 16,
+      "sha256": "a073e9a336cb302b241aca55b8ff0c6c5560658c656c20e8ba2fb208688b8676",
+      "width": 16
+    },
+    "jpeg/valid/32x32-quality-95.jpg": {
+      "channels": 3,
+      "format": "jpeg",
+      "height": 32,
+      "sha256": "9984d3a8fa5328a19c033fd953e6cce46f44d31b71c98a594b3c03ecac020072",
+      "width": 32
+    },
+    "jpeg/valid/64x64-quality-50.jpg": {
+      "channels": 3,
+      "format": "jpeg",
+      "height": 64,
+      "sha256": "3e5d133c5f2a01d6c08fe062c5b7187f488bb2cbcc4390ebdcee58090e647582",
+      "width": 64
+    },
+    "jpeg/valid/8x8-420.jpg": {
+      "channels": 3,
+      "format": "jpeg",
+      "height": 8,
+      "sha256": "9e3229d16a7bbf4378d1dadab7fbac13e0ff870897a168b8f8b318dc17db1d9b",
+      "width": 8
+    },
+    "jpeg/valid/8x8-422.jpg": {
+      "channels": 3,
+      "format": "jpeg",
+      "height": 8,
+      "sha256": "2fe4166ca75f4a37f875b996e8e5b7d9ba5fc654c9fe9d998b2607ec86d95cbc",
+      "width": 8
+    },
+    "jpeg/valid/8x8-444.jpg": {
+      "channels": 3,
+      "format": "jpeg",
+      "height": 8,
+      "sha256": "2b2b3cdd985cbc8b395b544dbbb8368c31755dadb0783dd81580886ad06cd6f5",
+      "width": 8
+    },
+    "jpeg/valid/8x8-grayscale.jpg": {
+      "channels": 3,
+      "format": "jpeg",
+      "height": 8,
+      "sha256": "d5830de90f5d64c255fdff672e5124471ba0510f37df58c9d7159fab40000c3c",
+      "width": 8
+    },
+    "jpeg/valid/8x8-quality-10.jpg": {
+      "channels": 3,
+      "format": "jpeg",
+      "height": 8,
+      "sha256": "87c9f9f7b4a2a2414ade0b25954ce8b177072df800b725f4ae87f12fd77fdd9a",
+      "width": 8
+    },
+    "jpeg/valid/8x8-quality-50.jpg": {
+      "channels": 3,
+      "format": "jpeg",
+      "height": 8,
+      "sha256": "85d998aa65659bb6ba0f67b57ff578b4a5a61061b7e8f0cdfeb2cb966bd3dcc9",
+      "width": 8
+    },
+    "jpeg/valid/8x8-quality-95.jpg": {
+      "channels": 3,
+      "format": "jpeg",
+      "height": 8,
+      "sha256": "301b67d546dde7b1165005aae43271f7478bb96d9660c641988dc5111cb9e6af",
+      "width": 8
+    },
+    "jpeg/valid/irregular-7x11.jpg": {
+      "channels": 3,
+      "format": "jpeg",
+      "height": 11,
+      "sha256": "6fa012818031863fac941c0d77c101e6afb950469e3f88a66b1275e9fb34f782",
+      "width": 7
+    },
+    "jpeg/valid/larger-photo-128.jpg": {
+      "channels": 3,
+      "format": "jpeg",
+      "height": 128,
+      "sha256": "19847ea37a970048d9e9d5ef714247b0c9660284576cd205e8009148dd73f785",
+      "width": 128
+    },
     "png/valid/all-black-256.png": {
       "channels": 3,
       "format": "png",
@@ -639,6 +744,6 @@
     }
   },
   "pillow_version": "11.0.0",
-  "regenerated_at": "2026-05-21T14:04:31Z",
+  "regenerated_at": "2026-05-21T14:43:04Z",
   "schema_version": 1
 }
