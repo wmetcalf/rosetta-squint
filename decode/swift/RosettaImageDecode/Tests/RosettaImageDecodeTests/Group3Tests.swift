@@ -85,3 +85,21 @@ extension Group3DetectionTests {
         XCTAssertTrue(Decoder.supportedFormats().contains(.webp))
     }
 }
+
+extension Group3DetectionTests {
+    func testDetectsAllValidTiff() throws {
+        for rel in try TestKit.listValidFixtures("tiff") {
+            let bytes = try TestKit.readFixture(rel)
+            XCTAssertEqual(Decoder.detectFormat(bytes), .tiff, rel)
+        }
+    }
+
+    func testRejectsTiffBadMagic() throws {
+        let bytes = try TestKit.readFixture("tiff/invalid/bad-magic.tif")
+        XCTAssertNil(Decoder.detectFormat(bytes))
+    }
+
+    func testSupportedFormatsContainsTiff() {
+        XCTAssertTrue(Decoder.supportedFormats().contains(.tiff))
+    }
+}

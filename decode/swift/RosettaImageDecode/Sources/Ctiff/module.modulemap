@@ -1,0 +1,5 @@
+module Ctiff [system] {
+    header "shim.h"
+    link "tiff"
+    export *
+}

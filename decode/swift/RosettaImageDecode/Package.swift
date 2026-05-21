@@ -20,12 +20,18 @@ let package = Package(
             pkgConfig: "libwebp",
             providers: [.apt(["libwebp-dev"]), .brew(["webp"])]
         ),
+        .systemLibrary(
+            name: "Ctiff",
+            pkgConfig: "libtiff-4",
+            providers: [.apt(["libtiff-dev"]), .brew(["libtiff"])]
+        ),
         .target(
             name: "RosettaImageDecode",
             dependencies: [
                 .product(name: "PNG", package: "swift-png"),
                 "Cjpeg",
                 "Cwebp",
+                "Ctiff",
             ]
         ),
         .testTarget(

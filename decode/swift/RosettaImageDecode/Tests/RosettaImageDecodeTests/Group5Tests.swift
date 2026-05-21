@@ -88,11 +88,34 @@ extension Group5InvariantsTests {
 
     func testSupportedFormatsContainsBmpPngGifJpegAndWebp() {
         let supported = Decoder.supportedFormats()
-        XCTAssertEqual(supported.count, 5)
         XCTAssertTrue(supported.contains(.bmp))
         XCTAssertTrue(supported.contains(.png))
         XCTAssertTrue(supported.contains(.gif))
         XCTAssertTrue(supported.contains(.jpeg))
         XCTAssertTrue(supported.contains(.webp))
+    }
+}
+
+extension Group5InvariantsTests {
+    func testAllDecodedTiffImagesHaveValidShape() throws {
+        for rel in try TestKit.listValidFixtures("tiff") {
+            let bytes = try TestKit.readFixture(rel)
+            let img = try Decoder.decode(bytes)
+            XCTAssertGreaterThan(img.width, 0, rel)
+            XCTAssertGreaterThan(img.height, 0, rel)
+            XCTAssertEqual(img.format, .tiff, rel)
+            XCTAssertEqual(img.data.count, img.width * img.height * img.channels.bytesPerPixel, rel)
+        }
+    }
+
+    func testSupportedFormatsContainsBmpPngGifJpegWebpAndTiff() {
+        let supported = Decoder.supportedFormats()
+        XCTAssertEqual(supported.count, 6)
+        XCTAssertTrue(supported.contains(.bmp))
+        XCTAssertTrue(supported.contains(.png))
+        XCTAssertTrue(supported.contains(.gif))
+        XCTAssertTrue(supported.contains(.jpeg))
+        XCTAssertTrue(supported.contains(.webp))
+        XCTAssertTrue(supported.contains(.tiff))
     }
 }
