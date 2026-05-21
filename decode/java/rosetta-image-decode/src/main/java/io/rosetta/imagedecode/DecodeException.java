@@ -7,7 +7,8 @@ public class DecodeException extends IOException {
         UNSUPPORTED_FORMAT,
         CORRUPT_INPUT,
         TRUNCATED,
-        UNSUPPORTED_FEATURE
+        UNSUPPORTED_FEATURE,
+        IMAGE_TOO_LARGE
     }
 
     private final Kind kind;

@@ -29,12 +29,19 @@ public final class TIFFDecoder {
         int width = img.getWidth();
         int height = img.getHeight();
 
+        Limits.checkDimensions(width, height, Format.TIFF);
+
         boolean isGray = img.getColorModel().getColorSpace().getType() == ColorSpace.TYPE_GRAY;
 
         // For v1: always RGB output (grayscale expands).
         // Grayscale images: use Raster.getPixels() to bypass sRGB gamma that getRGB() applies.
         // RGB images: getRGB() is correct.
-        byte[] out = new byte[width * height * 3];
+        long outSize = Math.multiplyExact(Math.multiplyExact((long) width, (long) height), 3L);
+        if (outSize > Integer.MAX_VALUE) {
+            throw new DecodeException(DecodeException.Kind.IMAGE_TOO_LARGE, Format.TIFF,
+                "pixel buffer size " + outSize + " exceeds Java int max");
+        }
+        byte[] out = new byte[(int) outSize];
         int outIdx = 0;
 
         if (isGray) {

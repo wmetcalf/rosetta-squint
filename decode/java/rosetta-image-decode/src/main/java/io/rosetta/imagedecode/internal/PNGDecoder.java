@@ -6,6 +6,8 @@ import io.rosetta.imagedecode.DecodedImage;
 import io.rosetta.imagedecode.Format;
 
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.MemoryCacheImageInputStream;
 import java.awt.AlphaComposite;
 import java.awt.Graphics2D;
 import java.awt.color.ColorSpace;
@@ -14,6 +16,7 @@ import java.awt.image.IndexColorModel;
 import java.awt.image.Raster;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.Iterator;
 
 /**
  * Decodes PNG images byte-exactly against PIL's reference output.
@@ -54,6 +57,26 @@ public final class PNGDecoder {
     private PNGDecoder() {}
 
     public static DecodedImage decode(byte[] bytes) throws DecodeException {
+        // Sniff dimensions before allocating the full BufferedImage.
+        try {
+            Iterator<ImageReader> readers = ImageIO.getImageReadersByFormatName("PNG");
+            if (readers.hasNext()) {
+                ImageReader reader = readers.next();
+                try {
+                    reader.setInput(new MemoryCacheImageInputStream(new ByteArrayInputStream(bytes)));
+                    int w = reader.getWidth(0);
+                    int h = reader.getHeight(0);
+                    Limits.checkDimensions(w, h, Format.PNG);
+                } finally {
+                    reader.dispose();
+                }
+            }
+        } catch (DecodeException e) {
+            throw e;
+        } catch (IOException e) {
+            // Dimension read failed; let ImageIO.read() below produce the real error.
+        }
+
         BufferedImage img;
         try {
             img = ImageIO.read(new ByteArrayInputStream(bytes));
@@ -100,7 +123,12 @@ public final class PNGDecoder {
         // ── Grayscale or 16-bit: use Raster API to match PIL's raw-sample behavior ──
         Channels channels = hasAlpha ? Channels.RGBA : Channels.RGB;
         int channelCount  = hasAlpha ? 4 : 3;
-        byte[] out = new byte[width * height * channelCount];
+        long outSize = Math.multiplyExact(Math.multiplyExact((long) width, (long) height), (long) channelCount);
+        if (outSize > Integer.MAX_VALUE) {
+            throw new DecodeException(DecodeException.Kind.IMAGE_TOO_LARGE, Format.PNG,
+                "pixel buffer size " + outSize + " exceeds Java int max");
+        }
+        byte[] out = new byte[(int) outSize];
         Raster raster  = img.getRaster();
         int numBands   = raster.getNumBands();
         int[] samples  = new int[width * numBands];
@@ -161,7 +189,7 @@ public final class PNGDecoder {
      * transparent pixels.
      */
     private static DecodedImage decodeIndexed(BufferedImage src, int width, int height,
-                                              boolean hasAlpha) {
+                                              boolean hasAlpha) throws DecodeException {
         Channels channels = hasAlpha ? Channels.RGBA : Channels.RGB;
         int channelCount  = hasAlpha ? 4 : 3;
 
@@ -174,7 +202,12 @@ public final class PNGDecoder {
         g.dispose();
 
         // Read back via getRGB().
-        byte[] out = new byte[width * height * channelCount];
+        long outSize = Math.multiplyExact(Math.multiplyExact((long) width, (long) height), (long) channelCount);
+        if (outSize > Integer.MAX_VALUE) {
+            throw new DecodeException(DecodeException.Kind.IMAGE_TOO_LARGE, Format.PNG,
+                "pixel buffer size " + outSize + " exceeds Java int max");
+        }
+        byte[] out = new byte[(int) outSize];
         int[] argb = new int[width];
         int outIdx = 0;
         for (int y = 0; y < height; y++) {
@@ -194,10 +227,15 @@ public final class PNGDecoder {
 
     /** Decode 8-bit non-gray images using getRGB() (matches PIL for these types). */
     private static DecodedImage decodeViaGetRgb(BufferedImage img, int width, int height,
-                                                boolean hasAlpha) {
+                                                boolean hasAlpha) throws DecodeException {
         Channels channels = hasAlpha ? Channels.RGBA : Channels.RGB;
         int channelCount  = hasAlpha ? 4 : 3;
-        byte[] out = new byte[width * height * channelCount];
+        long outSize = Math.multiplyExact(Math.multiplyExact((long) width, (long) height), (long) channelCount);
+        if (outSize > Integer.MAX_VALUE) {
+            throw new DecodeException(DecodeException.Kind.IMAGE_TOO_LARGE, Format.PNG,
+                "pixel buffer size " + outSize + " exceeds Java int max");
+        }
+        byte[] out = new byte[(int) outSize];
         int[] argb = new int[width];
         int outIdx = 0;
         for (int y = 0; y < height; y++) {

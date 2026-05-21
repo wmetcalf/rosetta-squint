@@ -29,7 +29,15 @@ public final class WebPDecoder {
         int width = img.getWidth();
         int height = img.getHeight();
         int channelCount = hasAlpha ? 4 : 3;
-        byte[] out = new byte[width * height * channelCount];
+
+        Limits.checkDimensions(width, height, Format.WEBP);
+
+        long outSize = Math.multiplyExact(Math.multiplyExact((long) width, (long) height), (long) channelCount);
+        if (outSize > Integer.MAX_VALUE) {
+            throw new DecodeException(DecodeException.Kind.IMAGE_TOO_LARGE, Format.WEBP,
+                "pixel buffer size " + outSize + " exceeds Java int max");
+        }
+        byte[] out = new byte[(int) outSize];
 
         int[] argb = new int[width];
         int outIdx = 0;

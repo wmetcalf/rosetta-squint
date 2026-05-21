@@ -48,11 +48,16 @@ public final class BMPDecoder {
 
     private static DecodedImage decodeRgb24(byte[] bytes, BMPHeader hdr) throws DecodeException {
         int stride = ((hdr.width * 3 + 3) / 4) * 4;
-        if (bytes.length - hdr.pixelDataOffset < stride * hdr.height) {
+        if ((long) stride * hdr.height > bytes.length - hdr.pixelDataOffset) {
             throw new DecodeException(DecodeException.Kind.TRUNCATED, Format.BMP,
                 "pixel data truncated (24-bit RGB)");
         }
-        byte[] pixels = new byte[hdr.width * hdr.height * 3];
+        long totalBytes = Math.multiplyExact(Math.multiplyExact((long) hdr.width, (long) hdr.height), 3L);
+        if (totalBytes > Integer.MAX_VALUE) {
+            throw new DecodeException(DecodeException.Kind.IMAGE_TOO_LARGE, Format.BMP,
+                "pixel buffer size " + totalBytes + " exceeds Java int max");
+        }
+        byte[] pixels = new byte[(int) totalBytes];
         for (int srcRow = 0; srcRow < hdr.height; srcRow++) {
             int dstRow = hdr.topDown ? srcRow : (hdr.height - 1 - srcRow);
             for (int x = 0; x < hdr.width; x++) {
@@ -68,7 +73,7 @@ public final class BMPDecoder {
 
     private static DecodedImage decodeRgb32(byte[] bytes, BMPHeader hdr) throws DecodeException {
         int stride = hdr.width * 4;
-        if (bytes.length - hdr.pixelDataOffset < stride * hdr.height) {
+        if ((long) stride * hdr.height > bytes.length - hdr.pixelDataOffset) {
             throw new DecodeException(DecodeException.Kind.TRUNCATED, Format.BMP,
                 "pixel data truncated (32-bit RGB)");
         }
@@ -90,7 +95,12 @@ public final class BMPDecoder {
         }
         // Always output RGB to match Pillow 11 behavior (goldens show channels=3 for all BI_RGB 32-bit).
         // The two-pass detection would produce RGBA for non-zero alpha, but Pillow doesn't do that.
-        byte[] pixels = new byte[hdr.width * hdr.height * 3];
+        long totalBytes = Math.multiplyExact(Math.multiplyExact((long) hdr.width, (long) hdr.height), 3L);
+        if (totalBytes > Integer.MAX_VALUE) {
+            throw new DecodeException(DecodeException.Kind.IMAGE_TOO_LARGE, Format.BMP,
+                "pixel buffer size " + totalBytes + " exceeds Java int max");
+        }
+        byte[] pixels = new byte[(int) totalBytes];
         for (int srcRow = 0; srcRow < hdr.height; srcRow++) {
             int dstRow = hdr.topDown ? srcRow : (hdr.height - 1 - srcRow);
             for (int x = 0; x < hdr.width; x++) {
@@ -123,11 +133,16 @@ public final class BMPDecoder {
             palette[i][2] = bytes[off]     & 0xFF; // B
         }
         int stride = ((hdr.width + 3) / 4) * 4;
-        if (bytes.length - hdr.pixelDataOffset < stride * hdr.height) {
+        if ((long) stride * hdr.height > bytes.length - hdr.pixelDataOffset) {
             throw new DecodeException(DecodeException.Kind.TRUNCATED, Format.BMP,
                 "pixel data truncated (8-bit paletted)");
         }
-        byte[] pixels = new byte[hdr.width * hdr.height * 3];
+        long totalBytes = Math.multiplyExact(Math.multiplyExact((long) hdr.width, (long) hdr.height), 3L);
+        if (totalBytes > Integer.MAX_VALUE) {
+            throw new DecodeException(DecodeException.Kind.IMAGE_TOO_LARGE, Format.BMP,
+                "pixel buffer size " + totalBytes + " exceeds Java int max");
+        }
+        byte[] pixels = new byte[(int) totalBytes];
         for (int srcRow = 0; srcRow < hdr.height; srcRow++) {
             int dstRow = hdr.topDown ? srcRow : (hdr.height - 1 - srcRow);
             for (int x = 0; x < hdr.width; x++) {
@@ -169,11 +184,16 @@ public final class BMPDecoder {
         int[][] palette = readColorTable(bytes, hdr, entryCount);
         // Row stride: ceil(width*4 / 32) * 4 bytes = ((width * 4 + 31) / 32) * 4
         int stride = ((hdr.width * 4 + 31) / 32) * 4;
-        if (bytes.length - hdr.pixelDataOffset < stride * hdr.height) {
+        if ((long) stride * hdr.height > bytes.length - hdr.pixelDataOffset) {
             throw new DecodeException(DecodeException.Kind.TRUNCATED, Format.BMP,
                 "pixel data truncated (4-bit paletted)");
         }
-        byte[] pixels = new byte[hdr.width * hdr.height * 3];
+        long totalBytes = Math.multiplyExact(Math.multiplyExact((long) hdr.width, (long) hdr.height), 3L);
+        if (totalBytes > Integer.MAX_VALUE) {
+            throw new DecodeException(DecodeException.Kind.IMAGE_TOO_LARGE, Format.BMP,
+                "pixel buffer size " + totalBytes + " exceeds Java int max");
+        }
+        byte[] pixels = new byte[(int) totalBytes];
         for (int srcRow = 0; srcRow < hdr.height; srcRow++) {
             int dstRow = hdr.topDown ? srcRow : (hdr.height - 1 - srcRow);
             for (int x = 0; x < hdr.width; x++) {
@@ -195,11 +215,16 @@ public final class BMPDecoder {
         int[][] palette = readColorTable(bytes, hdr, entryCount);
         // Row stride: ceil(width / 32) * 4 bytes = ((width + 31) / 32) * 4
         int stride = ((hdr.width + 31) / 32) * 4;
-        if (bytes.length - hdr.pixelDataOffset < stride * hdr.height) {
+        if ((long) stride * hdr.height > bytes.length - hdr.pixelDataOffset) {
             throw new DecodeException(DecodeException.Kind.TRUNCATED, Format.BMP,
                 "pixel data truncated (1-bit paletted)");
         }
-        byte[] pixels = new byte[hdr.width * hdr.height * 3];
+        long totalBytes = Math.multiplyExact(Math.multiplyExact((long) hdr.width, (long) hdr.height), 3L);
+        if (totalBytes > Integer.MAX_VALUE) {
+            throw new DecodeException(DecodeException.Kind.IMAGE_TOO_LARGE, Format.BMP,
+                "pixel buffer size " + totalBytes + " exceeds Java int max");
+        }
+        byte[] pixels = new byte[(int) totalBytes];
         for (int srcRow = 0; srcRow < hdr.height; srcRow++) {
             int dstRow = hdr.topDown ? srcRow : (hdr.height - 1 - srcRow);
             for (int x = 0; x < hdr.width; x++) {
@@ -240,12 +265,17 @@ public final class BMPDecoder {
         } else {
             stride = hdr.width * 4;
         }
-        if (bytes.length - hdr.pixelDataOffset < stride * hdr.height) {
+        if ((long) stride * hdr.height > bytes.length - hdr.pixelDataOffset) {
             throw new DecodeException(DecodeException.Kind.TRUNCATED, Format.BMP,
                 "pixel data truncated (BI_BITFIELDS " + bitsPerPixel + "-bit)");
         }
 
-        byte[] pixels = new byte[hdr.width * hdr.height * channels];
+        long totalBytes = Math.multiplyExact(Math.multiplyExact((long) hdr.width, (long) hdr.height), (long) channels);
+        if (totalBytes > Integer.MAX_VALUE) {
+            throw new DecodeException(DecodeException.Kind.IMAGE_TOO_LARGE, Format.BMP,
+                "pixel buffer size " + totalBytes + " exceeds Java int max");
+        }
+        byte[] pixels = new byte[(int) totalBytes];
         for (int srcRow = 0; srcRow < hdr.height; srcRow++) {
             int dstRow = hdr.topDown ? srcRow : (hdr.height - 1 - srcRow);
             for (int x = 0; x < hdr.width; x++) {
@@ -371,7 +401,12 @@ public final class BMPDecoder {
         // Pillow's set_as_raw with direction=-1 reverses rows:
         // image row i = buffer row (ysize - 1 - i) for bottom-up.
         // For top-down (direction=+1), image row i = buffer row i.
-        byte[] pixels = new byte[xsize * ysize * 3];
+        long totalRleBytes = Math.multiplyExact(Math.multiplyExact((long) xsize, (long) ysize), 3L);
+        if (totalRleBytes > Integer.MAX_VALUE) {
+            throw new DecodeException(DecodeException.Kind.IMAGE_TOO_LARGE, Format.BMP,
+                "pixel buffer size " + totalRleBytes + " exceeds Java int max");
+        }
+        byte[] pixels = new byte[(int) totalRleBytes];
         for (int bufRow = 0; bufRow < ysize; bufRow++) {
             int imgRow = hdr.topDown ? bufRow : (ysize - 1 - bufRow);
             for (int col = 0; col < xsize; col++) {
@@ -478,6 +513,8 @@ public final class BMPDecoder {
 
         boolean topDown = biHeight < 0;
         int absHeight = Math.abs(biHeight);
+
+        Limits.checkDimensions(biWidth, absHeight, Format.BMP);
 
         return new BMPHeader(biWidth, absHeight, topDown, biBitCount, biCompression,
             biClrUsed, redMask, greenMask, blueMask, alphaMask,

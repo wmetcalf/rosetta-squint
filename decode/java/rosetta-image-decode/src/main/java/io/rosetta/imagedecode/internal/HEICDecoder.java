@@ -52,6 +52,8 @@ public final class HEICDecoder {
                 int height = lib.heif_image_handle_get_height(handle);
                 boolean hasAlpha = lib.heif_image_handle_has_alpha_channel(handle) != 0;
 
+                Limits.checkDimensions(width, height, Format.HEIC);
+
                 int chroma = hasAlpha
                         ? LibHeif.heif_chroma_interleaved_RGBA
                         : LibHeif.heif_chroma_interleaved_RGB;
@@ -80,7 +82,12 @@ public final class HEICDecoder {
 
                     int stride = strideRef.getValue();
                     int bpp = channels.bytesPerPixel();
-                    byte[] out = new byte[width * height * bpp];
+                    long outSize = Math.multiplyExact(Math.multiplyExact((long) width, (long) height), (long) bpp);
+                    if (outSize > Integer.MAX_VALUE) {
+                        throw new DecodeException(DecodeException.Kind.IMAGE_TOO_LARGE, Format.HEIC,
+                            "pixel buffer size " + outSize + " exceeds Java int max");
+                    }
+                    byte[] out = new byte[(int) outSize];
 
                     // Copy pixel rows, stripping any padding the library may add.
                     int rowBytes = width * bpp;

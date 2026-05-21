@@ -24,6 +24,8 @@ public final class JPEGDecoder {
                 throw new DecodeException(DecodeException.Kind.UNSUPPORTED_FEATURE, Format.JPEG, "CMYK color space");
             }
 
+            Limits.checkDimensions(width, height, Format.JPEG);
+
             // Decompress to RGB. pitch=0 means auto (width * bytesPerPixel).
             // FLAG_ACCURATEDCT = JDCT_ISLOW, matching PIL's default slow-but-accurate IDCT.
             byte[] rgb = decomp.decompress(width, 0, height, TJ.PF_RGB, TJ.FLAG_ACCURATEDCT);

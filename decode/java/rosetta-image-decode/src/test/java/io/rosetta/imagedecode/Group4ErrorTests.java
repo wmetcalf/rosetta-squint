@@ -38,6 +38,7 @@ public class Group4ErrorTests {
                     case CORRUPT_INPUT -> "corruptInput";
                     case TRUNCATED -> "truncated";
                     case UNSUPPORTED_FEATURE -> "unsupportedFeature";
+                    case IMAGE_TOO_LARGE -> "imageTooLarge";
                 };
                 if (!actualKind.equals(expectedKind)) {
                     failures.add(key + ": kind " + actualKind + " != expected " + expectedKind);

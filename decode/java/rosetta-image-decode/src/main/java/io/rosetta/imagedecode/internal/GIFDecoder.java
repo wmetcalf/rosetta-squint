@@ -37,6 +37,8 @@ public final class GIFDecoder {
         int height = img.getHeight();
         int channelCount = hasAlpha ? 4 : 3;
 
+        Limits.checkDimensions(width, height, Format.GIF);
+
         // Draw into a standard int image using SRC composite so that transparent pixels
         // retain their original palette RGB values (matching PIL's behavior). Without SRC,
         // Graphics2D's default SRC_OVER compositing zeroes the RGB components of fully
@@ -48,7 +50,12 @@ public final class GIFDecoder {
         g.drawImage(img, 0, 0, null);
         g.dispose();
 
-        byte[] out = new byte[width * height * channelCount];
+        long outSize = Math.multiplyExact(Math.multiplyExact((long) width, (long) height), (long) channelCount);
+        if (outSize > Integer.MAX_VALUE) {
+            throw new DecodeException(DecodeException.Kind.IMAGE_TOO_LARGE, Format.GIF,
+                "pixel buffer size " + outSize + " exceeds Java int max");
+        }
+        byte[] out = new byte[(int) outSize];
         int[] argb = new int[width];
         int outIdx = 0;
         for (int y = 0; y < height; y++) {
