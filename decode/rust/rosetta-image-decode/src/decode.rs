@@ -3,6 +3,7 @@ use crate::gif::decode_gif;
 use crate::png::decode_png;
 use crate::error::{DecodeError, DecodeErrorKind};
 use crate::types::{DecodedImage, Format};
+use crate::webp::decode_webp;
 
 /// Decode auto-detects the format from magic bytes and decodes.
 pub fn decode(bytes: &[u8]) -> Result<DecodedImage, DecodeError> {
@@ -14,6 +15,7 @@ pub fn decode(bytes: &[u8]) -> Result<DecodedImage, DecodeError> {
         Format::Gif => decode_gif(bytes),
         Format::Jpeg => crate::jpeg::decode_jpeg(bytes),
         Format::Png => decode_png(bytes),
+        Format::Webp => decode_webp(bytes),
         other => Err(DecodeError::new(DecodeErrorKind::UnsupportedFormat, Some(other), "")),
     }
 }
@@ -56,10 +58,17 @@ pub fn detect_format(bytes: &[u8]) -> Option<Format> {
     {
         return Some(Format::Jpeg);
     }
+    // WebP: RIFF????WEBP (bytes 0-3 = "RIFF", bytes 8-11 = "WEBP")
+    if bytes.len() >= 12
+        && bytes[0..4] == [b'R', b'I', b'F', b'F']
+        && bytes[8..12] == [b'W', b'E', b'B', b'P']
+    {
+        return Some(Format::Webp);
+    }
     None
 }
 
 /// Returns the list of formats this port can decode.
 pub fn supported_formats() -> Vec<Format> {
-    vec![Format::Bmp, Format::Png, Format::Gif, Format::Jpeg]
+    vec![Format::Bmp, Format::Png, Format::Gif, Format::Jpeg, Format::Webp]
 }

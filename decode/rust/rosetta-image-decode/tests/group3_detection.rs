@@ -66,3 +66,22 @@ fn detects_all_valid_jpeg() {
 fn supported_formats_contains_jpeg() {
     assert!(supported_formats().contains(&Format::Jpeg));
 }
+
+#[test]
+fn detects_all_valid_webp() {
+    for rel in testkit::list_valid_fixtures("webp") {
+        let bytes = testkit::read_fixture(&rel);
+        assert_eq!(Some(Format::Webp), detect_format(&bytes), "fixture {}", rel);
+    }
+}
+
+#[test]
+fn rejects_bad_magic_webp() {
+    let bytes = testkit::read_fixture("webp/invalid/bad-magic.webp");
+    assert!(detect_format(&bytes).is_none());
+}
+
+#[test]
+fn supported_formats_contains_webp() {
+    assert!(supported_formats().contains(&Format::Webp));
+}
