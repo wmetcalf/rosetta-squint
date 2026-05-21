@@ -49,3 +49,21 @@ extension Group3DetectionTests {
         XCTAssertTrue(Decoder.supportedFormats().contains(.gif))
     }
 }
+
+extension Group3DetectionTests {
+    func testDetectsAllValidJpeg() throws {
+        for rel in try TestKit.listValidFixtures("jpeg") {
+            let bytes = try TestKit.readFixture(rel)
+            XCTAssertEqual(Decoder.detectFormat(bytes), .jpeg, rel)
+        }
+    }
+
+    func testRejectsJpegBadMagic() throws {
+        let bytes = try TestKit.readFixture("jpeg/invalid/bad-magic.jpg")
+        XCTAssertNil(Decoder.detectFormat(bytes))
+    }
+
+    func testSupportedFormatsContainsJpeg() {
+        XCTAssertTrue(Decoder.supportedFormats().contains(.jpeg))
+    }
+}

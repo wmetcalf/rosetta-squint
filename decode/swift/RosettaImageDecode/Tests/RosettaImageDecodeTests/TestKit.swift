@@ -37,8 +37,10 @@ enum TestKit {
         let dir = "\(SPEC_DIR)/fixtures/\(format)/valid"
         let url = URL(fileURLWithPath: dir)
         let items = try FileManager.default.contentsOfDirectory(at: url, includingPropertiesForKeys: nil)
+        // Accept both "jpeg" and "jpg" extensions when format is "jpeg"
+        let validExtensions: Set<String> = format == "jpeg" ? [format, "jpg"] : [format]
         return items
-            .filter { $0.pathExtension == format }
+            .filter { validExtensions.contains($0.pathExtension) }
             .map { "\(format)/valid/\($0.lastPathComponent)" }
             .sorted()
     }

@@ -47,9 +47,30 @@ extension Group5InvariantsTests {
 
     func testSupportedFormatsContainsBmpPngAndGif() {
         let supported = Decoder.supportedFormats()
-        XCTAssertEqual(supported.count, 3)
         XCTAssertTrue(supported.contains(.bmp))
         XCTAssertTrue(supported.contains(.png))
         XCTAssertTrue(supported.contains(.gif))
+    }
+}
+
+extension Group5InvariantsTests {
+    func testAllDecodedJpegImagesHaveValidShape() throws {
+        for rel in try TestKit.listValidFixtures("jpeg") {
+            let bytes = try TestKit.readFixture(rel)
+            let img = try Decoder.decode(bytes)
+            XCTAssertGreaterThan(img.width, 0, rel)
+            XCTAssertGreaterThan(img.height, 0, rel)
+            XCTAssertEqual(img.format, .jpeg, rel)
+            XCTAssertEqual(img.data.count, img.width * img.height * img.channels.bytesPerPixel, rel)
+        }
+    }
+
+    func testSupportedFormatsContainsBmpPngGifAndJpeg() {
+        let supported = Decoder.supportedFormats()
+        XCTAssertEqual(supported.count, 4)
+        XCTAssertTrue(supported.contains(.bmp))
+        XCTAssertTrue(supported.contains(.png))
+        XCTAssertTrue(supported.contains(.gif))
+        XCTAssertTrue(supported.contains(.jpeg))
     }
 }

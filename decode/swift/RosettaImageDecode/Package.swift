@@ -10,10 +10,16 @@ let package = Package(
         .package(url: "https://github.com/tayloraswift/swift-png", "4.0.0"..<"4.4.0"),
     ],
     targets: [
+        .systemLibrary(
+            name: "Cjpeg",
+            pkgConfig: "libturbojpeg",
+            providers: [.apt(["libturbojpeg0-dev"]), .brew(["jpeg-turbo"])]
+        ),
         .target(
             name: "RosettaImageDecode",
             dependencies: [
                 .product(name: "PNG", package: "swift-png"),
+                "Cjpeg",
             ]
         ),
         .testTarget(
