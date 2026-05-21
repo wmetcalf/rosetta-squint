@@ -147,8 +147,12 @@ Then re-run every port's tests against the new goldens.
 - **No macOS testing.** All `swift test` runs are on Linux. The Mac path should work (pure Swift) but is unverified.
 - **No CI execution.** `.github/workflows/ci.yml` exists but the repo is local-only — no GitHub runs have happened.
 - **No live Python diff job.** Goldens are frozen at fixture-gen time; no test runs Python and a port side by side.
-- **Missing algorithms:** see top table. `crop_resistant_hash` / `ImageMultiHash` would be the biggest follow-up.
+- **Missing algorithms:** see top table.
 - **No published packages.** Nothing is on crates.io, Maven Central, npm, or Swift Package Index yet.
+
+## Security
+
+See [SECURITY.md](./SECURITY.md). Short version: the library operates on already-decoded RGB buffers, so the attack surface is small. All PNG decoder helpers are pure-language (no C FFI). Hash-size validation is in place but the library does NOT impose an upper bound on `hash_size` — the caller is responsible for sane values (recommended `<= 64`). For hashing **untrusted** images, decode them with [rosetta-image-decode](../rosetta-image-decode) first, which enforces `MAX_PIXELS`.
 
 ---
 
