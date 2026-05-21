@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rosetta-image-decode.example/goldens.schema.json",
+  "title": "rosetta-image-decode golden pixel manifest",
+  "type": "object",
+  "required": ["schema_version", "pillow_version", "regenerated_at", "fixtures"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "pillow_version": { "type": "string" },
+    "regenerated_at": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$" },
+    "fixtures": {
+      "type": "object",
+      "description": "Map of relative-from-fixtures-dir path (e.g., 'bmp/8x8-rgb24.bmp') to per-fixture metadata.",
+      "additionalProperties": { "$ref": "#/$defs/fixtureEntry" }
+    }
+  },
+  "$defs": {
+    "fixtureEntry": {
+      "type": "object",
+      "required": ["format", "width", "height", "channels", "sha256"],
+      "additionalProperties": false,
+      "properties": {
+        "format": {
+          "type": "string",
+          "enum": ["bmp", "png", "gif", "jpeg", "webp", "tiff", "heic", "emf", "wmf"]
+        },
+        "width":    { "type": "integer", "minimum": 1 },
+        "height":   { "type": "integer", "minimum": 1 },
+        "channels": { "type": "integer", "enum": [3, 4] },
+        "sha256":   { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    }
+  }
+}
