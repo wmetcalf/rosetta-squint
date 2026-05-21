@@ -315,6 +315,76 @@
       "sha256": "8e4aea8e0f51cca3b215af39de2c0863a9cbad5b9164a35d426a6ef36eeebc74",
       "width": 32
     },
+    "heic/valid/16x16-lossless.heic": {
+      "channels": 3,
+      "format": "heic",
+      "height": 16,
+      "sha256": "67ef239573dab73c20314c758c0c1d5fa583740ec89c54b524d448d87394f8d9",
+      "width": 16
+    },
+    "heic/valid/16x16-rgba.heic": {
+      "channels": 4,
+      "format": "heic",
+      "height": 16,
+      "sha256": "53b9f58d2985a2b08d07584a1295a486a96839c708518fd26aec418ca3fec953",
+      "width": 16
+    },
+    "heic/valid/16x16.heic": {
+      "channels": 3,
+      "format": "heic",
+      "height": 16,
+      "sha256": "2afe15adbac067924891c6f0866c5af2e2ed0b9a5f7b78a31a868ab1f8e91765",
+      "width": 16
+    },
+    "heic/valid/32x32-q50.heic": {
+      "channels": 3,
+      "format": "heic",
+      "height": 32,
+      "sha256": "f822650488e26389227665c2336121ab04176187907cf32120a9a57684c809b6",
+      "width": 32
+    },
+    "heic/valid/32x32-q90.heic": {
+      "channels": 3,
+      "format": "heic",
+      "height": 32,
+      "sha256": "600c73401c59fcbe953a0f1b0c675af3a2b92ae3bc998e926af6595831d8f94f",
+      "width": 32
+    },
+    "heic/valid/32x32-rgba.heic": {
+      "channels": 4,
+      "format": "heic",
+      "height": 32,
+      "sha256": "28152cfd246f36030481c55ea96d543b5d184fc7ec4fe260e72108614f39b571",
+      "width": 32
+    },
+    "heic/valid/64x64-q90.heic": {
+      "channels": 3,
+      "format": "heic",
+      "height": 64,
+      "sha256": "7b0a6232cee8dcac9fed7baef6af5f4e1727d2eb8127907798b32d21aa2bf998",
+      "width": 64
+    },
+    "heic/valid/larger-128x96.heic": {
+      "channels": 3,
+      "format": "heic",
+      "height": 96,
+      "sha256": "cee89b85a78252ce91f064a7e4a50d7e6602e343c43e3dc525bd28f5d62d60c3",
+      "width": 128
+    },
+    "heic/valid/photo-96.heic": {
+      "channels": 3,
+      "format": "heic",
+      "height": 96,
+      "sha256": "c5b52ca541c817dfa4e85cf42368fc4619265ee1197a8ca774d0b20f27a2939b",
+      "width": 96
+    },
+    "heic/valid/rect-24x16.heic": {
+      "channels": 3,
+      "format": "heic",
+      "height": 16,
+      "sha256": "41f7d0c2460de4c3182ae986405dd9bfcb6eb241f3a5d56d10c82bbb6d2d6595",
+      "width": 24
+    },
     "jpeg/valid/16x16-grayscale.jpg": {
       "channels": 3,
       "format": "jpeg",
@@ -897,7 +967,7 @@
       "width": 24
     }
   },
-  "pillow_version": "10.2.0",
-  "regenerated_at": "2026-05-21T16:59:36Z",
+  "pillow_version": "12.2.0",
+  "regenerated_at": "2026-05-21T17:11:01Z",
   "schema_version": 1
 }

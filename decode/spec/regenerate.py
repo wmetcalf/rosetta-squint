@@ -32,6 +32,12 @@ from pathlib import Path
 import PIL
 from PIL import Image
 
+try:
+    import pillow_heif
+    pillow_heif.register_heif_opener()
+except ImportError:
+    pass
+
 SPEC_DIR = Path(__file__).parent
 FIXTURES_DIR = SPEC_DIR / "fixtures"
 DECODED_DIR = SPEC_DIR / "decoded"
@@ -130,6 +136,8 @@ def regenerate(only_format: str | None) -> dict:
             fmt_extensions.add("jpg")
         if fmt_name == "tiff":
             fmt_extensions.add("tif")
+        if fmt_name == "heic":
+            fmt_extensions.add("heif")
 
         for fixture in sorted(fmt_dir.rglob("*")):
             if not fixture.is_file() or fixture.name.startswith("."):
