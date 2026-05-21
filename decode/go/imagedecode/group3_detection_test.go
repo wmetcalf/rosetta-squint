@@ -35,3 +35,26 @@ func TestGroup3SupportedFormats(t *testing.T) {
 		t.Errorf("SupportedFormats should contain Bmp")
 	}
 }
+
+func TestGroup3DetectsAllValidPngFixtures(t *testing.T) {
+	fixtures := listValidFixtures(t, "png")
+	for _, rel := range fixtures {
+		b := readFixture(t, rel)
+		f, ok := DetectFormat(b)
+		if !ok || f != Png {
+			t.Errorf("%s: expected Png detection, got %v ok=%v", rel, f, ok)
+		}
+	}
+}
+
+func TestGroup3SupportedFormatsContainsPng(t *testing.T) {
+	found := false
+	for _, f := range SupportedFormats() {
+		if f == Png {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("SupportedFormats should contain Png")
+	}
+}
