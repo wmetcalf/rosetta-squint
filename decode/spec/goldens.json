@@ -319,70 +319,70 @@
       "channels": 3,
       "format": "heic",
       "height": 16,
-      "sha256": "67ef239573dab73c20314c758c0c1d5fa583740ec89c54b524d448d87394f8d9",
+      "sha256": "bc7b2019d6fbb867f4189eb6109cb26da6192846e42deedb581be82b9156ca66",
       "width": 16
     },
     "heic/valid/16x16-rgba.heic": {
       "channels": 4,
       "format": "heic",
       "height": 16,
-      "sha256": "53b9f58d2985a2b08d07584a1295a486a96839c708518fd26aec418ca3fec953",
+      "sha256": "354f74930be1f4744b8796ec55490bd3108977cb0e38c259e86aeb5ec751b247",
       "width": 16
     },
     "heic/valid/16x16.heic": {
       "channels": 3,
       "format": "heic",
       "height": 16,
-      "sha256": "2afe15adbac067924891c6f0866c5af2e2ed0b9a5f7b78a31a868ab1f8e91765",
+      "sha256": "f17f5ea7fea5b9c2d329b0c2f4925523370c1eba2d7d70089c58740bf24be503",
       "width": 16
     },
     "heic/valid/32x32-q50.heic": {
       "channels": 3,
       "format": "heic",
       "height": 32,
-      "sha256": "f822650488e26389227665c2336121ab04176187907cf32120a9a57684c809b6",
+      "sha256": "858e7cc2fa1e8769bc1a319b7e7273d7788a4f1781d37d16b9fd943349bd4892",
       "width": 32
     },
     "heic/valid/32x32-q90.heic": {
       "channels": 3,
       "format": "heic",
       "height": 32,
-      "sha256": "600c73401c59fcbe953a0f1b0c675af3a2b92ae3bc998e926af6595831d8f94f",
+      "sha256": "5fa19c2d93467e42997bc903ee75219976246230b7818be8f755f482995050fa",
       "width": 32
     },
     "heic/valid/32x32-rgba.heic": {
       "channels": 4,
       "format": "heic",
       "height": 32,
-      "sha256": "28152cfd246f36030481c55ea96d543b5d184fc7ec4fe260e72108614f39b571",
+      "sha256": "502e486e5bfe961b6756e83011dfde72d17b521bfdcdff7262ed841de78c706c",
       "width": 32
     },
     "heic/valid/64x64-q90.heic": {
       "channels": 3,
       "format": "heic",
       "height": 64,
-      "sha256": "7b0a6232cee8dcac9fed7baef6af5f4e1727d2eb8127907798b32d21aa2bf998",
+      "sha256": "e047fd922c3318452882d2a69823be3935e6566eac2ed2985696b6fe00470b91",
       "width": 64
     },
     "heic/valid/larger-128x96.heic": {
       "channels": 3,
       "format": "heic",
       "height": 96,
-      "sha256": "cee89b85a78252ce91f064a7e4a50d7e6602e343c43e3dc525bd28f5d62d60c3",
+      "sha256": "8a5bfd9ef3706e89a1b635326147561719f8db0b86f9f7b84643878d3b4306e0",
       "width": 128
     },
     "heic/valid/photo-96.heic": {
       "channels": 3,
       "format": "heic",
       "height": 96,
-      "sha256": "c5b52ca541c817dfa4e85cf42368fc4619265ee1197a8ca774d0b20f27a2939b",
+      "sha256": "e37361cee5d4bb15226f29e6b4a48ebb1ec1f29d9502f2ac3b34cb0330569906",
       "width": 96
     },
     "heic/valid/rect-24x16.heic": {
       "channels": 3,
       "format": "heic",
       "height": 16,
-      "sha256": "41f7d0c2460de4c3182ae986405dd9bfcb6eb241f3a5d56d10c82bbb6d2d6595",
+      "sha256": "9e3153b13b51bec3d242b2b9f752dff73fe6b2bb94e6e56362190147370b71e7",
       "width": 24
     },
     "jpeg/valid/16x16-grayscale.jpg": {
