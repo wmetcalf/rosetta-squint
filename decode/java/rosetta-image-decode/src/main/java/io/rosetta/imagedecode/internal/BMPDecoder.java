@@ -26,17 +26,21 @@ public final class BMPDecoder {
                 case 24 -> decodeRgb24(bytes, hdr);
                 case 32 -> decodeRgb32(bytes, hdr);
                 case 8  -> decodePal8(bytes, hdr);
-                case 1, 4 -> throw new DecodeException(DecodeException.Kind.UNSUPPORTED_FEATURE, Format.BMP,
-                    "1/4-bit paletted (Tier 2; implemented in next task)");
-                case 16 -> throw new DecodeException(DecodeException.Kind.UNSUPPORTED_FEATURE, Format.BMP,
-                    "BI_RGB 16-bit not supported (use BI_BITFIELDS)");
+                case 4  -> decodePal4(bytes, hdr);
+                case 1  -> decodePal1(bytes, hdr);
+                case 16 -> throw new DecodeException(DecodeException.Kind.CORRUPT_INPUT, Format.BMP,
+                    "BI_RGB 16-bit not supported");
                 default -> throw new DecodeException(DecodeException.Kind.CORRUPT_INPUT, Format.BMP,
-                    "biBitCount " + hdr.bitCount + " for BI_RGB not supported");
+                    "biBitCount " + hdr.bitCount + " for BI_RGB");
             };
-            case BI_RLE8, BI_RLE4 -> throw new DecodeException(DecodeException.Kind.UNSUPPORTED_FEATURE, Format.BMP,
-                "RLE compression (Tier 3; implemented in next task)");
-            case BI_BITFIELDS, BI_ALPHABITFIELDS -> throw new DecodeException(DecodeException.Kind.UNSUPPORTED_FEATURE, Format.BMP,
-                "BI_BITFIELDS (Tier 2; implemented in next task)");
+            case BI_BITFIELDS, BI_ALPHABITFIELDS -> switch (hdr.bitCount) {
+                case 16 -> decodeBitfields(bytes, hdr, 16);
+                case 32 -> decodeBitfields(bytes, hdr, 32);
+                default -> throw new DecodeException(DecodeException.Kind.CORRUPT_INPUT, Format.BMP,
+                    "BI_BITFIELDS with biBitCount " + hdr.bitCount);
+            };
+            case BI_RLE8 -> decodeRle(bytes, hdr, 8);
+            case BI_RLE4 -> decodeRle(bytes, hdr, 4);
             default -> throw new DecodeException(DecodeException.Kind.CORRUPT_INPUT, Format.BMP,
                 "biCompression " + hdr.compression + " unreachable");
         };
@@ -142,6 +146,245 @@ public final class BMPDecoder {
         return new DecodedImage(hdr.width, hdr.height, pixels, Channels.RGB, Format.BMP);
     }
 
+    /** Reads the color table for paletted images; returns int[entryCount][3] (R,G,B). */
+    private static int[][] readColorTable(byte[] bytes, BMPHeader hdr, int entryCount) throws DecodeException {
+        int colorTableOffset = 14 + hdr.dibHeaderSize;
+        int colorTableEnd = colorTableOffset + entryCount * 4;
+        if (bytes.length < colorTableEnd) {
+            throw new DecodeException(DecodeException.Kind.TRUNCATED, Format.BMP,
+                "color table truncated");
+        }
+        int[][] palette = new int[entryCount][3];
+        for (int i = 0; i < entryCount; i++) {
+            int off = colorTableOffset + i * 4;
+            palette[i][0] = bytes[off + 2] & 0xFF; // R
+            palette[i][1] = bytes[off + 1] & 0xFF; // G
+            palette[i][2] = bytes[off]     & 0xFF; // B
+        }
+        return palette;
+    }
+
+    private static DecodedImage decodePal4(byte[] bytes, BMPHeader hdr) throws DecodeException {
+        int entryCount = hdr.clrUsed > 0 ? hdr.clrUsed : 16;
+        int[][] palette = readColorTable(bytes, hdr, entryCount);
+        // Row stride: ceil(width*4 / 32) * 4 bytes = ((width * 4 + 31) / 32) * 4
+        int stride = ((hdr.width * 4 + 31) / 32) * 4;
+        if (bytes.length - hdr.pixelDataOffset < stride * hdr.height) {
+            throw new DecodeException(DecodeException.Kind.TRUNCATED, Format.BMP,
+                "pixel data truncated (4-bit paletted)");
+        }
+        byte[] pixels = new byte[hdr.width * hdr.height * 3];
+        for (int srcRow = 0; srcRow < hdr.height; srcRow++) {
+            int dstRow = hdr.topDown ? srcRow : (hdr.height - 1 - srcRow);
+            for (int x = 0; x < hdr.width; x++) {
+                int byteOff = hdr.pixelDataOffset + srcRow * stride + (x / 2);
+                int b = bytes[byteOff] & 0xFF;
+                int idx = (x % 2 == 0) ? (b >> 4) : (b & 0xF);
+                if (idx >= entryCount) idx = entryCount - 1;
+                int dstIdx = (dstRow * hdr.width + x) * 3;
+                pixels[dstIdx]     = (byte) palette[idx][0]; // R
+                pixels[dstIdx + 1] = (byte) palette[idx][1]; // G
+                pixels[dstIdx + 2] = (byte) palette[idx][2]; // B
+            }
+        }
+        return new DecodedImage(hdr.width, hdr.height, pixels, Channels.RGB, Format.BMP);
+    }
+
+    private static DecodedImage decodePal1(byte[] bytes, BMPHeader hdr) throws DecodeException {
+        int entryCount = hdr.clrUsed > 0 ? hdr.clrUsed : 2;
+        int[][] palette = readColorTable(bytes, hdr, entryCount);
+        // Row stride: ceil(width / 32) * 4 bytes = ((width + 31) / 32) * 4
+        int stride = ((hdr.width + 31) / 32) * 4;
+        if (bytes.length - hdr.pixelDataOffset < stride * hdr.height) {
+            throw new DecodeException(DecodeException.Kind.TRUNCATED, Format.BMP,
+                "pixel data truncated (1-bit paletted)");
+        }
+        byte[] pixels = new byte[hdr.width * hdr.height * 3];
+        for (int srcRow = 0; srcRow < hdr.height; srcRow++) {
+            int dstRow = hdr.topDown ? srcRow : (hdr.height - 1 - srcRow);
+            for (int x = 0; x < hdr.width; x++) {
+                int byteOff = hdr.pixelDataOffset + srcRow * stride + (x / 8);
+                int b = bytes[byteOff] & 0xFF;
+                // MSB first: bit 7 is pixel 0
+                int idx = (b >> (7 - (x % 8))) & 1;
+                if (idx >= entryCount) idx = entryCount - 1;
+                int dstIdx = (dstRow * hdr.width + x) * 3;
+                pixels[dstIdx]     = (byte) palette[idx][0]; // R
+                pixels[dstIdx + 1] = (byte) palette[idx][1]; // G
+                pixels[dstIdx + 2] = (byte) palette[idx][2]; // B
+            }
+        }
+        return new DecodedImage(hdr.width, hdr.height, pixels, Channels.RGB, Format.BMP);
+    }
+
+    private static DecodedImage decodeBitfields(byte[] bytes, BMPHeader hdr, int bitsPerPixel) throws DecodeException {
+        boolean hasAlpha = hdr.alphaMask != 0;
+        int channels = hasAlpha ? 4 : 3;
+        Channels ch = hasAlpha ? Channels.RGBA : Channels.RGB;
+
+        // Pre-compute shifts and ranges for each channel
+        int redShift   = Long.numberOfTrailingZeros(hdr.redMask);
+        int greenShift = Long.numberOfTrailingZeros(hdr.greenMask);
+        int blueShift  = Long.numberOfTrailingZeros(hdr.blueMask);
+        long redRange   = hdr.redMask   >>> redShift;
+        long greenRange = hdr.greenMask >>> greenShift;
+        long blueRange  = hdr.blueMask  >>> blueShift;
+        int alphaShift = hasAlpha ? Long.numberOfTrailingZeros(hdr.alphaMask) : 0;
+        long alphaRange = hasAlpha ? (hdr.alphaMask >>> alphaShift) : 1;
+
+        ByteBuffer bb = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN);
+
+        int stride;
+        if (bitsPerPixel == 16) {
+            stride = ((hdr.width * 2 + 3) / 4) * 4;
+        } else {
+            stride = hdr.width * 4;
+        }
+        if (bytes.length - hdr.pixelDataOffset < stride * hdr.height) {
+            throw new DecodeException(DecodeException.Kind.TRUNCATED, Format.BMP,
+                "pixel data truncated (BI_BITFIELDS " + bitsPerPixel + "-bit)");
+        }
+
+        byte[] pixels = new byte[hdr.width * hdr.height * channels];
+        for (int srcRow = 0; srcRow < hdr.height; srcRow++) {
+            int dstRow = hdr.topDown ? srcRow : (hdr.height - 1 - srcRow);
+            for (int x = 0; x < hdr.width; x++) {
+                int srcIdx = hdr.pixelDataOffset + srcRow * stride;
+                long pixel;
+                if (bitsPerPixel == 16) {
+                    pixel = Short.toUnsignedInt(bb.getShort(srcIdx + x * 2));
+                } else {
+                    pixel = bb.getInt(srcIdx + x * 4) & 0xFFFFFFFFL;
+                }
+                int r = (int) (((pixel & hdr.redMask)   >>> redShift)   * 255L / redRange);
+                int g = (int) (((pixel & hdr.greenMask) >>> greenShift) * 255L / greenRange);
+                int b = (int) (((pixel & hdr.blueMask)  >>> blueShift)  * 255L / blueRange);
+                int dstIdx = (dstRow * hdr.width + x) * channels;
+                pixels[dstIdx]     = (byte) r;
+                pixels[dstIdx + 1] = (byte) g;
+                pixels[dstIdx + 2] = (byte) b;
+                if (hasAlpha) {
+                    int a = (int) (((pixel & hdr.alphaMask) >>> alphaShift) * 255L / alphaRange);
+                    pixels[dstIdx + 3] = (byte) a;
+                }
+            }
+        }
+        return new DecodedImage(hdr.width, hdr.height, pixels, ch, Format.BMP);
+    }
+
+    private static DecodedImage decodeRle(byte[] bytes, BMPHeader hdr, int bitsPerPixel) throws DecodeException {
+        int entryCount = hdr.clrUsed > 0 ? hdr.clrUsed : (bitsPerPixel == 8 ? 256 : 16);
+        int[][] palette = readColorTable(bytes, hdr, entryCount);
+
+        int xsize = hdr.width;
+        int ysize = hdr.height;
+
+        // Replicate Pillow's BmpRleDecoder exactly.
+        // Pillow accumulates pixel indices into a flat buffer in file-scanline order,
+        // then calls set_as_raw with direction=-1 (bottom-up) or +1 (top-down).
+        // We replicate its flat buffer, then flip rows if bottom-up.
+        java.util.ArrayList<Integer> dataBuf = new java.util.ArrayList<>(xsize * ysize);
+        int x = 0;
+        int pos = hdr.pixelDataOffset;
+        int end = bytes.length;
+
+        outer:
+        while (dataBuf.size() < xsize * ysize) {
+            if (pos + 1 >= end) break;
+            int numPixels = bytes[pos++] & 0xFF;
+            int dataByte  = bytes[pos++] & 0xFF;
+
+            if (numPixels != 0) {
+                // Encoded mode: clip at end of row (Pillow behavior)
+                if (x + numPixels > xsize) {
+                    numPixels = Math.max(0, xsize - x);
+                }
+                if (bitsPerPixel == 8) {
+                    for (int i = 0; i < numPixels; i++) dataBuf.add(dataByte);
+                } else {
+                    // RLE4: alternating high/low nibble
+                    for (int i = 0; i < numPixels; i++) {
+                        dataBuf.add((i % 2 == 0) ? (dataByte >> 4) : (dataByte & 0xF));
+                    }
+                }
+                x += numPixels;
+            } else {
+                if (dataByte == 0) {
+                    // EOL: pad with zeros to next row boundary (Pillow behavior)
+                    while (dataBuf.size() % xsize != 0) dataBuf.add(0);
+                    x = 0;
+                } else if (dataByte == 1) {
+                    // End of bitmap
+                    break outer;
+                } else if (dataByte == 2) {
+                    // Delta: Pillow reads 4 bytes (reads 2 into bytes_read, then 2 into right,up).
+                    // The first 2 bytes are discarded; the second 2 are used as dx, dy.
+                    // This is a Pillow bug but we must match it to be byte-exact with the goldens.
+                    if (pos + 3 >= end) break; // not enough bytes
+                    pos += 2; // skip first 2 bytes (discarded in Pillow)
+                    int right = bytes[pos++] & 0xFF;
+                    int up    = bytes[pos++] & 0xFF;
+                    int zeros = right + up * xsize;
+                    for (int i = 0; i < zeros; i++) dataBuf.add(0);
+                    x = dataBuf.size() % xsize;
+                } else {
+                    // Absolute mode: dataByte >= 3 pixels follow
+                    int numAbs = dataByte;
+                    int byteCount;
+                    if (bitsPerPixel == 8) {
+                        byteCount = numAbs;
+                    } else {
+                        // RLE4: Pillow uses floor division (byte[0] // 2), NOT ceil
+                        byteCount = numAbs / 2;
+                    }
+                    if (pos + byteCount > end) break;
+                    if (bitsPerPixel == 8) {
+                        for (int i = 0; i < byteCount; i++) {
+                            dataBuf.add(bytes[pos + i] & 0xFF);
+                        }
+                    } else {
+                        // RLE4: emit both nibbles of each byte read
+                        for (int i = 0; i < byteCount; i++) {
+                            int b = bytes[pos + i] & 0xFF;
+                            dataBuf.add(b >> 4);
+                            dataBuf.add(b & 0xF);
+                        }
+                    }
+                    x += numAbs;
+                    pos += byteCount;
+                    // Word-align: Pillow checks fd.tell() % 2 != 0 (position in file from pixelDataOffset)
+                    // We track absolute pos; check if (pos - hdr.pixelDataOffset) % 2 != 0
+                    if ((pos - hdr.pixelDataOffset) % 2 != 0) {
+                        pos++; // skip padding byte
+                    }
+                }
+            }
+        }
+
+        // Ensure buffer is exactly xsize * ysize (pad or truncate)
+        while (dataBuf.size() < xsize * ysize) dataBuf.add(0);
+
+        // Build output pixels.
+        // Pillow's set_as_raw with direction=-1 reverses rows:
+        // image row i = buffer row (ysize - 1 - i) for bottom-up.
+        // For top-down (direction=+1), image row i = buffer row i.
+        byte[] pixels = new byte[xsize * ysize * 3];
+        for (int bufRow = 0; bufRow < ysize; bufRow++) {
+            int imgRow = hdr.topDown ? bufRow : (ysize - 1 - bufRow);
+            for (int col = 0; col < xsize; col++) {
+                int palIdx = dataBuf.get(bufRow * xsize + col);
+                if (palIdx >= entryCount) palIdx = entryCount - 1;
+                int[] rgb = palette[palIdx];
+                int dstIdx = (imgRow * xsize + col) * 3;
+                pixels[dstIdx]     = (byte) rgb[0]; // R
+                pixels[dstIdx + 1] = (byte) rgb[1]; // G
+                pixels[dstIdx + 2] = (byte) rgb[2]; // B
+            }
+        }
+
+        return new DecodedImage(hdr.width, hdr.height, pixels, Channels.RGB, Format.BMP);
+    }
+
     static BMPHeader parseHeader(byte[] bytes) throws DecodeException {
         if (bytes.length < 14) {
             throw new DecodeException(DecodeException.Kind.TRUNCATED, Format.BMP, "file header truncated");
@@ -163,7 +406,8 @@ public final class BMPDecoder {
         if (biSize == 12) {
             throw new DecodeException(DecodeException.Kind.UNSUPPORTED_FEATURE, Format.BMP, "OS/2 BMP header (size 12)");
         }
-        if (biSize != 40 && biSize != 108 && biSize != 124) {
+        // Accept BITMAPINFOHEADER(40), BITMAPV2(52), BITMAPV3(56), BITMAPV4(108), BITMAPV5(124)
+        if (biSize != 40 && biSize != 52 && biSize != 56 && biSize != 108 && biSize != 124) {
             throw new DecodeException(DecodeException.Kind.CORRUPT_INPUT, Format.BMP,
                 "DIB header size " + biSize + " not supported");
         }

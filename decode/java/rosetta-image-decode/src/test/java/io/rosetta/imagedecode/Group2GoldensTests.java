@@ -4,31 +4,27 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.regex.Pattern;
 import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class Group2GoldensTests {
-    /** Files matching Tier 1: BI_RGB 24/32/8-paletted. */
-    private static final Pattern TIER1 = Pattern.compile(
-        "bmp/valid/(?:rgb24-|rgba32-|pal8|real-bmpsuite-g-rgb24|real-bmpsuite-g-pal8gs).*\\.bmp"
-    );
 
     @Test
-    public void byteExactTier1() throws IOException {
+    public void byteExactAll() throws IOException {
         List<String> fixtures = TestKit.listValidFixtures("bmp");
-        List<String> tier1 = fixtures.stream().filter(p -> TIER1.matcher(p).matches()).toList();
-        assertFalse(tier1.isEmpty(), "should have Tier-1 fixtures");
+        assertEquals(30, fixtures.size(), "expected 30 BMP fixtures");
 
         List<String> failures = new ArrayList<>();
-        for (String rel : tier1) {
+        for (String rel : fixtures) {
             byte[] input = TestKit.readFixture(rel);
             try {
                 DecodedImage got = Decoder.decode(input);
                 TestKit.DecodedGolden want = TestKit.readGolden(rel);
-                if (got.width() != want.width() || got.height() != want.height() || got.channels().bytesPerPixel() != want.channels()) {
-                    failures.add(rel + ": shape " + got.width() + "x" + got.height() + "c" + got.channels().bytesPerPixel()
+                if (got.width() != want.width() || got.height() != want.height()
+                        || got.channels().bytesPerPixel() != want.channels()) {
+                    failures.add(rel + ": shape " + got.width() + "x" + got.height()
+                        + "c" + got.channels().bytesPerPixel()
                         + " != " + want.width() + "x" + want.height() + "c" + want.channels());
                     continue;
                 }
@@ -39,8 +35,10 @@ public class Group2GoldensTests {
                 }
                 for (int i = 0; i < gotData.length; i++) {
                     if (gotData[i] != want.pixels()[i]) {
-                        failures.add(rel + ": pixel byte " + i + " " + (gotData[i] & 0xFF) + " != " + (want.pixels()[i] & 0xFF));
-                        break; // one failure per fixture is enough
+                        failures.add(rel + ": pixel byte " + i
+                            + " got=" + (gotData[i] & 0xFF)
+                            + " want=" + (want.pixels()[i] & 0xFF));
+                        break;
                     }
                 }
             } catch (DecodeException e) {
@@ -48,7 +46,7 @@ public class Group2GoldensTests {
             }
         }
         if (!failures.isEmpty()) {
-            fail(failures.size() + " Tier-1 failures:\n  " + String.join("\n  ", failures));
+            fail(failures.size() + " failures:\n  " + String.join("\n  ", failures));
         }
     }
 }
