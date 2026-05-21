@@ -19,6 +19,7 @@ These differences arise from rounding divergences in the DCT/YCbCr→RGB convers
 path between the bundled WASM libde265/libheif and the system-compiled 1.17.6 build.
 The lossless and small (16x16) fixtures matched exactly.
 
-**Resolution:** The HEIC goldens in `spec/decoded/heic/valid/` were regenerated using
-libheif-js 1.17.1 output as the reference. All other format goldens (BMP, PNG, GIF,
-JPEG, WebP, TIFF) remain anchored to system PIL/Pillow output.
+**Resolution:** HEIC goldens stay anchored to system libheif 1.17.6 (so Rust/Go/Java/Swift
+ports linking to system libheif remain byte-exact). The JS port's Group 2 HEIC test uses a
+±2 per-pixel tolerance instead of byte-exact comparison. This is the only port-specific
+relaxation in the project — all other ports and formats are byte-exact.
