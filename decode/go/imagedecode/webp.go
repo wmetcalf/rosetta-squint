@@ -7,10 +7,13 @@ import (
 func decodeWebp(b []byte) (DecodedImage, error) {
 	// Use libwebp's WebPGetFeatures (via GetInfo) to detect alpha.
 	// This is authoritative: it reads the bitstream features directly.
-	_, _, hasAlpha, err := webp.GetInfo(b)
+	webpWidth, webpHeight, hasAlpha, err := webp.GetInfo(b)
 	if err != nil {
 		// GetInfo failed — likely corrupt or truncated header.
 		return DecodedImage{}, newError(CorruptInput, Webp, true, "webp.GetInfo failed: "+err.Error())
+	}
+	if err := checkDimensions(webpWidth, webpHeight, Webp); err != nil {
+		return DecodedImage{}, err
 	}
 
 	if hasAlpha {

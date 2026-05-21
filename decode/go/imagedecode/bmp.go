@@ -32,6 +32,9 @@ func decodeBmp(b []byte) (DecodedImage, error) {
 	if err != nil {
 		return DecodedImage{}, err
 	}
+	if err := checkDimensions(hdr.width, hdr.height, Bmp); err != nil {
+		return DecodedImage{}, err
+	}
 	switch hdr.compression {
 	case biRgb:
 		switch hdr.bitCount {

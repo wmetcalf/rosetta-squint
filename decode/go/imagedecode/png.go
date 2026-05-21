@@ -9,6 +9,15 @@ import (
 )
 
 func decodePng(b []byte) (DecodedImage, error) {
+	// Sniff dimensions without full decode to guard against decompression bombs.
+	cfg, err := png.DecodeConfig(bytes.NewReader(b))
+	if err != nil {
+		return DecodedImage{}, newError(CorruptInput, Png, true, "png.DecodeConfig failed: "+err.Error())
+	}
+	if err := checkDimensions(cfg.Width, cfg.Height, Png); err != nil {
+		return DecodedImage{}, err
+	}
+
 	img, err := png.Decode(bytes.NewReader(b))
 	if err != nil {
 		return DecodedImage{}, newError(CorruptInput, Png, true, "png.Decode failed: "+err.Error())

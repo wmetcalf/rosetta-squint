@@ -8,6 +8,15 @@ import (
 )
 
 func decodeTiff(b []byte) (DecodedImage, error) {
+	// Sniff dimensions without full decode to guard against decompression bombs.
+	cfg, err := tiff.DecodeConfig(bytes.NewReader(b))
+	if err != nil {
+		return DecodedImage{}, newError(CorruptInput, Tiff, true, "tiff.DecodeConfig failed: "+err.Error())
+	}
+	if err := checkDimensions(cfg.Width, cfg.Height, Tiff); err != nil {
+		return DecodedImage{}, err
+	}
+
 	img, err := tiff.Decode(bytes.NewReader(b))
 	if err != nil {
 		return DecodedImage{}, newError(CorruptInput, Tiff, true, "tiff.Decode failed: "+err.Error())

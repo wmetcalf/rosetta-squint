@@ -19,6 +19,10 @@ func decodeHeic(b []byte) (DecodedImage, error) {
 		return DecodedImage{}, newError(CorruptInput, Heic, true, "GetPrimaryImageHandle: "+err.Error())
 	}
 
+	if err := checkDimensions(handle.GetWidth(), handle.GetHeight(), Heic); err != nil {
+		return DecodedImage{}, err
+	}
+
 	hasAlpha := handle.HasAlphaChannel()
 	var chroma heif.Chroma
 	if hasAlpha {

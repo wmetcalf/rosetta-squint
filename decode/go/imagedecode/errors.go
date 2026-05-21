@@ -10,6 +10,7 @@ const (
 	CorruptInput
 	Truncated
 	UnsupportedFeature
+	ImageTooLarge
 )
 
 func (k DecodeErrorKind) String() string {
@@ -22,6 +23,8 @@ func (k DecodeErrorKind) String() string {
 		return "truncated"
 	case UnsupportedFeature:
 		return "unsupportedFeature"
+	case ImageTooLarge:
+		return "imageTooLarge"
 	}
 	return "unknown"
 }

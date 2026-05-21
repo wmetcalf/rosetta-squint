@@ -12,6 +12,13 @@ func decodeJpeg(b []byte) (DecodedImage, error) {
 		return DecodedImage{}, newError(UnsupportedFeature, Jpeg, true, "CMYK color space")
 	}
 
+	// Sniff dimensions from the SOF marker to guard against decompression bombs.
+	if w, h, ok := jpegDimensions(b); ok {
+		if err := checkDimensions(w, h, Jpeg); err != nil {
+			return DecodedImage{}, err
+		}
+	}
+
 	// DecodeIntoRGB forces out_color_space=JCS_RGB in libjpeg-turbo,
 	// so YCbCr→RGB conversion is done by libjpeg (matching Rust/JS goldens).
 	// Grayscale is also expanded to 3-channel RGB by libjpeg.
@@ -44,6 +51,37 @@ func decodeJpeg(b []byte) (DecodedImage, error) {
 	}
 
 	return DecodedImage{Width: width, Height: height, Data: out, Channels: RGB, Format: Jpeg}, nil
+}
+
+// jpegDimensions scans JPEG markers to find the first SOF (Start Of Frame) marker
+// and returns the image width and height. Returns (0, 0, false) if not found.
+// SOF layout: FF Cn [length 2 bytes] [precision 1 byte] [height 2 bytes] [width 2 bytes] ...
+func jpegDimensions(b []byte) (width, height int, ok bool) {
+	for i := 0; i+1 < len(b); i++ {
+		if b[i] != 0xFF {
+			continue
+		}
+		mk := b[i+1]
+		switch mk {
+		case 0xC0, 0xC1, 0xC2, 0xC9, 0xCA:
+			// SOF marker: precision(1) height(2) width(2) at i+4..i+8
+			if i+8 < len(b) {
+				h := int(b[i+4])<<8 | int(b[i+5])
+				w := int(b[i+6])<<8 | int(b[i+7])
+				return w, h, true
+			}
+		case 0x00, 0xFF:
+			// stuffed byte or padding; continue
+		case 0xD8, 0xD9:
+			// SOI / EOI — no length field
+		default:
+			if i+3 < len(b) {
+				length := int(b[i+2])<<8 | int(b[i+3])
+				i += 1 + length
+			}
+		}
+	}
+	return 0, 0, false
 }
 
 // isCmyk scans JPEG markers to find the first SOF (Start Of Frame) marker

@@ -69,6 +69,15 @@ func gifTransparentIndex(b []byte, gctEntries int) int {
 }
 
 func decodeGif(b []byte) (DecodedImage, error) {
+	// Sniff dimensions without full decode to guard against decompression bombs.
+	cfg, err := gif.DecodeConfig(bytes.NewReader(b))
+	if err != nil {
+		return DecodedImage{}, newError(CorruptInput, Gif, true, "gif.DecodeConfig failed: "+err.Error())
+	}
+	if err := checkDimensions(cfg.Width, cfg.Height, Gif); err != nil {
+		return DecodedImage{}, err
+	}
+
 	img, err := gif.Decode(bytes.NewReader(b))
 	if err != nil {
 		return DecodedImage{}, newError(CorruptInput, Gif, true, "gif.Decode failed: "+err.Error())
