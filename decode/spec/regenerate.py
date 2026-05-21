@@ -37,6 +37,7 @@ FIXTURES_DIR = SPEC_DIR / "fixtures"
 DECODED_DIR = SPEC_DIR / "decoded"
 GOLDENS_PATH = SPEC_DIR / "goldens.json"
 FORMATS_PATH = SPEC_DIR / "formats.json"
+ERRORS_PATH = SPEC_DIR / "errors.json"
 
 GOLDENS_SCHEMA_VERSION = 1
 
@@ -92,6 +93,12 @@ def regenerate(only_format: str | None) -> dict:
     formats_data = load_formats()
     supported = supported_formats(formats_data)
 
+    # Load error fixtures so we skip them (they can't be decoded by design)
+    error_fixtures: set[str] = set()
+    if ERRORS_PATH.exists():
+        errors_data = json.loads(ERRORS_PATH.read_text())
+        error_fixtures = set(errors_data.get("fixtures", {}))
+
     new_goldens = {
         "schema_version": GOLDENS_SCHEMA_VERSION,
         "pillow_version": PIL.__version__,
@@ -119,6 +126,11 @@ def regenerate(only_format: str | None) -> dict:
         for fixture in sorted(fmt_dir.rglob("*")):
             if not fixture.is_file() or fixture.name.startswith("."):
                 continue
+            if fixture.suffix.lower() != f".{fmt_name}":
+                continue  # skip non-image files (e.g. LICENSE.md in fixture dirs)
+            rel = fixture_to_relpath(fixture)
+            if rel in error_fixtures:
+                continue  # invalid fixtures are covered by errors.json
             with Image.open(fixture) as img:
                 img.load()
                 converted, channels = decide_channels(img)
@@ -127,7 +139,6 @@ def regenerate(only_format: str | None) -> dict:
                     converted.width, converted.height, channels, pixels
                 )
 
-            rel = fixture_to_relpath(fixture)
             out_path = DECODED_DIR / rel
             out_path = out_path.with_suffix(out_path.suffix + ".bin")
             out_path.parent.mkdir(parents=True, exist_ok=True)

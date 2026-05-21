@@ -30,6 +30,7 @@ GOLDENS_PATH = SPEC_DIR / "goldens.json"
 GOLDENS_SCHEMA_PATH = SPEC_DIR / "goldens.schema.json"
 FORMATS_PATH = SPEC_DIR / "formats.json"
 FORMATS_SCHEMA_PATH = SPEC_DIR / "formats.schema.json"
+ERRORS_PATH = SPEC_DIR / "errors.json"
 
 
 def main() -> int:
@@ -39,6 +40,10 @@ def main() -> int:
     formats_schema = json.loads(FORMATS_SCHEMA_PATH.read_text())
     goldens = json.loads(GOLDENS_PATH.read_text())
     goldens_schema = json.loads(GOLDENS_SCHEMA_PATH.read_text())
+    error_fixtures: set[str] = set()
+    if ERRORS_PATH.exists():
+        errors_data = json.loads(ERRORS_PATH.read_text())
+        error_fixtures = set(errors_data.get("fixtures", {}))
 
     # 1. Schemas
     for name, data, schema in (
@@ -62,10 +67,15 @@ def main() -> int:
         if fmt_dir.name not in formats["formats"]:
             errors.append(f"fixtures/{fmt_dir.name}: not a known format")
             continue
+        fmt_name = fmt_dir.name
         for fixture in sorted(fmt_dir.rglob("*")):
             if not fixture.is_file() or fixture.name.startswith("."):
                 continue
+            if fixture.suffix.lower() != f".{fmt_name}":
+                continue  # skip non-image files (e.g. LICENSE.md in fixture dirs)
             rel = str(fixture.relative_to(FIXTURES_DIR)).replace("\\", "/")
+            if rel in error_fixtures:
+                continue  # invalid fixtures are covered by errors.json, not goldens.json
             if rel not in goldens.get("fixtures", {}):
                 errors.append(f"fixture file '{rel}': no entry in goldens.json")
 

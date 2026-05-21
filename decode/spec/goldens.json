@@ -1,6 +1,217 @@
 {
-  "schema_version": 1,
+  "fixtures": {
+    "bmp/valid/bitfields16-555.bmp": {
+      "channels": 3,
+      "format": "bmp",
+      "height": 16,
+      "sha256": "b9f1e5b509d0a6a32016bf9db4388ac5742f58ac164985d94cb7c0ae63c8819d",
+      "width": 16
+    },
+    "bmp/valid/bitfields16-565.bmp": {
+      "channels": 3,
+      "format": "bmp",
+      "height": 16,
+      "sha256": "f31c8fc0f9447b24d8cdc96d067245b9ee5931701b5e1f94522cd25bf4b9efe0",
+      "width": 16
+    },
+    "bmp/valid/bitfields32-abgr.bmp": {
+      "channels": 4,
+      "format": "bmp",
+      "height": 16,
+      "sha256": "87693c2e17847c32ad19a1f7435e5bd07f5fb3de21de447df84f84e58b45cba7",
+      "width": 16
+    },
+    "bmp/valid/bitfields32-rgba.bmp": {
+      "channels": 4,
+      "format": "bmp",
+      "height": 16,
+      "sha256": "87693c2e17847c32ad19a1f7435e5bd07f5fb3de21de447df84f84e58b45cba7",
+      "width": 16
+    },
+    "bmp/valid/pal1-odd-width.bmp": {
+      "channels": 3,
+      "format": "bmp",
+      "height": 8,
+      "sha256": "a1575484b24ef7df309c3b1417ad3e9993989990e0d15cebd9f01b16b71cef39",
+      "width": 11
+    },
+    "bmp/valid/pal1.bmp": {
+      "channels": 3,
+      "format": "bmp",
+      "height": 16,
+      "sha256": "4d7aaae1d601a7fc0c89330edbbed0a91117823d82d27f3206ce4f432c246d48",
+      "width": 16
+    },
+    "bmp/valid/pal4-odd-width.bmp": {
+      "channels": 3,
+      "format": "bmp",
+      "height": 8,
+      "sha256": "13cb5c0013eb2db82c29d952c32e67edf896220b90c3dd6c48ffd74cefa88ef6",
+      "width": 7
+    },
+    "bmp/valid/pal4.bmp": {
+      "channels": 3,
+      "format": "bmp",
+      "height": 16,
+      "sha256": "0ac43f90acef9d8bb0028efc2f7f6b41a2f985bbaf43013014b5419f1b3f0d85",
+      "width": 16
+    },
+    "bmp/valid/pal8-small-palette.bmp": {
+      "channels": 3,
+      "format": "bmp",
+      "height": 16,
+      "sha256": "981c7bec4f952bbca7aa80dfe397432942ffafba3915b97977e49a96dd500d58",
+      "width": 16
+    },
+    "bmp/valid/pal8.bmp": {
+      "channels": 3,
+      "format": "bmp",
+      "height": 16,
+      "sha256": "1e6ea8a87dc89b5ff3b4f7be31690a3031bfeacad1078fc9bd091ab4271ab05c",
+      "width": 16
+    },
+    "bmp/valid/real-bmpsuite-g-pal8gs.bmp": {
+      "channels": 3,
+      "format": "bmp",
+      "height": 64,
+      "sha256": "0d77452f6e8b5e755438f5f39dbb47789f2b2b0d1f1f0ed8f6f25d45e2800099",
+      "width": 127
+    },
+    "bmp/valid/real-bmpsuite-g-rgb24.bmp": {
+      "channels": 3,
+      "format": "bmp",
+      "height": 64,
+      "sha256": "e2fb8640bc5fdb2c74bed4ea1fe494991a366b1808828c88bdc4ca27459602b3",
+      "width": 127
+    },
+    "bmp/valid/real-bmpsuite-g-rletopdown.bmp": {
+      "channels": 3,
+      "format": "bmp",
+      "height": 64,
+      "sha256": "0e623e8b8909b1f884690726ca4ae9e1be44cc240a1cbf2c2ba980814c76c149",
+      "width": 127
+    },
+    "bmp/valid/rgb24-16x1.bmp": {
+      "channels": 3,
+      "format": "bmp",
+      "height": 1,
+      "sha256": "4a120c70dba6136aaf1b2205ee13832a132ab638119bdc998a38dc8d2503782d",
+      "width": 16
+    },
+    "bmp/valid/rgb24-1x1.bmp": {
+      "channels": 3,
+      "format": "bmp",
+      "height": 1,
+      "sha256": "709e80c88487a2411e1ee4dfb9f22a861492d20c4765150c0c794abd70f8147c",
+      "width": 1
+    },
+    "bmp/valid/rgb24-1x16.bmp": {
+      "channels": 3,
+      "format": "bmp",
+      "height": 16,
+      "sha256": "4407e8c08b46d735c79ccec2ee13cdd45ef23c908ffd6459d4d05701275df513",
+      "width": 1
+    },
+    "bmp/valid/rgb24-bottom-up.bmp": {
+      "channels": 3,
+      "format": "bmp",
+      "height": 16,
+      "sha256": "a933591da872aeeb8078f201d8fc9e2da5965e1b354ccc55767fb7d475bea719",
+      "width": 16
+    },
+    "bmp/valid/rgb24-large.bmp": {
+      "channels": 3,
+      "format": "bmp",
+      "height": 64,
+      "sha256": "dafc9a49a9c770a3a0ee89c74b02f409738428a8c8d4c514fe16548517e6f90b",
+      "width": 64
+    },
+    "bmp/valid/rgb24-odd-width.bmp": {
+      "channels": 3,
+      "format": "bmp",
+      "height": 4,
+      "sha256": "7df59ff47f52976dbbcbc4fcfd0a1c96941fb39efc0542b4713d27af3508bd72",
+      "width": 5
+    },
+    "bmp/valid/rgb24-top-down.bmp": {
+      "channels": 3,
+      "format": "bmp",
+      "height": 16,
+      "sha256": "a933591da872aeeb8078f201d8fc9e2da5965e1b354ccc55767fb7d475bea719",
+      "width": 16
+    },
+    "bmp/valid/rgba32-bgra.bmp": {
+      "channels": 3,
+      "format": "bmp",
+      "height": 16,
+      "sha256": "a933591da872aeeb8078f201d8fc9e2da5965e1b354ccc55767fb7d475bea719",
+      "width": 16
+    },
+    "bmp/valid/rgba32-no-alpha.bmp": {
+      "channels": 3,
+      "format": "bmp",
+      "height": 16,
+      "sha256": "a933591da872aeeb8078f201d8fc9e2da5965e1b354ccc55767fb7d475bea719",
+      "width": 16
+    },
+    "bmp/valid/rle4-absolute.bmp": {
+      "channels": 3,
+      "format": "bmp",
+      "height": 16,
+      "sha256": "bf6cfaf23d90276769e76432b78f2a2e1f008999a70f9983593476065db46325",
+      "width": 16
+    },
+    "bmp/valid/rle4.bmp": {
+      "channels": 3,
+      "format": "bmp",
+      "height": 16,
+      "sha256": "f15429c32a49ca78ccfe6e686690d98459d19807364d55a3c7266ede8acc1363",
+      "width": 16
+    },
+    "bmp/valid/rle8-absolute.bmp": {
+      "channels": 3,
+      "format": "bmp",
+      "height": 16,
+      "sha256": "94880058f381c859d4e892b2f9b3d27fcf0f348a6b4fc31bc5a9295f80e86915",
+      "width": 16
+    },
+    "bmp/valid/rle8-with-delta.bmp": {
+      "channels": 3,
+      "format": "bmp",
+      "height": 16,
+      "sha256": "4ed22e8eeae8f0f8a0016bcd41ff841704d1e135b71ef65c226c01c203c110ae",
+      "width": 16
+    },
+    "bmp/valid/rle8.bmp": {
+      "channels": 3,
+      "format": "bmp",
+      "height": 16,
+      "sha256": "6432fd32ee2dcbb081c7b9531b62af372537e8ba8fb05f5ca8ab7d48fc081350",
+      "width": 16
+    },
+    "bmp/valid/v4-header.bmp": {
+      "channels": 3,
+      "format": "bmp",
+      "height": 16,
+      "sha256": "a933591da872aeeb8078f201d8fc9e2da5965e1b354ccc55767fb7d475bea719",
+      "width": 16
+    },
+    "bmp/valid/v5-header.bmp": {
+      "channels": 3,
+      "format": "bmp",
+      "height": 16,
+      "sha256": "a933591da872aeeb8078f201d8fc9e2da5965e1b354ccc55767fb7d475bea719",
+      "width": 16
+    },
+    "bmp/valid/v5-with-bitfields.bmp": {
+      "channels": 4,
+      "format": "bmp",
+      "height": 16,
+      "sha256": "87693c2e17847c32ad19a1f7435e5bd07f5fb3de21de447df84f84e58b45cba7",
+      "width": 16
+    }
+  },
   "pillow_version": "11.0.0",
-  "regenerated_at": "1970-01-01T00:00:00Z",
-  "fixtures": {}
+  "regenerated_at": "2026-05-21T04:10:30Z",
+  "schema_version": 1
 }
