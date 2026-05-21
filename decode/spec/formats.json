@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "version": "0.1.0",
+  "formats": {
+    "bmp":  { "status": "planned", "subspec": null, "reference_lib": null, "reference_version": null, "fixture_count": 0, "ports_implemented": [] },
+    "png":  { "status": "planned", "subspec": null, "reference_lib": null, "reference_version": null, "fixture_count": 0, "ports_implemented": [] },
+    "gif":  { "status": "planned", "subspec": null, "reference_lib": null, "reference_version": null, "fixture_count": 0, "ports_implemented": [] },
+    "jpeg": { "status": "planned", "subspec": null, "reference_lib": null, "reference_version": null, "fixture_count": 0, "ports_implemented": [] },
+    "webp": { "status": "planned", "subspec": null, "reference_lib": null, "reference_version": null, "fixture_count": 0, "ports_implemented": [] },
+    "tiff": { "status": "planned", "subspec": null, "reference_lib": null, "reference_version": null, "fixture_count": 0, "ports_implemented": [] },
+    "heic": { "status": "planned", "subspec": null, "reference_lib": null, "reference_version": null, "fixture_count": 0, "ports_implemented": [] },
+    "emf":  { "status": "planned", "subspec": null, "reference_lib": null, "reference_version": null, "fixture_count": 0, "ports_implemented": [] },
+    "wmf":  { "status": "planned", "subspec": null, "reference_lib": null, "reference_version": null, "fixture_count": 0, "ports_implemented": [] }
+  }
+}
