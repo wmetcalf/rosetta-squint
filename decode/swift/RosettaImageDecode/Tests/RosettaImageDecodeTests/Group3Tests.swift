@@ -18,3 +18,16 @@ final class Group3DetectionTests: XCTestCase {
         XCTAssertTrue(Decoder.supportedFormats().contains(.bmp))
     }
 }
+
+extension Group3DetectionTests {
+    func testDetectsAllValidPng() throws {
+        for rel in try TestKit.listValidFixtures("png") {
+            let bytes = try TestKit.readFixture(rel)
+            XCTAssertEqual(Decoder.detectFormat(bytes), .png, rel)
+        }
+    }
+
+    func testSupportedFormatsContainsPng() {
+        XCTAssertTrue(Decoder.supportedFormats().contains(.png))
+    }
+}
