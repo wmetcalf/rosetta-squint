@@ -19,6 +19,7 @@ public final class Decoder {
             case JPEG -> io.rosetta.imagedecode.internal.JPEGDecoder.decode(bytes);
             case WEBP -> io.rosetta.imagedecode.internal.WebPDecoder.decode(bytes);
             case TIFF -> io.rosetta.imagedecode.internal.TIFFDecoder.decode(bytes);
+            case HEIC -> io.rosetta.imagedecode.internal.HEICDecoder.decode(bytes);
             default -> throw new DecodeException(DecodeException.Kind.UNSUPPORTED_FORMAT, fmt.get(), "");
         };
     }
@@ -50,10 +51,22 @@ public final class Decoder {
              || (bytes[0] == 0x4D && bytes[1] == 0x4D && bytes[2] == 0x00 && bytes[3] == 0x2A))) {
             return Optional.of(Format.TIFF);
         }
+        // HEIC / HEIF: ISO base media file with ftyp box at bytes 4..8 and brand at bytes 8..12.
+        // Accepted brands: heic, heix, mif1, msf1, hevc, hevx.
+        // Rejected brands (unsupported): avif, and anything else we don't know about.
+        if (bytes.length >= 12
+            && bytes[4] == 0x66 && bytes[5] == 0x74 && bytes[6] == 0x79 && bytes[7] == 0x70) {
+            // has 'ftyp' box marker — extract the 4-byte brand
+            String brand = new String(bytes, 8, 4, java.nio.charset.StandardCharsets.ISO_8859_1);
+            return switch (brand) {
+                case "heic", "heix", "mif1", "msf1", "hevc", "hevx" -> Optional.of(Format.HEIC);
+                default -> Optional.empty(); // avif, mif2, etc. → unsupported
+            };
+        }
         return Optional.empty();
     }
 
     public static Set<Format> supportedFormats() {
-        return EnumSet.of(Format.BMP, Format.PNG, Format.GIF, Format.JPEG, Format.WEBP, Format.TIFF);
+        return EnumSet.of(Format.BMP, Format.PNG, Format.GIF, Format.JPEG, Format.WEBP, Format.TIFF, Format.HEIC);
     }
 }

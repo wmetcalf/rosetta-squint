@@ -117,4 +117,27 @@ public class Group3DetectionTests {
     public void supportedFormatsContainsTiff() {
         assertTrue(Decoder.supportedFormats().contains(Format.TIFF));
     }
+
+    @Test
+    public void detectsAllValidHeicFixtures() throws IOException {
+        var fixtures = TestKit.listValidFixtures("heic");
+        assertFalse(fixtures.isEmpty(), "should have HEIC fixtures");
+        for (String rel : fixtures) {
+            byte[] bytes = TestKit.readFixture(rel);
+            Optional<Format> fmt = Decoder.detectFormat(bytes);
+            assertEquals(Optional.of(Format.HEIC), fmt, "should detect HEIC for " + rel);
+        }
+    }
+
+    @Test
+    public void supportedFormatsContainsHeic() {
+        assertTrue(Decoder.supportedFormats().contains(Format.HEIC));
+    }
+
+    @Test
+    public void rejectsAvifAsUnsupported() throws IOException {
+        byte[] bytes = TestKit.readFixture("heic/invalid/avif.heic");
+        Optional<Format> fmt = Decoder.detectFormat(bytes);
+        assertTrue(fmt.isEmpty(), "avif brand should not be detected as HEIC");
+    }
 }
