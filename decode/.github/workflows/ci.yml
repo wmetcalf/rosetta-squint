@@ -1,0 +1,55 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  spec-drift:
+    name: spec drift check
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: spec
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: spec/requirements.txt
+      - name: Install pinned dependencies
+        run: pip install -r requirements.txt
+      - name: Check regenerate.py is idempotent
+        run: python regenerate.py --check
+
+  spec-only:
+    name: spec consistency
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: spec
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: spec/requirements.txt
+      - name: Install pinned dependencies
+        run: pip install -r requirements.txt
+      - name: Run consistency check
+        run: python consistency.py
+
+  # port-tests intentionally absent in v1 — added by format sub-projects.
+  # When the BMP sub-project lands, it adds a job here:
+  #
+  # port-tests:
+  #   name: Port tests (${{ matrix.port }})
+  #   runs-on: ubuntu-22.04
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       port: [java, go, rust, js, swift]
+  #   steps: ...
