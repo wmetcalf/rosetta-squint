@@ -741,9 +741,93 @@
       "height": 800,
       "sha256": "63e7e46b0ec87320c8471261860a4318ab5e377b3381faedd81340b1a548058b",
       "width": 1200
+    },
+    "webp/valid/16x16-lossless.webp": {
+      "channels": 3,
+      "format": "webp",
+      "height": 16,
+      "sha256": "6cd3573adf64dc9cc4fdfc380eda0d0354526d01069dcffef576252a53d4965c",
+      "width": 16
+    },
+    "webp/valid/16x16-lossy-q50.webp": {
+      "channels": 3,
+      "format": "webp",
+      "height": 16,
+      "sha256": "248e7aa1715db09b42eb6f2ae392ef8a5d10cc92f074addf07dea8fd3a869850",
+      "width": 16
+    },
+    "webp/valid/16x16-lossy-q90.webp": {
+      "channels": 3,
+      "format": "webp",
+      "height": 16,
+      "sha256": "6c42e14e6d7a3f7ea2fb6f63538c5b8cf683c998e8d33baebd7cd1eabc5b9cbd",
+      "width": 16
+    },
+    "webp/valid/16x16-rgba-lossless.webp": {
+      "channels": 4,
+      "format": "webp",
+      "height": 16,
+      "sha256": "bc98b86d843b173b66230f19e642d58b333c97d653c8cb533e0ab1cd2adb2366",
+      "width": 16
+    },
+    "webp/valid/16x16-rgba-lossy-q90.webp": {
+      "channels": 4,
+      "format": "webp",
+      "height": 16,
+      "sha256": "2a5323381c7471fe9231e9240dd0c05ed33f3a2ea1a05378dc1de217d9bf512f",
+      "width": 16
+    },
+    "webp/valid/1x1-lossy-q90.webp": {
+      "channels": 3,
+      "format": "webp",
+      "height": 1,
+      "sha256": "709e80c88487a2411e1ee4dfb9f22a861492d20c4765150c0c794abd70f8147c",
+      "width": 1
+    },
+    "webp/valid/32x32-lossless.webp": {
+      "channels": 3,
+      "format": "webp",
+      "height": 32,
+      "sha256": "f0989b1a78471a0d5ae53b9a381c1067d3e54d301a70f10491a823af967677ae",
+      "width": 32
+    },
+    "webp/valid/32x32-lossy-q90.webp": {
+      "channels": 3,
+      "format": "webp",
+      "height": 32,
+      "sha256": "192ba6bfd5aef2c871c953c84fa26fe4778ffa32e168754bdf6138184b74c919",
+      "width": 32
+    },
+    "webp/valid/64x64-lossy-q90.webp": {
+      "channels": 3,
+      "format": "webp",
+      "height": 64,
+      "sha256": "d48477b09d421dc8cbbf85920368d69c675300a91ac3f9399dd69563398eb67c",
+      "width": 64
+    },
+    "webp/valid/8x8-lossy-q90.webp": {
+      "channels": 3,
+      "format": "webp",
+      "height": 8,
+      "sha256": "d09f7fc610216601bc2272641c93ff9904d56915bbf04977c208da4a146fa84a",
+      "width": 8
+    },
+    "webp/valid/larger-128x96-lossy.webp": {
+      "channels": 3,
+      "format": "webp",
+      "height": 96,
+      "sha256": "a09cb430ce1f3ea3d5a8a38ef676f6cd8012ed36bd2fc6f1067ca6442d585952",
+      "width": 128
+    },
+    "webp/valid/rect-24x16-lossless.webp": {
+      "channels": 3,
+      "format": "webp",
+      "height": 16,
+      "sha256": "4952d73bb7abb0dcac6881a1acf747fa414a2e0b6a459aefa677ac552f295a81",
+      "width": 24
     }
   },
   "pillow_version": "11.0.0",
-  "regenerated_at": "2026-05-21T14:43:04Z",
+  "regenerated_at": "2026-05-21T15:23:12Z",
   "schema_version": 1
 }
