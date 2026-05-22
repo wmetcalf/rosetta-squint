@@ -1,6 +1,6 @@
 # rosetta-image-hash — Status & Setup
 
-Byte-exact ports of the Python `imagehash` library (PyPI v4.3.2) to **Java, Go, Rust, JavaScript/TypeScript, and Swift**.
+Byte-exact ports of the Python `imagehash` library (PyPI v4.3.2) to **Python, Java, Go, Rust, JavaScript/TypeScript, and Swift**. The Python port (`python/rosetta_imagehash/`) is a thin extension package that re-exports upstream `imagehash` unchanged and adds one cross-port-stable function — `whash_db4_robust`.
 
 Every port produces the same hex output as the Python `imagehash` package for the same input image, algorithm, and hash size.
 
@@ -8,21 +8,21 @@ Every port produces the same hex output as the Python `imagehash` package for th
 
 ## What is implemented
 
-| Algorithm | Python ref | Rust | Go | JS | Swift | Java |
-|---|---|---|---|---|---|---|
-| `average_hash` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `phash` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `phash_simple` (1-D DCT + mean) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `dhash` (horizontal) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `dhash_vertical` (pre-3.0 back-compat) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `whash` (Haar) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `whash` db4 mode | ✓ | ✓¹ | ✓¹ | ✓¹ | ✓¹ | ✓¹ |
-| `whash_db4_robust` (ours, snap-to-zero bolt-on) | — | ✓² | ✓² | ✓² | ✓² | ✓² |
-| `colorhash` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| hex round-trip (`hex_to_hash`, `hex_to_flathash`) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Hamming distance (`Hash.subtract`) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `crop_resistant_hash` + `ImageMultiHash` | ✓ | — | — | — | — | — |
-| `old_hex_to_hash` (pre-4.0 migration) | ✓ | — | — | — | — | — |
+| Algorithm | Python ref (`imagehash`) | Python ext (`rosetta_imagehash`) | Rust | Go | JS | Swift | Java |
+|---|---|---|---|---|---|---|---|
+| `average_hash` | ✓ | ✓ (re-export) | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `phash` | ✓ | ✓ (re-export) | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `phash_simple` (1-D DCT + mean) | ✓ | ✓ (re-export) | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `dhash` (horizontal) | ✓ | ✓ (re-export) | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `dhash_vertical` (pre-3.0 back-compat) | ✓ | ✓ (re-export) | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `whash` (Haar) | ✓ | ✓ (re-export) | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `whash` db4 mode | ✓ | ✓ (re-export) | ✓¹ | ✓¹ | ✓¹ | ✓¹ | ✓¹ |
+| `whash_db4_robust` (ours, snap-to-zero bolt-on) | — | ✓² | ✓² | ✓² | ✓² | ✓² | ✓² |
+| `colorhash` | ✓ | ✓ (re-export) | ✓ | ✓ | ✓ | ✓ | ✓ |
+| hex round-trip (`hex_to_hash`, `hex_to_flathash`) | ✓ | ✓ (re-export) | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Hamming distance (`Hash.subtract`) | ✓ | ✓ (re-export) | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `crop_resistant_hash` + `ImageMultiHash` | ✓ | ✓ (re-export) | — | — | — | — | — |
+| `old_hex_to_hash` (pre-4.0 migration) | ✓ | ✓ (re-export) | — | — | — | — | — |
 
 ¹ `whash_db4`: 39–41 of 42 golden cases byte-exact across ports. A handful of pathological synthetic fixtures (`checker-256.png`, `line-art-icon-256.png`) sit at a ULP-level median tie point where PyWavelets' C+SIMD/FMA accumulation resolves the sign differently than portable double arithmetic. Each port skips a documented `ULP_EXEMPT` set; real-world photos are unaffected. See `spec/SPEC.md` §whash_db4.
 
@@ -59,15 +59,16 @@ Pinned in `spec/SPEC.md` and `spec/requirements.txt`. The actual versions used l
 
 ---
 
-## Test counts (current)
+## Test counts (current, post-`hash-sweep-v0.1.0` + `robust-db4-v0.1.0`)
 
 | Port | Tests | How to run |
 |---|---|---|
-| Rust | 31 | `cargo test` |
-| Go | 53 | `go test ./...` |
-| Java | 53 | `mvn -B test` |
-| JS/TS | 52 | `npm test` |
-| Swift | 54 | `swift test` |
+| Python ext | 45 | `cd python && pytest` |
+| Rust | 65 | `cd rust/rosetta-image-hash && cargo test` |
+| Go | all pkgs | `cd go/imagehash && go test ./...` |
+| Java | 807 | `cd java && mvn -B -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 test` |
+| JS/TS | 69 | `cd js/rosetta-image-hash && npm test` |
+| Swift | 59 | `cd swift/RosettaImageHash && swift test` |
 
 All numbers measured on Linux x86-64. **No macOS or Windows runs.**
 
