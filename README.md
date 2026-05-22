@@ -90,6 +90,35 @@ Both halves are at clean release-candidate states. See:
 - [`decode/STATUS.md`](./decode/STATUS.md) — 5 ports, ~212 tests, byte-exact across 7 formats
 - [`hash/SECURITY.md`](./hash/SECURITY.md) + [`decode/SECURITY.md`](./decode/SECURITY.md)
 
+## Performance
+
+End-to-end CLI cost per hash (process startup + decode + algorithm + print), measured on a 384×512 RGB photograph (`hash/spec/fixtures/peppers.png`), median of 10 iterations on Linux x86-64. Reproducible via `make bench` (per-algorithm details in [`tools/bench/`](./tools/bench/)).
+
+| Algorithm | Rust | Swift | Go | Python | JS (Node) | Java |
+|---|---:|---:|---:|---:|---:|---:|
+| `phash` @ 8 | **9.8 ms** | 21.6 ms | 28.2 ms | 274 ms | 146 ms | 188 ms |
+| `dhash` @ 8 | **8.4 ms** | 19.3 ms | 27.5 ms | 157 ms | 133 ms | 157 ms |
+| `average_hash` @ 8 | **9.3 ms** | 20.9 ms | 25.2 ms | 154 ms | 151 ms | 173 ms |
+| `colorhash` @ 3 | **9.9 ms** | 22.7 ms | 29.5 ms | 175 ms | 163 ms | 183 ms |
+| `whash_haar` @ 8 | **22.4 ms** | 39.9 ms | 42.8 ms | 173 ms | 224 ms | 210 ms |
+| `whash_db4` @ 8 | **21.9 ms** | 47.2 ms | 56.4 ms | 148 ms | 245 ms | 203 ms |
+| `crop_resistant_hash` | **23.8 ms** | 74.5 ms | 58.1 ms | 300 ms | 371 ms | 243 ms |
+
+**The numbers are end-to-end CLI invocation costs.** For one-shot use (e.g. a CI script that hashes one screenshot per build), this is what you'd actually pay. For workloads that amortise startup — long-running services, batch processing thousands of images — the JIT/VM ports (Python, JS, Java) end up dramatically faster than the table suggests, because most of their cost is paid once at process launch (Python imports `numpy`/`scipy`/`PIL`/`PyWavelets`; Java boots the JVM; Node initialises the mozjpeg WASM module).
+
+For steady-state per-hash latency, use each language's native bench harness — `cargo bench`, `go test -bench`, JMH, `vitest bench`, XCTest `measure`, `pytest-benchmark`.
+
+**Three takeaways:**
+
+1. **Rust wins every algorithm.** No surprise — native + libjpeg-turbo via mozjpeg-sys, no managed-runtime overhead, in-tree C shim for the JPEG decode path (added after a fuzz finding).
+2. **Native ports cluster.** Swift, Go, and Rust are within 2-3× of each other across algorithms. The wavelet algorithms (`whash_haar`, `whash_db4`, `crop_resistant_hash`) widen the gap somewhat — those benefit more from Rust's loop optimisations.
+3. **Managed ports are startup-bound.** Python's `~150 ms` minimum is dominated by importing `numpy + scipy + PyWavelets + Pillow + imagehash`. Java's `~150 ms` is JVM cold-start. JS's `~130 ms` is Node bootstrap + WASM compile. The actual hash computation in each is fast; the CLI invocation model just pays it on every call.
+
+Choose your port by deployment model, not algorithm speed:
+- **CI step or one-off CLI invocation** → native (Rust / Go / Swift) saves real wall time.
+- **Long-running service** → any port performs adequately; pick by ecosystem fit.
+- **Browser** → JS (the Node CLI startup cost doesn't apply; WASM loads once per page).
+
 ## Layout
 
 ```
