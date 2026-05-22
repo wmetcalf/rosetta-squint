@@ -147,6 +147,13 @@ cross-squint-diff:
 	@echo "→ cross-squint-diff (live chain comparison across 6 ports)"
 	@tools/cross-squint-diff/diff_all_squint.py --regression
 
+# ─── Cross-port benchmark ───────────────────────────────────────────────────
+
+.PHONY: bench
+bench:
+	@echo "→ cross-port bench (phash @ 8 on peppers.png, 10 iters)"
+	@tools/bench/bench.py --iter 10
+
 # ─── Build all CLIs ─────────────────────────────────────────────────────────
 
 .PHONY: build-all-clis
