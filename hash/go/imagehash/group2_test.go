@@ -189,6 +189,26 @@ func TestWHashDb4RobustGoldens(t *testing.T) {
 	}
 }
 
+func TestCropResistantHashGoldens(t *testing.T) {
+	cases, err := testkit.CropResistantCasesFromRoot()
+	if err != nil {
+		t.Fatalf("load goldens: %v", err)
+	}
+	for _, c := range cases {
+		c := c
+		t.Run(c.Fixture, func(t *testing.T) {
+			img := testkit.LoadPreDecodedFromRoot(t, c.Fixture)
+			mh, err := imagehash.CropResistantHash(img)
+			if err != nil {
+				t.Fatalf("CropResistantHash: %v", err)
+			}
+			if got := mh.ToHex(); got != c.Hex {
+				t.Errorf("fixture=%s: got %q, want %q", c.Fixture, got, c.Hex)
+			}
+		})
+	}
+}
+
 func TestColorHashGoldens(t *testing.T) {
 	cases, err := testkit.AlgorithmCasesFromRoot("colorhash")
 	if err != nil {

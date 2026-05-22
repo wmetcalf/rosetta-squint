@@ -102,3 +102,57 @@ func algorithmCases(specDir, algorithm string) ([]Triple, error) {
 	}
 	return out, nil
 }
+
+// CropResistantCase holds a single (fixture, expected_hex) test case for
+// crop_resistant_hash, which uses "default" as its size key.
+type CropResistantCase struct {
+	Fixture string
+	Hex     string
+}
+
+// CropResistantCasesFromRoot returns test cases for crop_resistant_hash.
+func CropResistantCasesFromRoot() ([]CropResistantCase, error) {
+	return cropResistantCases(DirRoot())
+}
+
+func cropResistantCases(specDir string) ([]CropResistantCase, error) {
+	g, err := loadGoldens(specDir)
+	if err != nil {
+		return nil, err
+	}
+	algos, ok := g["algorithms"].(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("goldens.json missing 'algorithms' object")
+	}
+	algo, ok := algos["crop_resistant_hash"].(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("algorithm 'crop_resistant_hash' not in goldens")
+	}
+	fixtures, ok := algo["fixtures"].(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("algorithm 'crop_resistant_hash' missing 'fixtures'")
+	}
+
+	var out []CropResistantCase
+	names := make([]string, 0, len(fixtures))
+	for n := range fixtures {
+		names = append(names, n)
+	}
+	sort.Strings(names)
+	for _, fixture := range names {
+		sizesObj, ok := fixtures[fixture].(map[string]interface{})
+		if !ok {
+			continue
+		}
+		v, ok := sizesObj["default"]
+		if !ok || v == nil {
+			continue
+		}
+		hex, ok := v.(string)
+		if !ok {
+			continue
+		}
+		out = append(out, CropResistantCase{Fixture: fixture, Hex: hex})
+	}
+	return out, nil
+}
