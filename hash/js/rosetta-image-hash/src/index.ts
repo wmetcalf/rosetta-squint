@@ -10,5 +10,6 @@ export { phash } from "./phash.js";
 export { phashSimple } from "./phashSimple.js";
 export { whashHaar } from "./whashHaar.js";
 export { whashDb4 } from "./whashDb4.js";
+export { whashDb4Robust } from "./whashDb4Robust.js";
 export { colorhash, colorhashBinEncode } from "./colorhash.js";
 export { decodePng } from "./decodePng.js";

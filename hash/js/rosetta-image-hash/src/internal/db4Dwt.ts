@@ -128,10 +128,13 @@ function dwt1d(x: number[]): [number[], number[]] {
     let a = 0;
     let d = 0;
     for (let k = 0; k < FILTER_LEN; k++) {
-      const v = ext[start + k];
-      // dec_lo/hi reversed = convolution (not correlation)
-      a += DEC_LO[FILTER_LEN - 1 - k] * v;
-      d += DEC_HI[FILTER_LEN - 1 - k] * v;
+      // Access signal in reversed order, filter in forward order — matches
+      // PyWavelets' C inner loop accumulation order. This produces exact zeros
+      // for structured inputs (e.g., alternating ±0.5) where the opposite
+      // order would accumulate to ~1e-17 instead of 0.0. See Java Db4Dwt.java.
+      const v = ext[start + FILTER_LEN - 1 - k];
+      a += DEC_LO[k] * v;
+      d += DEC_HI[k] * v;
     }
     cA[i] = a;
     cD[i] = d;

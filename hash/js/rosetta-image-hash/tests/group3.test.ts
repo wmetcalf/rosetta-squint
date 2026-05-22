@@ -66,6 +66,7 @@ describe("PNG end-to-end (Group 3)", () => {
 		run("phash_simple", exempt, rih.phashSimple, "phash_simple", failures);
 		run("whash_haar", exempt, rih.whashHaar, "whash_haar", failures);
 		run("whash_db4", exempt, rih.whashDb4, "whash_db4", failures);
+		run("whash_db4_robust", exempt, rih.whashDb4Robust, "whash_db4_robust", failures);
 		run("colorhash", exempt, rih.colorhash, "colorhash", failures);
 		if (failures.length > 0) {
 			throw new Error(`${failures.length} Group-3 failures:\n  ${failures.join("\n  ")}`);
