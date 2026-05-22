@@ -43,8 +43,31 @@ def decode_heic_via_system_libheif(path: Path) -> tuple[int, int, int, bytes]:
     1.21.2, which differs by ±1 px). This is the same wrapper that produced
     spec/decoded/heic/valid/*.bin goldens — see SPEC.md §16."""
     import ctypes
+    import ctypes.util
+    import sys
 
-    lib = ctypes.CDLL("libheif.so.1")
+    # Cross-platform libheif loading (Gemini review §4.1).
+    if sys.platform == "darwin":
+        candidates = ["libheif.dylib", "libheif.1.dylib"]
+    elif sys.platform == "win32":
+        candidates = ["libheif.dll", "libheif-1.dll"]
+    else:
+        candidates = ["libheif.so.1", "libheif.so"]
+    found = ctypes.util.find_library("heif")
+    if found:
+        candidates.append(found)
+    lib = None
+    for name in candidates:
+        try:
+            lib = ctypes.CDLL(name)
+            break
+        except OSError:
+            continue
+    if lib is None:
+        raise OSError(
+            f"libheif not found. Tried: {', '.join(candidates)}. "
+            f"Install via your package manager."
+        )
     # Minimal C API surface; see /usr/include/libheif/heif.h
     lib.heif_context_alloc.restype = ctypes.c_void_p
     lib.heif_context_free.argtypes = [ctypes.c_void_p]

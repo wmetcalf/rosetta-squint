@@ -77,6 +77,19 @@ Bundled libheif version in `libheif-js@1.17.1` diverges from system libheif 1.17
 
 **Resolved** (commit d2ebd53). The JS GIF decoder previously depended on `omggif` (last commit July 2019, 6 years stale). Replaced with a hand-rolled pure-TS decoder at `js/rosetta-image-decode/src/internal/gif-decoder.ts` (~612 LOC, ported from the Swift port's validated GIF89a decoder). Includes LZW decompression, 4-pass interlacing, and the transparent-palette-RGB-preservation semantics required for PIL parity.
 
+### Go HEIC cgo — GC latency on sustained throughput
+
+The Go HEIC decoder uses `github.com/strukturag/libheif/go/heif`, which handles C-pointer lifetime via `runtime.SetFinalizer`. The finalizer calls `heif_context_free` only when the Go GC marks the wrapping object as dead, but Go's GC has no visibility into the C-heap size held by libheif/libde265 (decoded image planes, intermediate DPB buffers, etc.).
+
+Under sustained high-throughput HEIC decoding, the Go process's RSS can grow well past what active-Go-heap accounting suggests, because finalizers run on a delayed schedule. The library is still correct (memory is reclaimed eventually); the issue is *when*.
+
+**Recommendation for production deployments processing > 100 HEIC/sec:**
+- Call `runtime.GC()` explicitly at controlled intervals to flush pending finalizers
+- Or process HEIC in a subprocess + recycle the process periodically
+- Or set `GOGC` lower (default 100; try 50 or 25) to make GC more aggressive
+
+This is a property of `cgo` + native-library binding generally, not specific to HEIC. The Go JPEG and WebP paths have the same characteristic but their per-image C-heap footprint is much smaller.
+
 ## Reporting a vulnerability
 
 If you find a security issue, please email william.metcalf@gmail.com — do not open a public issue.

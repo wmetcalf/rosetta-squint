@@ -9,13 +9,48 @@ the system libheif 1.17.6 that the 5 native ports link to).
 
 from __future__ import annotations
 
+import ctypes
+import ctypes.util
 import io
+import sys
 from pathlib import Path
 from typing import Union
 
 import imagehash
 import rosetta_imagehash as rih
 from PIL import Image
+
+
+def _load_libheif_xplat() -> ctypes.CDLL:
+    """Cross-platform libheif loader.
+
+    Linux:   libheif.so.1
+    macOS:   libheif.dylib (Homebrew unversioned) or libheif.1.dylib
+    Windows: libheif.dll / libheif-1.dll
+    Other:   ctypes.util.find_library fallback
+
+    Raises OSError with a clear message if no candidate loads.
+    """
+    if sys.platform == "darwin":
+        candidates = ["libheif.dylib", "libheif.1.dylib"]
+    elif sys.platform == "win32":
+        candidates = ["libheif.dll", "libheif-1.dll"]
+    else:
+        candidates = ["libheif.so.1", "libheif.so"]
+    # ctypes.util.find_library lets us pick up homebrew/macports/other paths
+    found = ctypes.util.find_library("heif")
+    if found:
+        candidates.append(found)
+    for name in candidates:
+        try:
+            return ctypes.CDLL(name)
+        except OSError:
+            continue
+    raise OSError(
+        f"libheif not found. Tried: {', '.join(candidates)}. "
+        f"Install via your package manager (apt install libheif-dev, "
+        f"brew install libheif, etc.)."
+    )
 
 PathOrBytes = Union[str, Path, bytes, bytearray, memoryview]
 
@@ -42,9 +77,7 @@ def _decode_heic_via_system_libheif(data: bytes) -> Image.Image:
     matches the 5 native ports (which all link to system libheif via
     FFI). pillow-heif would bundle libheif 1.21.2 and diverge from
     system libheif 1.17.6 by ±1 px on lossy fixtures."""
-    import ctypes
-
-    lib = ctypes.CDLL("libheif.so.1")
+    lib = _load_libheif_xplat()
     lib.heif_context_alloc.restype = ctypes.c_void_p
     lib.heif_context_free.argtypes = [ctypes.c_void_p]
     lib.heif_context_read_from_memory_without_copy.argtypes = [
