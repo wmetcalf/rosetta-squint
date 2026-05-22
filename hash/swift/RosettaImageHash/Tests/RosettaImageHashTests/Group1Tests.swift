@@ -319,6 +319,149 @@ final class Db4DwtTests: XCTestCase {
     }
 }
 
+final class PILGaussianBlurTests: XCTestCase {
+    private struct GaussianCase: Decodable {
+        let name: String
+        let shape: [Int]
+        let input: [[Int]]
+        let output: [[Int]]
+    }
+    private struct GaussianDoc: Decodable {
+        let cases: [GaussianCase]
+    }
+
+    func testAllGaussianBlurCases() throws {
+        let path = "\(TestKit.SPEC_DIR)/gaussian_blur_cases.json"
+        let data = try Data(contentsOf: URL(fileURLWithPath: path))
+        let doc = try JSONDecoder().decode(GaussianDoc.self, from: data)
+        XCTAssertEqual(doc.cases.count, 6)
+        var failures: [String] = []
+        for c in doc.cases {
+            let h = c.shape[0]
+            let w = c.shape[1]
+            var src = [UInt8](repeating: 0, count: h * w)
+            for y in 0..<h {
+                for x in 0..<w {
+                    src[y * w + x] = UInt8(c.input[y][x])
+                }
+            }
+            let result = pilGaussianBlur(src, width: w, height: h)
+            for y in 0..<h {
+                for x in 0..<w {
+                    let got = Int(result[y * w + x])
+                    let want = c.output[y][x]
+                    if got != want {
+                        failures.append("case=\(c.name) y=\(y) x=\(x) got=\(got) want=\(want)")
+                    }
+                }
+            }
+        }
+        if !failures.isEmpty {
+            XCTFail("\(failures.count) failures:\n  " + failures.prefix(10).joined(separator: "\n  "))
+        }
+    }
+}
+
+final class PILMedianFilterTests: XCTestCase {
+    private struct MedianCase: Decodable {
+        let name: String
+        let shape: [Int]
+        let input: [[Int]]
+        let output: [[Int]]
+    }
+    private struct MedianDoc: Decodable {
+        let cases: [MedianCase]
+    }
+
+    func testAllMedianFilterCases() throws {
+        let path = "\(TestKit.SPEC_DIR)/median_filter_cases.json"
+        let data = try Data(contentsOf: URL(fileURLWithPath: path))
+        let doc = try JSONDecoder().decode(MedianDoc.self, from: data)
+        XCTAssertEqual(doc.cases.count, 5)
+        var failures: [String] = []
+        for c in doc.cases {
+            let h = c.shape[0]
+            let w = c.shape[1]
+            var src = [UInt8](repeating: 0, count: h * w)
+            for y in 0..<h {
+                for x in 0..<w {
+                    src[y * w + x] = UInt8(c.input[y][x])
+                }
+            }
+            let result = pilMedianFilter(src, width: w, height: h)
+            for y in 0..<h {
+                for x in 0..<w {
+                    let got = Int(result[y * w + x])
+                    let want = c.output[y][x]
+                    if got != want {
+                        failures.append("case=\(c.name) y=\(y) x=\(x) got=\(got) want=\(want)")
+                    }
+                }
+            }
+        }
+        if !failures.isEmpty {
+            XCTFail("\(failures.count) failures:\n  " + failures.prefix(10).joined(separator: "\n  "))
+        }
+    }
+}
+
+final class FindSegmentsTests: XCTestCase {
+    private struct SegCase: Decodable {
+        let name: String
+        let shape: [Int]
+        let input: [[Double]]
+        let threshold: Double?
+        let min_segment_size: Int?
+        let segments: [[[Int]]]
+    }
+    private struct SegDoc: Decodable {
+        let cases: [SegCase]
+    }
+
+    func testAllSegmentationCases() throws {
+        let path = "\(TestKit.SPEC_DIR)/segmentation_cases.json"
+        let data = try Data(contentsOf: URL(fileURLWithPath: path))
+        let doc = try JSONDecoder().decode(SegDoc.self, from: data)
+        XCTAssertEqual(doc.cases.count, 4)
+        var failures: [String] = []
+        for c in doc.cases {
+            let h = c.shape[0]
+            let w = c.shape[1]
+            var pixels = [Float](repeating: 0, count: h * w)
+            for y in 0..<h {
+                for x in 0..<w {
+                    pixels[y * w + x] = Float(c.input[y][x])
+                }
+            }
+            let threshold = Float(c.threshold ?? 128.0)
+            let minSeg = c.min_segment_size ?? 500
+
+            let result = findAllSegments(
+                pixels, width: w, height: h,
+                threshold: threshold, minSegmentSize: minSeg
+            )
+
+            // Each expected segment is [[y, x], ...]
+            let expectedCount = c.segments.count
+            if result.count != expectedCount {
+                failures.append("case=\(c.name) got \(result.count) segs want \(expectedCount)")
+                continue
+            }
+            for (i, (gotSeg, expSeg)) in zip(result, c.segments).enumerated() {
+                let gotPairs = gotSeg.map { [$0.y, $0.x] }
+                let gotSorted = gotPairs.sorted { ($0[0], $0[1]) < ($1[0], $1[1]) }
+                let expSorted = expSeg.sorted { ($0[0], $0[1]) < ($1[0], $1[1]) }
+                if gotSorted != expSorted {
+                    failures.append("case=\(c.name) seg[\(i)] got \(gotSorted.count) px want \(expSorted.count) px")
+                }
+            }
+        }
+        if !failures.isEmpty {
+            XCTFail("\(failures.count) failures:\n  " + failures.joined(separator: "\n  "))
+        }
+    }
+}
+
 final class ColorhashBinEncodeTests: XCTestCase {
     func testB4QuirkyEncoding() {
         // v=8 with B=4 must produce [T,T,F,F] (0xc), NOT [T,F,F,F] (standard binary 0x8).
