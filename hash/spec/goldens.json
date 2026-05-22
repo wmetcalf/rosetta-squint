@@ -206,6 +206,80 @@
         }
       }
     },
+    "crop_resistant_hash": {
+      "default_params": {
+        "hash_func": "dhash",
+        "limit_segments": null,
+        "min_segment_size": 500,
+        "segment_threshold": 128,
+        "segmentation_image_size": 300
+      },
+      "fixtures": {
+        "all-black-256.png": {
+          "default": "0000000000000000"
+        },
+        "all-black-32.png": {
+          "default": "0000000000000000"
+        },
+        "all-white-256.png": {
+          "default": "0000000000000000"
+        },
+        "all-white-32.png": {
+          "default": "0000000000000000"
+        },
+        "art-saturated-512.png": {
+          "default": "0000000000000000,0000000000000000,0000000000000000"
+        },
+        "checker-256.png": {
+          "default": "a552a5000052a552"
+        },
+        "checker-32.png": {
+          "default": "0000000000000000,0000000000000000,0000000000000000,0000000000000000,0000000000000000,0000000000000000,0000000000000000,0000000000000000,0000000000000000,0000000000000000,0000000000000000,0000000000000000,0000000000000000,0000000000000000,0000000000000000,0000000000000000"
+        },
+        "gradient-diag-256.png": {
+          "default": "ffffffffffffffff,ffffffffffffffff"
+        },
+        "gradient-h-256.png": {
+          "default": "ffffffffffffffff,ffffffffffffffff"
+        },
+        "gradient-v-256.png": {
+          "default": "0000000000000000,0000000000000000"
+        },
+        "imagehash.png": {
+          "default": "0026273b2b19550e"
+        },
+        "line-art-icon-256.png": {
+          "default": "002a330f0f332a00,00a2aad0c84d552b,1f0031131331000f,07f863343463f80f,71c0a2f25469b396,4cc791ccc4b1c34c,8d1866c9c862188d,96326955f022c071,33554de0d4a2a200,cca8b2ccccb2e8cc"
+        },
+        "lum-boundary-32.png": {
+          "default": "0000000000000000"
+        },
+        "mid-gray-256.png": {
+          "default": "0000000000000000"
+        },
+        "peppers.png": {
+          "default": "c4d9f3e3e1c18101,706c6e66464c99b9,98d8f1ecd8f0f0e1,a082c0c49acc6dbd,f1f39b99c1c1b1b1,3a7ece1c9df4fcb9"
+        },
+        "photo-1024.png": {
+          "default": "0000000000000000,ffffffffffffffff,0f0f0f0f0f0f0f0f"
+        },
+        "salt-pepper-256.png": {
+          "default": "b332131a24ad084d,ccbad44c26566525,68d2e2b9b546bb69,06a6839336652bbc,731a83dad2a3969b,c1cd27b753579295,594191a86e35b552,2cac4703a0c21919,25cce9d4d89a3392,92d549b1b42c35c7,d692ed04924da5a4,52a2a92a622a642a,8828a4542360c889"
+        },
+        "sat-boundary-170.png": {
+          "default": "0000000000000000"
+        },
+        "sat-boundary-85.png": {
+          "default": "0000000000000000"
+        },
+        "scan-doc-1024.png": {
+          "default": "4541454141454541"
+        },
+        "screenshot-1200.png": {
+          "default": "454541414141450f,0000000000000000,0000000000000000,0000000000000000"
+        }
+      }
+    },
     "dhash": {
       "fixtures": {
         "all-black-256.png": {

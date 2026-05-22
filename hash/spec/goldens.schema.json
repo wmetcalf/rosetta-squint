@@ -14,18 +14,19 @@
     "regenerated_at":      { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$" },
     "algorithms": {
       "type": "object",
-      "required": ["average_hash", "dhash", "dhash_vertical", "phash", "phash_simple", "whash_haar", "whash_db4", "whash_db4_robust", "colorhash"],
+      "required": ["average_hash", "dhash", "dhash_vertical", "phash", "phash_simple", "whash_haar", "whash_db4", "whash_db4_robust", "colorhash", "crop_resistant_hash"],
       "additionalProperties": false,
       "properties": {
-        "average_hash":     { "$ref": "#/$defs/algoSized" },
-        "dhash":            { "$ref": "#/$defs/algoSized" },
-        "dhash_vertical":   { "$ref": "#/$defs/algoSized" },
-        "phash":            { "$ref": "#/$defs/algoSized" },
-        "phash_simple":     { "$ref": "#/$defs/algoSized" },
-        "whash_haar":       { "$ref": "#/$defs/algoSizedNullable" },
-        "whash_db4":        { "$ref": "#/$defs/algoSizedNullable" },
-        "whash_db4_robust": { "$ref": "#/$defs/algoSizedNullable" },
-        "colorhash":        { "$ref": "#/$defs/algoBinbits" }
+        "average_hash":         { "$ref": "#/$defs/algoSized" },
+        "dhash":                { "$ref": "#/$defs/algoSized" },
+        "dhash_vertical":       { "$ref": "#/$defs/algoSized" },
+        "phash":                { "$ref": "#/$defs/algoSized" },
+        "phash_simple":         { "$ref": "#/$defs/algoSized" },
+        "whash_haar":           { "$ref": "#/$defs/algoSizedNullable" },
+        "whash_db4":            { "$ref": "#/$defs/algoSizedNullable" },
+        "whash_db4_robust":     { "$ref": "#/$defs/algoSizedNullable" },
+        "colorhash":            { "$ref": "#/$defs/algoBinbits" },
+        "crop_resistant_hash":  { "$ref": "#/$defs/algoMultiHash" }
       }
     },
     "decoded_sha256": {
@@ -58,6 +59,20 @@
       "properties": {
         "binbits":  { "type": "array", "items": { "type": "integer", "minimum": 1 } },
         "fixtures": { "type": "object", "additionalProperties": { "type": "object", "additionalProperties": { "$ref": "#/$defs/hexHash" } } }
+      }
+    },
+    "algoMultiHash": {
+      "type": "object",
+      "required": ["default_params", "fixtures"],
+      "properties": {
+        "default_params": { "type": "object" },
+        "fixtures": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": { "type": "string", "pattern": "^[0-9a-f]+(,[0-9a-f]+)*$" }
+          }
+        }
       }
     }
   }

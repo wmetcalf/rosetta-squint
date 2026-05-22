@@ -431,6 +431,82 @@ For colorhash-style flat shape `(14, hashsize)` where the caller supplies the se
 2. Parse hex as big-endian unsigned integer; expand to that many MSB-first bits.
 3. Reshape into a 2-D boolean array of shape `(14, hashsize)`.
 
+### `crop_resistant_hash(image, hash_func=dhash, limit_segments=None, segment_threshold=128, min_segment_size=500, segmentation_image_size=300)`
+
+The "Efficient Cropping-Resistant Robust Image Hashing" algorithm (DOI 10.1109/ARES.2014.85). Segments the image via watershed-like flood fill on a smoothed-and-thresholded grayscale copy, then per-segment hashes via `dhash`. Returns an `ImageMultiHash` (variable-length list of `Hash`).
+
+#### Pipeline
+
+1. `orig = image.copy()` — keep the unmodified original for per-segment cropping.
+2. `gray = image.convert('L').resize((300, 300), LANCZOS)` — segmentation operates on a downscaled grayscale copy. `300` = `segmentation_image_size` default.
+3. `gray = gray.filter(ImageFilter.GaussianBlur())` — PIL default `radius=2`. **See parity hazard 3.1 below.**
+4. `gray = gray.filter(ImageFilter.MedianFilter())` — PIL default `size=3` (3×3 windowed median). **See parity hazard 3.2 below.**
+5. `pixels = numpy.array(gray).astype(numpy.float32)` — shape `(300, 300)`, float32.
+6. Segmentation via `_find_all_segments(pixels, threshold=128, min_segment_size=500)`:
+   - Find connected regions of `pixels > 128` ("hills"); keep regions with `>500` pixels.
+   - Then find connected regions of `pixels <= 128` ("valleys"); keep regions with `>500` pixels.
+   - Each segment is a set of `(y, x)` coordinates. Connectivity is 4-neighbor.
+7. If no segments survive, synthesize a single whole-image segment.
+8. If `limit_segments` is set, keep the M largest segments (stable sort by `len(segment)` descending).
+9. For each segment:
+   - Compute axis-aligned bounding box `(min_y, min_x, max_y+1, max_x+1)` in segmentation coords.
+   - Scale to original image coords: `scale_w = orig_w / 300`, `scale_h = orig_h / 300`.
+   - Crop original via `orig.crop((min_x * scale_w, min_y * scale_h, (max_x+1) * scale_w, (max_y+1) * scale_h))`. **`Image.crop` accepts floats and truncates to int (toward zero) internally — see parity hazard 3.4.**
+   - `dhash(crop)` with default `hash_size=8` → 64-bit Hash.
+10. Wrap the list of Hash in `ImageMultiHash`.
+
+#### Output type: `ImageMultiHash`
+
+```
+ImageMultiHash {
+    segment_hashes: list[Hash]
+}
+
+# Stringification: comma-separated hex of each segment hash.
+str(multihash) == ",".join(str(h) for h in multihash.segment_hashes)
+
+# Distance: returns FLOAT (not int).
+multihash1 - multihash2  →  float  (sum of best-match Hamming distances + penalty for unmatched segments)
+multihash1.hash_diff(other) → (matches: int, sum_distance: int)
+multihash1.matches(other, region_cutoff=1) → bool
+multihash1.best_match(others: list, hamming_cutoff=None, bit_error_rate=None) → ImageMultiHash
+```
+
+Parsing: `hex_to_multihash("hex1,hex2,hex3")` splits on `,`, parses each via `hex_to_hash`, wraps.
+
+#### Parity hazards (the hard bits)
+
+**3.1 PIL `GaussianBlur(radius=2)`:** Pillow approximates a 2-D gaussian via 3 separable box filters (horizontal pass then vertical pass, repeated 3 times). The box radii depend on `radius` via Pillow's `BoxBlur.c` formula. Boundary mode is edge replication (clamp). Ports must match the exact 3-box decomposition; floating-point operates on float intermediates then rounds to uint8 at the end. Reference vectors in `spec/gaussian_blur_cases.json`.
+
+**3.2 PIL `MedianFilter(size=3)`:** 3×3 windowed median with edge-replication boundary. For each pixel, gather the 9 values in the window (clamping at borders so e.g. pixel `(0, 0)` has the same value in 4 of its 9 window positions), sort, take index 4. Reference vectors in `spec/median_filter_cases.json`.
+
+**3.3 Flood-fill iteration order:** Python `_find_region` iterates `remaining_pixels` in `np.argwhere` order (row-major, y-then-x). Tie-breaking matters because segments containing the same pixels can otherwise end up in different orders, producing different bounding boxes after sorting in step 8. Ports MUST use row-major iteration. Reference cases in `spec/segmentation_cases.json`.
+
+**3.4 Bounding-box float→int truncation:** PIL's `Image.crop((left, top, right, bottom))` accepts floats and internally calls `int()` (truncate toward zero). Ports must match this exactly when converting `min_x * scale_w` etc. to integer crop coordinates.
+
+**3.5 Variable-length output:** Each fixture produces a different number of segments depending on image content. Group-2 tests compare the full comma-separated hex string against `goldens.json` — same number of segments, same order, same per-segment hex.
+
+#### Goldens schema
+
+`spec/goldens.json.algorithms.crop_resistant_hash` shape:
+
+```json
+{
+  "default_params": {
+    "hash_func": "dhash",
+    "limit_segments": null,
+    "segment_threshold": 128,
+    "min_segment_size": 500,
+    "segmentation_image_size": 300
+  },
+  "fixtures": {
+    "fixture-name.png": { "default": "hex1,hex2,..." }
+  }
+}
+```
+
+The `"default"` size key is a placeholder — `crop_resistant_hash` doesn't take a `hash_size` parameter at the top level (the inner `dhash` does, but its default is fixed at 8 in this v1).
+
 ## Validation matrix
 
 Each port's test suite reads the following files and asserts byte-exact equality:
