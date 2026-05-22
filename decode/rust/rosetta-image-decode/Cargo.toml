@@ -6,6 +6,7 @@ rust-version = "1.70"
 description = "Byte-exact PIL-compatible image decoder library (Rust)"
 license = "BSD-2-Clause"
 repository = "https://github.com/wmetcalf/rosetta-image-decode"
+links = "rid_jpeg_shim"
 
 [dependencies]
 thiserror = "1"
@@ -13,6 +14,9 @@ image = { version = "0.25", default-features = false, features = ["png", "gif", 
 mozjpeg-sys = "2"
 libwebp-sys2 = { version = "0.1.11", features = ["0_5"] }
 libheif-rs = { version = "2.7", default-features = false, features = ["v1_17"] }
+
+[build-dependencies]
+cc = "1"
 
 [dev-dependencies]
 serde = { version = "1", features = ["derive"] }

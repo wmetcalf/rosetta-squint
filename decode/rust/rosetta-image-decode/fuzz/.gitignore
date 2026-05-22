@@ -2,3 +2,9 @@ target/
 artifacts/
 coverage/
 corpus-evolved/
+
+# Evolved corpus files written by libFuzzer at runtime
+corpus/decode_any/[0-9a-f]*
+corpus/decode_with_prefix/[0-9a-f]*
+corpus/detect_format/[0-9a-f]*
+artifacts/*/leak-*

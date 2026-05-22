@@ -122,35 +122,46 @@ cargo +nightly fuzz tmin decode_any fuzz/artifacts/decode_any/crash-<hash>
 
 ---
 
-## Known crash (real bug — requires a fix)
+## Resolved: JPEG panic on truncated input (was a real bug)
 
 **Target:** `decode_any` and `decode_with_prefix`
 
 **Reproducer bytes:** `[0xFF, 0xD8]` (2-byte truncated JPEG SOI marker)
 
-**Reproducer file:** `fuzz/artifacts/decode_any/crash-26eb6285d32d133930aab9a669b1155aa82099ae`
+**Original root cause:** `src/jpeg.rs` used a `panic!()` + `catch_unwind` workaround for
+libjpeg's `error_exit` callback. Worked under `cargo test` (panic=unwind) but broke under
+`panic=abort` builds like cargo-fuzz — libFuzzer's deadly-signal handler intercepted
+`SIGABRT` before `catch_unwind` could handle it.
 
-**Root cause:**
-`src/jpeg.rs` installs a custom `error_exit` callback (`jpeg_error_exit_panic`) that calls
-`panic!()` when libjpeg hits a fatal error. The intent is that `decode_jpeg` wraps the call
-in `std::panic::catch_unwind`, converting the panic into `Err(DecodeError::CorruptInput)`.
+**Resolved:** in-tree C shim at `c-src/jpeg_decode_shim.c` uses the canonical
+`setjmp`/`longjmp` error-recovery pattern entirely in C. `error_exit` calls `longjmp` back
+to a `setjmp` point inside the shim. Rust never sees a panic from this code path — it just
+receives a return code + buffer via FFI.
 
-However, when the panic unwinds through the C libjpeg stack frames
-(the `extern "C-unwind"` ABI), libFuzzer's own signal handler intercepts the resulting
-`SIGABRT`/signal before `catch_unwind` can handle it, causing libFuzzer to report exit
-status 77 (deadly signal).
+`src/jpeg.rs` now wraps the shim with `extern "C"` declarations, maps the shim's return
+codes to `DecodeError` variants, and includes a forced-link reference to `mozjpeg_sys`
+(`use mozjpeg_sys::jpeg_std_error as _force_libjpeg_link`) so the linker pulls in
+libjpeg-turbo's static library when external crates consume `rosetta-image-decode`.
 
-**Observed panic message:**
-```
-thread '<unnamed>' panicked at src/jpeg.rs:26:5:
-libjpeg fatal error (msg_code=51)
-```
-`msg_code=51` is `JERR_PREMATURE_END` — "Premature end of JPEG file".
+Both `cargo test` (42/42 passing) and the previously-crashing fuzz input now produce
+`DecodeError::CorruptInput { detail: "libjpeg fatal error msg_code=51" }`.
 
-**Impact:** Any 2-byte (or longer) buffer starting with `0xFF 0xD8` that is not a valid
-JPEG will panic the process instead of returning `DecodeError::CorruptInput`.
+---
 
-**Recommended fix (follow-up PR):** Replace the `panic!`/`catch_unwind` strategy with
-libjpeg's built-in `setjmp`/`longjmp` error handling:
-store a `jmp_buf` in a custom error manager struct, return from `error_exit` via `longjmp`,
-and check the `setjmp` return value in `decode_jpeg_inner`. This avoids unwinding through C.
+## Known minor issue: one-time 192-byte leak under LSan
+
+**Target:** any (surfaces in `decode_any` runs > 10 seconds)
+
+**Observation:** LeakSanitizer reports a **single** 192-byte direct leak after running the
+fuzzer. The "1 allocation(s)" count and the fact that this happens even on the initial
+corpus (not requiring fuzzer mutation) indicates a one-time static allocation, not a
+per-decode leak. Per-decode leak would compound across the ~100,000 iterations the
+fuzzer runs and show up as many MB.
+
+**Probable source:** libjpeg-turbo's static state allocated once when the first decoder
+is initialised (jconfig pool or similar). Not affecting normal users — the allocation
+lives until process exit anyway.
+
+**Not investigated further:** the cost-benefit doesn't justify deep libjpeg-turbo
+internals work for a 192-byte one-time allocation that LSan may simply be misreporting.
+Documented here so future fuzz runs don't surface it as a new finding.

@@ -1,127 +1,153 @@
-//! JPEG decoder via mozjpeg-sys (libjpeg-turbo decode path).
+//! JPEG decoder via the in-tree C shim (`c-src/jpeg_decode_shim.c`),
+//! which uses libjpeg-turbo with the canonical `setjmp`/`longjmp`
+//! error-recovery pattern.
 //!
-//! Configures dct_method=JDCT_ISLOW and out_color_space=JCS_RGB to match PIL's default.
-//! Always outputs RGB (3 channels). CMYK/YCCK input → UnsupportedFeature.
+//! ## Why a C shim and not direct FFI?
 //!
-//! Error handling: installs a custom error_exit callback that panics; the outer
-//! decode_jpeg wraps everything in catch_unwind so libjpeg fatal errors become
-//! CorruptInput rather than process abort.
+//! libjpeg's error model: install an `error_exit` callback; on fatal errors
+//! libjpeg invokes it; the callback is expected to call `longjmp` back to
+//! a `setjmp` point in the caller, which then returns an error.
+//!
+//! `longjmp` skips Rust destructors — using it through Rust frames is UB.
+//! Earlier versions of this file used a `panic!()` + `catch_unwind`
+//! workaround. That works under `cargo test` (panic=unwind) but **breaks
+//! under `panic=abort` builds** like cargo-fuzz, where panics SIGABRT and
+//! libFuzzer's signal handler intercepts before `catch_unwind` fires.
+//!
+//! The fix: keep `setjmp`/`longjmp` entirely in C. The shim does the full
+//! decode pipeline in one C call; Rust just gets a return code + buffer.
+//! Real bug found by fuzzing: `[0xFF, 0xD8]` (bare SOI marker) used to
+//! crash the process under panic=abort; now returns `CorruptInput` properly
+//! in any build profile.
+//!
+//! Configures `out_color_space = JCS_RGB`, `dct_method = JDCT_ISLOW` (matches
+//! PIL's default; ensures cross-architecture pixel parity). CMYK/YCCK input
+//! → `UnsupportedFeature`.
 
 use crate::error::{DecodeError, DecodeErrorKind};
-use crate::limits::check_dimensions;
+use crate::limits::MAX_PIXELS;
 use crate::types::{Channels, DecodedImage, Format};
 
-use mozjpeg_sys::*;
-use std::mem;
-use std::os::raw::c_int;
-use std::panic;
+use std::os::raw::{c_int, c_uchar};
 
-/// Custom error_exit installed on the jpeg_error_mgr.
-/// Called by libjpeg on fatal errors instead of exit().
-/// Since the ABI is "C-unwind", a Rust panic propagates back through libjpeg.
-unsafe extern "C-unwind" fn jpeg_error_exit_panic(cinfo: &mut jpeg_common_struct) {
-    // Format the error message into a short string before panicking
-    let err = &mut *cinfo.err;
-    // msg_code 0 means "no message" — just panic with a generic message
-    panic!("libjpeg fatal error (msg_code={})", err.msg_code);
+// Force the linker to pull in mozjpeg-sys's bundled libjpeg-turbo even though
+// this module no longer references any of its symbols directly — our C shim
+// in c-src/jpeg_decode_shim.c calls jpeg_create_decompress / jpeg_read_header
+// / etc., and without a Rust-side reference, the linker drops mozjpeg-sys's
+// static library and the shim's libjpeg calls go unresolved.
+#[allow(unused_imports)]
+use mozjpeg_sys::jpeg_std_error as _force_libjpeg_link;
+
+// Return codes from the C shim. Must stay in sync with c-src/jpeg_decode_shim.c.
+const RID_OK: c_int = 0;
+const RID_ERR_CMYK: c_int = -1;
+const RID_ERR_TOO_LARGE: c_int = -2;
+const RID_ERR_UNEXPECTED_COMPONENTS: c_int = -3;
+const RID_ERR_ALLOC: c_int = -4;
+const RID_ERR_BAD_HEADER: c_int = -5;
+const RID_ERR_LIBJPEG_BASE: c_int = 1000;
+
+extern "C" {
+    fn rid_decode_jpeg(
+        bytes: *const c_uchar,
+        len: usize,
+        max_pixels: usize,
+        out_width: *mut u32,
+        out_height: *mut u32,
+        out_buf: *mut *mut c_uchar,
+    ) -> c_int;
+
+    fn rid_free_buf(buf: *mut c_uchar);
 }
 
 pub(crate) fn decode_jpeg(bytes: &[u8]) -> Result<DecodedImage, DecodeError> {
-    // Wrap everything in catch_unwind so that jpeg_error_exit_panic above
-    // converts libjpeg fatal errors into a Rust Result rather than aborting.
-    let result = panic::catch_unwind(|| decode_jpeg_inner(bytes));
-    match result {
-        Ok(inner) => inner,
-        Err(_panic_payload) => Err(DecodeError::new(
+    if bytes.is_empty() {
+        return Err(DecodeError::new(
             DecodeErrorKind::CorruptInput,
             Some(Format::Jpeg),
-            "libjpeg fatal error",
-        )),
+            "empty input",
+        ));
     }
+
+    let mut width: u32 = 0;
+    let mut height: u32 = 0;
+    let mut buf: *mut c_uchar = std::ptr::null_mut();
+
+    // SAFETY: rid_decode_jpeg never reads past bytes.as_ptr() + bytes.len()
+    // (libjpeg's mem source is bounded by the len argument), and it writes
+    // to width/height/buf only. On success, *buf is a malloc'd buffer we own
+    // and free via rid_free_buf. On failure, *buf is NULL and we don't deref.
+    let rc = unsafe {
+        rid_decode_jpeg(
+            bytes.as_ptr(),
+            bytes.len(),
+            MAX_PIXELS,
+            &mut width,
+            &mut height,
+            &mut buf,
+        )
+    };
+
+    if rc != RID_OK {
+        debug_assert!(buf.is_null());
+        return Err(map_shim_error(rc));
+    }
+
+    let width = width as usize;
+    let height = height as usize;
+    let size = width * height * 3;
+
+    let mut data = vec![0u8; size];
+    unsafe {
+        std::ptr::copy_nonoverlapping(buf, data.as_mut_ptr(), size);
+        rid_free_buf(buf);
+    }
+
+    Ok(DecodedImage {
+        width,
+        height,
+        data,
+        channels: Channels::Rgb,
+        format: Format::Jpeg,
+    })
 }
 
-fn decode_jpeg_inner(bytes: &[u8]) -> Result<DecodedImage, DecodeError> {
-    unsafe {
-        let mut cinfo: jpeg_decompress_struct = mem::zeroed();
-        let mut err: jpeg_error_mgr = mem::zeroed();
-        cinfo.common.err = jpeg_std_error(&mut err);
-
-        // Replace the default error_exit (which calls exit()) with our panic-based one
-        (*cinfo.common.err).error_exit = Some(jpeg_error_exit_panic);
-
-        jpeg_create_decompress(&mut cinfo);
-        jpeg_mem_src(&mut cinfo, bytes.as_ptr(), bytes.len() as _);
-
-        // JPEG_HEADER_OK == 1 (from jpeglib.h; not exported as a Rust constant)
-        let header_ret = jpeg_read_header(&mut cinfo, true as boolean);
-        if header_ret != 1 as c_int {
-            jpeg_destroy_decompress(&mut cinfo);
-            return Err(DecodeError::new(
-                DecodeErrorKind::CorruptInput,
-                Some(Format::Jpeg),
-                format!("jpeg_read_header returned {}", header_ret),
-            ));
-        }
-
-        // Reject CMYK / YCCK before allocating output buffer
-        let cs = cinfo.jpeg_color_space;
-        if cs == J_COLOR_SPACE::JCS_CMYK || cs == J_COLOR_SPACE::JCS_YCCK {
-            jpeg_destroy_decompress(&mut cinfo);
-            return Err(DecodeError::new(
-                DecodeErrorKind::UnsupportedFeature,
-                Some(Format::Jpeg),
-                "CMYK color space",
-            ));
-        }
-
-        // Enforce MAX_PIXELS before allocating the output buffer.
-        // image_width / image_height are populated by jpeg_read_header.
-        let jpeg_w = cinfo.image_width as usize;
-        let jpeg_h = cinfo.image_height as usize;
-        if let Err(e) = check_dimensions(jpeg_w, jpeg_h, Format::Jpeg) {
-            jpeg_destroy_decompress(&mut cinfo);
-            return Err(e);
-        }
-
-        cinfo.out_color_space = J_COLOR_SPACE::JCS_RGB;
-        cinfo.dct_method = J_DCT_METHOD::JDCT_ISLOW;
-        // Fancy upsampling is the default; explicitly set for clarity
-        cinfo.do_fancy_upsampling = true as boolean;
-
-        jpeg_start_decompress(&mut cinfo);
-
-        let width = cinfo.output_width as usize;
-        let height = cinfo.output_height as usize;
-        let components = cinfo.output_components as usize;
-
-        if components != 3 {
-            jpeg_destroy_decompress(&mut cinfo);
-            return Err(DecodeError::new(
-                DecodeErrorKind::CorruptInput,
-                Some(Format::Jpeg),
-                format!("unexpected output_components: {}", components),
-            ));
-        }
-
-        let row_stride = width * components;
-        let mut data = vec![0u8; height * row_stride];
-
-        while cinfo.output_scanline < cinfo.output_height {
-            let offset = (cinfo.output_scanline as usize) * row_stride;
-            let row_ptr = data[offset..].as_mut_ptr();
-            let mut row_ptrs: [*mut u8; 1] = [row_ptr];
-            jpeg_read_scanlines(&mut cinfo, row_ptrs.as_mut_ptr(), 1);
-        }
-
-        jpeg_finish_decompress(&mut cinfo);
-        jpeg_destroy_decompress(&mut cinfo);
-
-        Ok(DecodedImage {
-            width,
-            height,
-            data,
-            channels: Channels::Rgb,
-            format: Format::Jpeg,
-        })
+fn map_shim_error(rc: c_int) -> DecodeError {
+    match rc {
+        RID_ERR_CMYK => DecodeError::new(
+            DecodeErrorKind::UnsupportedFeature,
+            Some(Format::Jpeg),
+            "CMYK color space",
+        ),
+        RID_ERR_TOO_LARGE => DecodeError::new(
+            DecodeErrorKind::ImageTooLarge,
+            Some(Format::Jpeg),
+            format!("declared dimensions exceed MAX_PIXELS = {}", MAX_PIXELS),
+        ),
+        RID_ERR_UNEXPECTED_COMPONENTS => DecodeError::new(
+            DecodeErrorKind::CorruptInput,
+            Some(Format::Jpeg),
+            "unexpected output_components (libjpeg returned non-RGB)",
+        ),
+        RID_ERR_ALLOC => DecodeError::new(
+            DecodeErrorKind::CorruptInput,
+            Some(Format::Jpeg),
+            "out of memory allocating output buffer",
+        ),
+        RID_ERR_BAD_HEADER => DecodeError::new(
+            DecodeErrorKind::CorruptInput,
+            Some(Format::Jpeg),
+            "jpeg_read_header returned non-OK (corrupt header)",
+        ),
+        x if x >= RID_ERR_LIBJPEG_BASE => DecodeError::new(
+            DecodeErrorKind::CorruptInput,
+            Some(Format::Jpeg),
+            format!("libjpeg fatal error msg_code={}", x - RID_ERR_LIBJPEG_BASE),
+        ),
+        _ => DecodeError::new(
+            DecodeErrorKind::CorruptInput,
+            Some(Format::Jpeg),
+            format!("unknown jpeg shim error code: {}", rc),
+        ),
     }
 }
