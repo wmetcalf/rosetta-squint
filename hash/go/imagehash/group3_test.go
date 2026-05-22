@@ -73,11 +73,42 @@ func runEndToEnd(t *testing.T, algoName string, exempt map[string]struct{}, comp
 	}
 }
 
+func runEndToEndDb4(t *testing.T, exempt map[string]struct{}) {
+	cases, err := testkit.AlgorithmCasesFromRoot("whash_db4")
+	if err != nil {
+		t.Fatalf("load goldens: %v", err)
+	}
+	for _, c := range cases {
+		c := c
+		t.Run(fmt.Sprintf("whash_db4/%s-size-%d", c.Fixture, c.Size), func(t *testing.T) {
+			if _, ok := exempt[c.Fixture]; ok {
+				t.Skipf("Group-3 exempt per DECODER_NOTES.md: %s", c.Fixture)
+			}
+			// Skip floating-point precision cases (see group2_test.go db4FPPrecisionExempt).
+			key := fmt.Sprintf("%s-%d", c.Fixture, c.Size)
+			if db4FPPrecisionExempt[key] {
+				t.Skipf("fp-precision-exempt: %s size=%d", c.Fixture, c.Size)
+			}
+			img := decodePNG(t, c.Fixture)
+			h, err := imagehash.WHashDb4(img, c.Size)
+			if err != nil {
+				t.Fatalf("WHashDb4: %v", err)
+			}
+			if got := h.ToHex(); got != c.Hex {
+				t.Errorf("whash_db4 end-to-end PNG: fixture=%s size=%d: got %q, want %q", c.Fixture, c.Size, got, c.Hex)
+			}
+		})
+	}
+}
+
 func TestPNGEndToEnd(t *testing.T) {
 	exempt := loadExemptions(t)
 	runEndToEnd(t, "average_hash", exempt, imagehash.AverageHash)
 	runEndToEnd(t, "dhash", exempt, imagehash.DHash)
+	runEndToEnd(t, "dhash_vertical", exempt, imagehash.DHashVertical)
 	runEndToEnd(t, "phash", exempt, imagehash.PHash)
+	runEndToEnd(t, "phash_simple", exempt, imagehash.PHashSimple)
 	runEndToEnd(t, "whash_haar", exempt, imagehash.WHashHaar)
+	runEndToEndDb4(t, exempt)
 	runEndToEnd(t, "colorhash", exempt, imagehash.ColorHash)
 }
