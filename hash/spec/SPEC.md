@@ -297,13 +297,17 @@ Same as `dhash` but compares **vertically adjacent** pixels instead of horizonta
 
 ### `phash_simple(img, hash_size=N, highfreq_factor=4)`
 
-Identical to `phash` except the threshold is the **mean** of the DCT block (not the median). Steps 1–4 unchanged.
+**Differs from `phash` in three ways** (not just thresholding — verified against `imagehash` 4.3.2 source):
 
-5. `m = mean(block)` — float64.
-6. `bit = block > m` (strict `>`).
+1. Convert to grayscale.
+2. Lanczos resize to `(N*highfreq_factor, N*highfreq_factor)` (same as `phash`).
+3. **1-D DCT-II row-wise only** — `dct = scipy.fftpack.dct(pixels)`. This is `dct(pixels, axis=-1)` — applied to each row independently. **NOT** the column-then-row 2-D DCT used by `phash`. Each row of the input becomes a row of DCT coefficients.
+4. Slice `dctlowfreq = dct[0:N, 1:N+1]` — rows 0..N, columns **1..N+1** (skip the DC column at index 0).
+5. `m = mean(dctlowfreq)` — float64.
+6. `bit = dctlowfreq > m` (strict `>`).
 7. Pack bits to hex.
 
-`phash_simple` exists as an alternative threshold strategy; produces visibly different hashes for the same input.
+The slicing+mean choice mirrors the original "Looks Like It" blog-post algorithm, which uses the 1-D DCT and discards the DC term to be robust against overall brightness shifts. `phash` (median + 2-D DCT) is a refinement; `phash_simple` is the original. Both algorithms exist in Python `imagehash` and they produce **different** hashes for the same input.
 
 ### `whash(img, hash_size=N)` — v1 only `mode='haar'`, `remove_max_haar_ll=True`
 
