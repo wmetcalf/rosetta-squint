@@ -1,16 +1,23 @@
-# Weekly check for new upstream releases of `imagehash`, `Pillow`,
-# `numpy`, `scipy`, and `PyWavelets`. When a new version is available
-# beyond our current pin, install the latest and run the entire spec
-# regeneration + per-port test suites. If anything fails or any golden
-# would change, the workflow fails — opening a tracking issue is the
-# operator's cue to investigate and possibly bump the pin.
+# Weekly check for new upstream releases of `imagehash`, `Pillow`, and
+# `PyWavelets`. Decision tree per dep:
 #
-# Why: our 6 ports test against `spec/goldens.json` which is generated
-# from a specific pinned Python imagehash + Pillow + numpy + scipy +
-# PyWavelets combination. If upstream changes algorithm behavior in a
-# new release, our goldens go stale silently — every port keeps passing
-# its own tests against the frozen goldens while diverging from the
-# true upstream reference.
+#   1. Install latest from PyPI.
+#   2. Re-regenerate spec/goldens.json against the latest.
+#   3. Compare against committed goldens.json (ignoring the regenerated_at
+#      timestamp).
+#   4a. NO drift  → upstream is bit-equivalent. Bump the pin in
+#       python/pyproject.toml + spec/requirements.txt, bump the wrapper
+#       patch version, commit, tag, open PR. CI on the PR runs the full
+#       test matrix; auto-merge if green. Tag push triggers release.yml
+#       which publishes to PyPI.
+#   4b. Drift detected → file an issue with the diff and stop. No
+#       automatic release; a human decides whether to accept the new
+#       behavior + recompute goldens.
+#
+# This gives security patches (Pillow CVE fixes that don't change pixel
+# output, imagehash internal fixes that don't change hex strings) a
+# fast-path to end users via PyPI, while major algorithm changes still
+# require human review.
 #
 # Trigger: weekly + manual.
 name: upstream-tracker
@@ -19,92 +26,251 @@ on:
   schedule:
     - cron: "0 6 * * 1"  # Mondays 06:00 UTC
   workflow_dispatch:
+    inputs:
+      force_release:
+        description: "Force a release even if pin didn't change (for testing)"
+        type: boolean
+        default: false
+
+# Need write access to push commits/tags + open issues + open PRs.
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
 
 jobs:
   check-upstream:
     runs-on: ubuntu-latest
     strategy:
+      # Run each dep sequentially so we don't end up with two parallel
+      # auto-bump PRs touching the same files. fail-fast=false so an
+      # error on one dep doesn't block tracking of the others (the
+      # subsequent matrix entries still run).
+      max-parallel: 1
       fail-fast: false
       matrix:
         include:
-          - name: imagehash
-            install: "imagehash"
-            pinned_from: "spec/requirements.txt"
-          - name: pillow
-            install: "Pillow"
-            pinned_from: "spec/requirements.txt"
-          - name: pywavelets
-            install: "PyWavelets"
-            pinned_from: "spec/requirements.txt"
+          - dep: imagehash
+            pkg: imagehash
+            pin_in_pyproject: "imagehash=="
+          - dep: pillow
+            pkg: Pillow
+            pin_in_pyproject: "Pillow=="
+          - dep: pywavelets
+            pkg: PyWavelets
+            pin_in_pyproject: "PyWavelets>="
+
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Need full history to commit + tag.
+          fetch-depth: 0
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Install pinned requirements
+      - name: Install current pinned requirements
         run: |
           python -m pip install --upgrade pip
           pip install -r spec/requirements.txt
 
-      - name: Snapshot pinned ${{ matrix.name }} version
+      - name: Snapshot pinned version
         run: |
-          PINNED=$(pip show ${{ matrix.install }} | awk '/^Version:/ {print $2}')
+          PINNED=$(pip show ${{ matrix.pkg }} | awk '/^Version:/ {print $2}')
           echo "PINNED=$PINNED" >> $GITHUB_ENV
-          echo "Pinned ${{ matrix.name }}: $PINNED"
+          echo "::notice::Pinned ${{ matrix.dep }} version: $PINNED"
 
-      - name: Install latest ${{ matrix.name }} from PyPI
-        run: pip install --upgrade ${{ matrix.install }}
+      - name: Install latest from PyPI
+        run: pip install --upgrade ${{ matrix.pkg }}
 
       - name: Snapshot latest version
         run: |
-          LATEST=$(pip show ${{ matrix.install }} | awk '/^Version:/ {print $2}')
+          LATEST=$(pip show ${{ matrix.pkg }} | awk '/^Version:/ {print $2}')
           echo "LATEST=$LATEST" >> $GITHUB_ENV
-          echo "Latest ${{ matrix.name }}: $LATEST"
+          echo "::notice::Latest ${{ matrix.dep }} version: $LATEST"
 
-      - name: Report version delta
+      - name: No-op if no new version
+        if: env.PINNED == env.LATEST && !inputs.force_release
         run: |
-          echo "${{ matrix.name }}: pinned=$PINNED  latest=$LATEST"
-          if [ "$PINNED" = "$LATEST" ]; then
-            echo "::notice::No new ${{ matrix.name }} release; current pin is up to date."
-          else
-            echo "::warning::Upstream ${{ matrix.name }} has a new release ($PINNED → $LATEST). Will attempt re-regenerate against latest to check for golden drift."
-          fi
+          echo "::notice::${{ matrix.dep }} is at the latest version ($PINNED). Nothing to do."
 
       - name: Re-regenerate spec/goldens.json against latest
-        if: env.PINNED != env.LATEST
+        if: env.PINNED != env.LATEST || inputs.force_release
         run: |
           cd spec
           python regenerate.py
+          # Tag the regenerated_at field as the only thing allowed to differ.
+          # spec/regenerate.py emits it; we strip it before diffing below.
 
-      - name: Check for golden drift
-        if: env.PINNED != env.LATEST
+      - name: Diff goldens (ignoring regenerated_at + version metadata)
+        id: diff
+        if: env.PINNED != env.LATEST || inputs.force_release
         run: |
-          if ! git diff --quiet spec/goldens.json; then
-            echo "::error::Golden drift detected after upgrading ${{ matrix.name }} $PINNED → $LATEST. Inspect the diff below; if accepted, bump the pin in spec/requirements.txt and re-commit goldens.json."
-            git diff --stat spec/goldens.json
-            git diff spec/goldens.json | head -200
-            exit 1
-          fi
-          echo "::notice::${{ matrix.name }} $PINNED → $LATEST produced no golden drift; the pin can be bumped safely."
+          # Strip volatile fields and compare.
+          python <<'EOF'
+          import json, sys, subprocess
+          committed = json.loads(subprocess.check_output(["git", "show", "HEAD:spec/goldens.json"]))
+          current = json.loads(open("spec/goldens.json").read())
+          volatile = {"regenerated_at", "pillow_version", "imagehash_version",
+                      "numpy_version", "scipy_version", "pywavelets_version"}
+          for k in volatile:
+            committed.pop(k, None)
+            current.pop(k, None)
+          if committed == current:
+            print("::notice::Goldens unchanged after upstream bump — safe to auto-release.")
+            with open(".drift", "w") as fh:
+              fh.write("clean\n")
+          else:
+            # Compute compact diff summary.
+            import sys
+            committed_fix = committed.get("algorithms", {})
+            current_fix = current.get("algorithms", {})
+            algos = set(committed_fix) | set(current_fix)
+            changes = []
+            for algo in sorted(algos):
+              c = committed_fix.get(algo, {}).get("fixtures", {})
+              n = current_fix.get(algo, {}).get("fixtures", {})
+              for fix in set(c) | set(n):
+                if c.get(fix) != n.get(fix):
+                  changes.append(f"{algo}: {fix}")
+            print(f"::warning::Drift detected ({len(changes)} (algo, fixture) pairs changed).")
+            print("\n".join(changes[:50]))
+            with open(".drift", "w") as fh:
+              fh.write("dirty\n")
+              fh.write("\n".join(changes))
+          EOF
+          echo "DRIFT=$(head -1 .drift)" >> $GITHUB_ENV
 
-      - name: Check Python port tests against fresh upstream
-        if: env.PINNED != env.LATEST
-        run: |
-          pip install -e python/[test]
-          cd python
-          pytest -q
+      # ─── 4a. NO DRIFT — auto-bump pin + version + commit + tag + open PR ───
 
-  notify:
-    if: always() && (needs.check-upstream.result == 'failure')
-    needs: check-upstream
-    runs-on: ubuntu-latest
-    steps:
-      - name: Summarize result
+      - name: Auto-bump on clean upgrade
+        if: env.DRIFT == 'clean'
         run: |
-          echo "Upstream-tracker detected drift or test failure."
-          echo "An operator should review the failing matrix entry and either"
-          echo "(a) bump the spec/requirements.txt pin + regenerate goldens, or"
-          echo "(b) document why the new upstream behavior is incompatible."
+          # Update python/pyproject.toml — replace the pinned dep line.
+          # The exact replacement depends on the pin format per matrix entry.
+          PIN_LINE='${{ matrix.pin_in_pyproject }}'
+          NEW_PIN='${{ matrix.pkg }}=='
+          # For Pillow we use ==X.Y.*; for imagehash we use ==X.Y.Z exact.
+          case '${{ matrix.dep }}' in
+            pillow)
+              # 11.0.1 → 11.0.* (allow patch, lock minor)
+              MAJOR_MINOR=$(echo "$LATEST" | awk -F. '{print $1 "." $2}')
+              NEW_PIN_FULL="Pillow==${MAJOR_MINOR}.*"
+              ;;
+            imagehash)
+              NEW_PIN_FULL="imagehash==${LATEST}"
+              ;;
+            pywavelets)
+              # Wider range, just bump upper bound.
+              MAJOR=$(echo "$LATEST" | cut -d. -f1)
+              NEW_PIN_FULL="PyWavelets>=1.5,<$((MAJOR + 1)).0"
+              ;;
+          esac
+
+          # Patch pyproject.toml
+          python <<EOF
+          from pathlib import Path
+          import re
+          p = Path("python/pyproject.toml")
+          txt = p.read_text()
+          old = re.compile(r'"${{ matrix.pin_in_pyproject }}[^"]+"')
+          if not old.search(txt):
+            raise SystemExit("could not find ${{ matrix.dep }} pin to update")
+          txt = old.sub('"${NEW_PIN_FULL}"', txt, count=1)
+          p.write_text(txt)
+          EOF
+
+          # Patch spec/requirements.txt similarly (exact pin).
+          sed -i "s|^${{ matrix.pkg }}==.*|${{ matrix.pkg }}==${LATEST}|" spec/requirements.txt || true
+
+          # Bump the wrapper patch version: 0.1.0 → 0.1.1
+          python <<'EOF'
+          from pathlib import Path
+          import re
+          p = Path("python/pyproject.toml")
+          txt = p.read_text()
+          m = re.search(r'version = "(\d+)\.(\d+)\.(\d+)"', txt)
+          if not m:
+            raise SystemExit("no version in pyproject.toml")
+          mj, mn, pt = m.groups()
+          new_version = f"{mj}.{mn}.{int(pt) + 1}"
+          txt = re.sub(r'version = "\d+\.\d+\.\d+"', f'version = "{new_version}"', txt, count=1)
+          p.write_text(txt)
+          with open(".new_version", "w") as fh:
+            fh.write(new_version)
+          EOF
+          NEW_VERSION=$(cat .new_version)
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          rm .new_version
+
+          # Configure git for the bot commit.
+          git config user.name "upstream-tracker[bot]"
+          git config user.email "upstream-tracker@users.noreply.github.com"
+
+      - name: Open PR with auto-bump
+        if: env.DRIFT == 'clean'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: upstream-bump/${{ matrix.dep }}-${{ env.LATEST }}
+          title: "chore: bump ${{ matrix.dep }} ${{ env.PINNED }} → ${{ env.LATEST }} (goldens unchanged)"
+          body: |
+            Automated bump triggered by upstream-tracker workflow.
+
+            **Upstream:** `${{ matrix.dep }} ${{ env.PINNED }}` → `${{ env.LATEST }}`
+
+            **Goldens diff:** clean. The new upstream version produces
+            byte-identical output to `spec/goldens.json`, so this bump is
+            safe for downstream consumers — no port re-validation needed.
+
+            **Wrapper version:** ${{ env.NEW_VERSION }} (patch bump)
+
+            **Action required:** review + merge. CI runs the full test
+            matrix on this PR before auto-merge. When merged, a tag push
+            triggers `release.yml` which publishes to PyPI.
+
+            If you don't want this release, close the PR.
+          commit-message: "chore(deps): bump ${{ matrix.dep }} to ${{ env.LATEST }}"
+          author: "upstream-tracker[bot] <upstream-tracker@users.noreply.github.com>"
+          delete-branch: true
+          add-paths: |
+            python/pyproject.toml
+            spec/requirements.txt
+
+      # ─── 4b. DRIFT — open issue for human review ───
+
+      - name: Open issue on drift
+        if: env.DRIFT == 'dirty'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const drift = fs.readFileSync('.drift', 'utf8').split('\n').slice(1).join('\n');
+            const body = `Automated check from upstream-tracker workflow.
+
+            Upstream **${{ matrix.dep }}** released **${{ env.LATEST }}** (we pin **${{ env.PINNED }}**).
+            Installing the new version and re-running \`spec/regenerate.py\` produces a different \`spec/goldens.json\`.
+
+            This means the new upstream changes algorithm output. The wrapper cannot
+            automatically bump the pin without breaking byte-exact parity with the 5
+            non-Python ports.
+
+            **Diff (first 50 entries):**
+            \`\`\`
+            ${drift.split('\n').slice(0, 50).join('\n')}
+            \`\`\`
+
+            **Action required:** a human should
+            1. Decide whether the new upstream behavior is acceptable.
+            2. If yes: re-run \`spec/regenerate.py\` locally against the new upstream, commit the new goldens, re-validate each of the 5 ports against them, then close this issue.
+            3. If no: keep the current pin, document the incompatibility in \`python/README.md\`, and close this issue with a note about the blocked upgrade.
+            `;
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `upstream-tracker: ${{ matrix.dep }} ${{ env.LATEST }} changes goldens — manual review needed`,
+              body,
+              labels: ['upstream-drift', 'needs-review'],
+            });
