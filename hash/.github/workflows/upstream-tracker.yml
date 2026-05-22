@@ -1,0 +1,110 @@
+# Weekly check for new upstream releases of `imagehash`, `Pillow`,
+# `numpy`, `scipy`, and `PyWavelets`. When a new version is available
+# beyond our current pin, install the latest and run the entire spec
+# regeneration + per-port test suites. If anything fails or any golden
+# would change, the workflow fails — opening a tracking issue is the
+# operator's cue to investigate and possibly bump the pin.
+#
+# Why: our 6 ports test against `spec/goldens.json` which is generated
+# from a specific pinned Python imagehash + Pillow + numpy + scipy +
+# PyWavelets combination. If upstream changes algorithm behavior in a
+# new release, our goldens go stale silently — every port keeps passing
+# its own tests against the frozen goldens while diverging from the
+# true upstream reference.
+#
+# Trigger: weekly + manual.
+name: upstream-tracker
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"  # Mondays 06:00 UTC
+  workflow_dispatch:
+
+jobs:
+  check-upstream:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: imagehash
+            install: "imagehash"
+            pinned_from: "spec/requirements.txt"
+          - name: pillow
+            install: "Pillow"
+            pinned_from: "spec/requirements.txt"
+          - name: pywavelets
+            install: "PyWavelets"
+            pinned_from: "spec/requirements.txt"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install pinned requirements
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r spec/requirements.txt
+
+      - name: Snapshot pinned ${{ matrix.name }} version
+        run: |
+          PINNED=$(pip show ${{ matrix.install }} | awk '/^Version:/ {print $2}')
+          echo "PINNED=$PINNED" >> $GITHUB_ENV
+          echo "Pinned ${{ matrix.name }}: $PINNED"
+
+      - name: Install latest ${{ matrix.name }} from PyPI
+        run: pip install --upgrade ${{ matrix.install }}
+
+      - name: Snapshot latest version
+        run: |
+          LATEST=$(pip show ${{ matrix.install }} | awk '/^Version:/ {print $2}')
+          echo "LATEST=$LATEST" >> $GITHUB_ENV
+          echo "Latest ${{ matrix.name }}: $LATEST"
+
+      - name: Report version delta
+        run: |
+          echo "${{ matrix.name }}: pinned=$PINNED  latest=$LATEST"
+          if [ "$PINNED" = "$LATEST" ]; then
+            echo "::notice::No new ${{ matrix.name }} release; current pin is up to date."
+          else
+            echo "::warning::Upstream ${{ matrix.name }} has a new release ($PINNED → $LATEST). Will attempt re-regenerate against latest to check for golden drift."
+          fi
+
+      - name: Re-regenerate spec/goldens.json against latest
+        if: env.PINNED != env.LATEST
+        run: |
+          cd spec
+          python regenerate.py
+
+      - name: Check for golden drift
+        if: env.PINNED != env.LATEST
+        run: |
+          if ! git diff --quiet spec/goldens.json; then
+            echo "::error::Golden drift detected after upgrading ${{ matrix.name }} $PINNED → $LATEST. Inspect the diff below; if accepted, bump the pin in spec/requirements.txt and re-commit goldens.json."
+            git diff --stat spec/goldens.json
+            git diff spec/goldens.json | head -200
+            exit 1
+          fi
+          echo "::notice::${{ matrix.name }} $PINNED → $LATEST produced no golden drift; the pin can be bumped safely."
+
+      - name: Check Python port tests against fresh upstream
+        if: env.PINNED != env.LATEST
+        run: |
+          pip install -e python/[test]
+          cd python
+          pytest -q
+
+  notify:
+    if: always() && (needs.check-upstream.result == 'failure')
+    needs: check-upstream
+    runs-on: ubuntu-latest
+    steps:
+      - name: Summarize result
+        run: |
+          echo "Upstream-tracker detected drift or test failure."
+          echo "An operator should review the failing matrix entry and either"
+          echo "(a) bump the spec/requirements.txt pin + regenerate goldens, or"
+          echo "(b) document why the new upstream behavior is incompatible."
