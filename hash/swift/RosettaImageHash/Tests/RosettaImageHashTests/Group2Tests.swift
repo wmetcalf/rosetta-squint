@@ -121,6 +121,23 @@ final class Group2DHashVerticalTests: XCTestCase {
     }
 }
 
+final class Group2WHashDb4RobustTests: XCTestCase {
+    func testByteExactAllFixturesAndSizes() throws {
+        let cases = try TestKit.algorithmCases("whash_db4_robust")
+        var failures: [String] = []
+        for c in cases {
+            let img = try TestKit.loadPredecoded(c.fixture)
+            let h = try whashDb4Robust(img, hashSize: c.size)
+            if h.hex != c.hex {
+                failures.append("fixture=\(c.fixture) size=\(c.size) got=\(h.hex) want=\(c.hex)")
+            }
+        }
+        if !failures.isEmpty {
+            XCTFail("\(failures.count) failures:\n  " + failures.joined(separator: "\n  "))
+        }
+    }
+}
+
 final class Group2WHashDb4Tests: XCTestCase {
     /// Fixtures where the db4 LL band has many near-zero coefficients (magnitude < 1e-10)
     /// that straddle the median=0 boundary. The exact sign of these values depends on
