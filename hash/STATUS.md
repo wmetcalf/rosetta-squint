@@ -21,7 +21,7 @@ Every port produces the same hex output as the Python `imagehash` package for th
 | `colorhash` | ✓ | ✓ (re-export) | ✓ | ✓ | ✓ | ✓ | ✓ |
 | hex round-trip (`hex_to_hash`, `hex_to_flathash`) | ✓ | ✓ (re-export) | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Hamming distance (`Hash.subtract`) | ✓ | ✓ (re-export) | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `crop_resistant_hash` + `ImageMultiHash` | ✓ | ✓ (re-export) | — | — | — | — | — |
+| `crop_resistant_hash` + `ImageMultiHash` | ✓ | ✓ (re-export) | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `old_hex_to_hash` (pre-4.0 migration) | ✓ | ✓ (re-export) | — | — | — | — | — |
 
 ¹ `whash_db4`: 39–41 of 42 golden cases byte-exact across ports. A handful of pathological synthetic fixtures (`checker-256.png`, `line-art-icon-256.png`) sit at a ULP-level median tie point where PyWavelets' C+SIMD/FMA accumulation resolves the sign differently than portable double arithmetic. Each port skips a documented `ULP_EXEMPT` set; real-world photos are unaffected. See `spec/SPEC.md` §whash_db4.
@@ -59,16 +59,16 @@ Pinned in `spec/SPEC.md` and `spec/requirements.txt`. The actual versions used l
 
 ---
 
-## Test counts (current, post-`hash-sweep-v0.1.0` + `robust-db4-v0.1.0`)
+## Test counts (current, post-`crop-resistant-v0.1.0`)
 
 | Port | Tests | How to run |
 |---|---|---|
-| Python ext | 45 | `cd python && pytest` |
-| Rust | 65 | `cd rust/rosetta-image-hash && cargo test` |
+| Python ext | 442 | `cd python && pytest` |
+| Rust | 68 | `cd rust/rosetta-image-hash && cargo test` |
 | Go | all pkgs | `cd go/imagehash && go test ./...` |
-| Java | 807 | `cd java && mvn -B -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 test` |
-| JS/TS | 69 | `cd js/rosetta-image-hash && npm test` |
-| Swift | 59 | `cd swift/RosettaImageHash && swift test` |
+| Java | 843 | `cd java && mvn -B -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 test` |
+| JS/TS | 73 | `cd js/rosetta-image-hash && npm test` |
+| Swift | 65 | `cd swift/RosettaImageHash && swift test` |
 
 All numbers measured on Linux x86-64. **No macOS or Windows runs.**
 
