@@ -1,0 +1,30 @@
+{
+  "name": "rosetta-squint",
+  "version": "0.1.0",
+  "description": "Cross-language byte-exact perceptual image hashing — decode + hash in one call",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "engines": { "node": ">=18" },
+  "license": "BSD-2-Clause",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "postinstall": "node -e \"const{mkdirSync,symlinkSync,existsSync}=require('fs');const t='node_modules/rosetta-image-decode/node_modules/@jsquash';if(!existsSync(t)){mkdirSync('node_modules/rosetta-image-decode/node_modules',{recursive:true});symlinkSync(require('path').resolve('node_modules/@jsquash'),t)}\""
+  },
+  "dependencies": {
+    "rosetta-image-decode": "file:../../../decode/js/rosetta-image-decode",
+    "rosetta-image-hash": "file:../../../hash/js/rosetta-image-hash"
+  },
+  "devDependencies": {
+    "typescript": "^5.5",
+    "vitest": "^2",
+    "@types/node": "^20"
+  }
+}
