@@ -1,8 +1,43 @@
 # rosetta-image-hash — JS/TS port
 
-Byte-exact port of Python `imagehash==4.3.2` algorithms to TypeScript (ESM, Node 18+).
+Byte-exact port of Python `imagehash==4.3.2` algorithms to TypeScript (ESM, Node 18+ and modern browsers).
 
 The hex string produced here equals the hex Python `imagehash` produces for the same image, algorithm, and `hashSize`.
+
+## Browser usage
+
+The package has a separate browser entry that excludes the Node-only `decodePng` helper (which depends on `pngjs`'s Buffer usage). In the browser, decode via canvas or another browser-native decoder, then pass the resulting RGB(A) pixel buffer to any hash function:
+
+```ts
+import { phash, type RgbImage } from "rosetta-image-hash/browser";
+
+// Decode in the browser using built-in APIs
+const blob = await (await fetch("photo.jpg")).blob();
+const bitmap = await createImageBitmap(blob);
+const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+const ctx = canvas.getContext("2d")!;
+ctx.drawImage(bitmap, 0, 0);
+const { data, width, height } = ctx.getImageData(0, 0, bitmap.width, bitmap.height);
+
+const img: RgbImage = { width, height, data, channels: 4 };
+const h = phash(img, 8);
+console.log(h.toString());                       // "c3f8a1b27d0e4f96"
+```
+
+### Via CDN (once published to npm)
+
+```html
+<script type="module">
+  // esm.sh — auto-builds ESM bundles for any npm package
+  import { phash } from "https://esm.sh/rosetta-image-hash/browser";
+
+  // jsDelivr / unpkg — serves the published file directly
+  // import { phash } from "https://cdn.jsdelivr.net/npm/rosetta-image-hash@0.1/dist/browser.js";
+  // import { phash } from "https://unpkg.com/rosetta-image-hash@0.1/dist/browser.js";
+</script>
+```
+
+Pure-TS, zero Node dependencies, zero WASM. Confirmed via `npm test` — `tests/browser-entry.test.ts` verifies the entire transitive import graph has no `node:` references. ~30 KB minified-ish bundle (all 10 hash algorithms + utilities).
 
 ## Quick start
 
