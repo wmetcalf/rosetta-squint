@@ -12,18 +12,20 @@ Every port produces the same hex output as the Python `imagehash` package for th
 |---|---|---|---|---|---|---|
 | `average_hash` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `phash` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `phash_simple` (1-D DCT + mean) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `dhash` (horizontal) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `dhash_vertical` (pre-3.0 back-compat) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `whash` (Haar) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `whash` db4 mode | ✓ | ✓¹ | ✓¹ | ✓¹ | ✓¹ | ✓¹ |
 | `colorhash` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | hex round-trip (`hex_to_hash`, `hex_to_flathash`) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Hamming distance (`Hash.subtract`) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `phash_simple` (mean threshold) | ✓ | — | — | — | — | — |
-| `dhash_vertical` (pre-3.0 back-compat) | ✓ | — | — | — | — | — |
-| `whash` db4 mode | ✓ | — | — | — | — | — |
 | `crop_resistant_hash` + `ImageMultiHash` | ✓ | — | — | — | — | — |
 | `old_hex_to_hash` (pre-4.0 migration) | ✓ | — | — | — | — | — |
 
-The Python `dhash_vertical` is explicitly back-compat-only (preserves a pre-3.0 bug). The other gaps are real and could be filled later — `crop_resistant_hash` is the most significant missing feature.
+¹ `whash_db4`: 39 of 42 golden cases byte-exact across all ports. Three pathological synthetic fixtures (`checker-256.png` at sizes 8 & 16, `line-art-icon-256.png` at size 16) sit at a ULP-level median tie point where PyWavelets' C+SIMD/FMA accumulation resolves the sign differently than portable double arithmetic. Each port skips these three goldens with a documented `ULP_EXEMPT` set; real-world photos are unaffected. See `spec/SPEC.md` §whash_db4.
+
+The remaining gaps (`crop_resistant_hash` and `old_hex_to_hash`) have a written design at [`docs/superpowers/specs/2026-05-21-rosetta-image-hash-crop-resistant-design.md`](../imagehash/docs/superpowers/specs/2026-05-21-rosetta-image-hash-crop-resistant-design.md) but are deferred — `crop_resistant_hash` requires byte-exact ports of PIL `GaussianBlur(radius=2)` and `MedianFilter(size=3)` plus a new `ImageMultiHash` type, scoped as ~3× the effort of any prior algorithm.
 
 ---
 
