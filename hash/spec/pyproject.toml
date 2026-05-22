@@ -1,0 +1,16 @@
+[project]
+name = "rosetta-image-hash-spec"
+version = "0.1.0"
+description = "Bit-level reference spec and golden values for rosetta-image-hash ports"
+requires-python = ">=3.11,<3.13"
+
+dependencies = [
+    "imagehash==4.3.2",
+    "Pillow==10.4.0",
+    "numpy>=1.26,<2.0",
+    "scipy>=1.11,<1.15",
+    "PyWavelets>=1.5,<2.0",
+]
+
+[project.optional-dependencies]
+dev = ["jsonschema>=4.21,<5.0"]

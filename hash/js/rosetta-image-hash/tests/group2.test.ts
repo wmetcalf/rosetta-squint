@@ -1,0 +1,240 @@
+import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
+import * as rih from "../src/index.js";
+import { algorithmCases, loadPredecoded, SPEC_DIR } from "./testkit.js";
+
+describe("average_hash goldens", () => {
+  it("byte-exact across all fixtures × sizes", () => {
+    const cases = algorithmCases("average_hash");
+    const failures: string[] = [];
+    for (const c of cases) {
+      const img = loadPredecoded(c.fixture);
+      const h = rih.averageHash(img, c.size);
+      const got = h.toHex();
+      if (got !== c.hex) {
+        failures.push(`fixture=${c.fixture} size=${c.size} got=${got} want=${c.hex}`);
+      }
+    }
+    if (failures.length > 0) {
+      throw new Error(`${failures.length} failures:\n  ${failures.join("\n  ")}`);
+    }
+  });
+});
+
+describe("dhash goldens", () => {
+  it("byte-exact across all fixtures × sizes", () => {
+    const cases = algorithmCases("dhash");
+    const failures: string[] = [];
+    for (const c of cases) {
+      const img = loadPredecoded(c.fixture);
+      const h = rih.dhash(img, c.size);
+      if (h.toHex() !== c.hex) {
+        failures.push(`fixture=${c.fixture} size=${c.size} got=${h.toHex()} want=${c.hex}`);
+      }
+    }
+    if (failures.length > 0) {
+      throw new Error(`${failures.length} failures:\n  ${failures.join("\n  ")}`);
+    }
+  });
+});
+
+describe("phash goldens", () => {
+  it("byte-exact across all fixtures × sizes", () => {
+    const cases = algorithmCases("phash");
+    const failures: string[] = [];
+    for (const c of cases) {
+      const img = loadPredecoded(c.fixture);
+      const h = rih.phash(img, c.size);
+      if (h.toHex() !== c.hex) {
+        failures.push(`fixture=${c.fixture} size=${c.size} got=${h.toHex()} want=${c.hex}`);
+      }
+    }
+    if (failures.length > 0) {
+      throw new Error(`${failures.length} failures:\n  ${failures.join("\n  ")}`);
+    }
+  });
+});
+
+describe("whash_haar goldens", () => {
+  it("byte-exact across all fixtures × sizes", () => {
+    const cases = algorithmCases("whash_haar");
+    const failures: string[] = [];
+    for (const c of cases) {
+      const img = loadPredecoded(c.fixture);
+      const h = rih.whashHaar(img, c.size);
+      if (h.toHex() !== c.hex) {
+        failures.push(`fixture=${c.fixture} size=${c.size} got=${h.toHex()} want=${c.hex}`);
+      }
+    }
+    if (failures.length > 0) {
+      throw new Error(`${failures.length} failures:\n  ${failures.join("\n  ")}`);
+    }
+  });
+});
+
+describe("colorhash goldens", () => {
+  it("byte-exact across all fixtures × binbits", () => {
+    const cases = algorithmCases("colorhash");
+    const failures: string[] = [];
+    for (const c of cases) {
+      const img = loadPredecoded(c.fixture);
+      const h = rih.colorhash(img, c.size);
+      if (h.toHex() !== c.hex) {
+        failures.push(`fixture=${c.fixture} binbits=${c.size} got=${h.toHex()} want=${c.hex}`);
+      }
+    }
+    if (failures.length > 0) {
+      throw new Error(`${failures.length} failures:\n  ${failures.join("\n  ")}`);
+    }
+  });
+});
+
+describe("phash_simple goldens", () => {
+  it("byte-exact across all fixtures × sizes", () => {
+    const cases = algorithmCases("phash_simple");
+    const failures: string[] = [];
+    for (const c of cases) {
+      const img = loadPredecoded(c.fixture);
+      const h = rih.phashSimple(img, c.size);
+      if (h.toHex() !== c.hex) {
+        failures.push(`fixture=${c.fixture} size=${c.size} got=${h.toHex()} want=${c.hex}`);
+      }
+    }
+    if (failures.length > 0) {
+      throw new Error(`${failures.length} failures:\n  ${failures.join("\n  ")}`);
+    }
+  });
+});
+
+describe("dhash_vertical goldens", () => {
+  it("byte-exact across all fixtures × sizes", () => {
+    const cases = algorithmCases("dhash_vertical");
+    const failures: string[] = [];
+    for (const c of cases) {
+      const img = loadPredecoded(c.fixture);
+      const h = rih.dhashVertical(img, c.size);
+      if (h.toHex() !== c.hex) {
+        failures.push(`fixture=${c.fixture} size=${c.size} got=${h.toHex()} want=${c.hex}`);
+      }
+    }
+    if (failures.length > 0) {
+      throw new Error(`${failures.length} failures:\n  ${failures.join("\n  ")}`);
+    }
+  });
+});
+
+// db4 LL coefficients can land at the median tie point (~1e-17 from 0) on
+// pathological inputs like checkerboards and high-contrast line art. PyWavelets'
+// C+SIMD/FMA accumulation resolves these on a different side of zero than
+// portable double arithmetic. Documented in spec/SPEC.md whash_db4 section.
+// Matches the exemptions in Java / Go / Swift ports.
+const DB4_ULP_EXEMPT = new Set([
+  "checker-256.png:8",
+  "checker-256.png:16",
+  "line-art-icon-256.png:16",
+]);
+
+describe("whash_db4 goldens", () => {
+  it("byte-exact across all fixtures × sizes (ULP-noise fixtures exempted)", () => {
+    const cases = algorithmCases("whash_db4");
+    const failures: string[] = [];
+    for (const c of cases) {
+      if (DB4_ULP_EXEMPT.has(`${c.fixture}:${c.size}`)) continue;
+      const img = loadPredecoded(c.fixture);
+      const h = rih.whashDb4(img, c.size);
+      if (h.toHex() !== c.hex) {
+        failures.push(`fixture=${c.fixture} size=${c.size} got=${h.toHex()} want=${c.hex}`);
+      }
+    }
+    if (failures.length > 0) {
+      throw new Error(`${failures.length} failures:\n  ${failures.join("\n  ")}`);
+    }
+  });
+});
+
+describe("whash_db4_robust goldens", () => {
+  it("byte-exact across all fixtures × sizes", () => {
+    const cases = algorithmCases("whash_db4_robust");
+    const failures: string[] = [];
+    for (const c of cases) {
+      const img = loadPredecoded(c.fixture);
+      const h = rih.whashDb4Robust(img, c.size);
+      if (h.toHex() !== c.hex) {
+        failures.push(`fixture=${c.fixture} size=${c.size} got=${h.toHex()} want=${c.hex}`);
+      }
+    }
+    if (failures.length > 0) {
+      throw new Error(`${failures.length} failures:\n  ${failures.join("\n  ")}`);
+    }
+  });
+});
+
+describe("colorhash bin encoding (Group 1)", () => {
+  it("B=4 quirky encoding (v=8 → 0xc, NOT 0x8)", () => {
+    const cases: [number, boolean[]][] = [
+      [0,  [false, false, false, false]],
+      [1,  [false, false, false, true]],
+      [2,  [false, false, true,  false]],
+      [4,  [false, true,  true,  false]],
+      [7,  [false, true,  true,  true]],
+      [8,  [true,  true,  false, false]],
+      [15, [true,  true,  true,  true]],
+    ];
+    for (const [v, expected] of cases) {
+      const got = rih.colorhashBinEncode(v, 4);
+      expect(got.length).toBe(4);
+      for (let i = 0; i < 4; i++) {
+        expect(got[i]).toBe(expected[i]);
+      }
+    }
+  });
+
+  it("B=3 simple cases", () => {
+    expect(rih.colorhashBinEncode(0, 3)).toEqual([false, false, false]);
+    expect(rih.colorhashBinEncode(7, 3)).toEqual([true, true, true]);
+  });
+});
+
+interface CropResistantGoldens {
+  default_params: {
+    hash_func: string;
+    limit_segments: null | number;
+    segment_threshold: number;
+    min_segment_size: number;
+    segmentation_image_size: number;
+  };
+  fixtures: Record<string, { default: string }>;
+}
+
+describe("crop_resistant_hash goldens", () => {
+  it("byte-exact comma-separated hex across all fixtures", () => {
+    const goldensPath = join(SPEC_DIR, "goldens.json");
+    const goldens = JSON.parse(readFileSync(goldensPath, "utf8")) as {
+      algorithms: { crop_resistant_hash: CropResistantGoldens };
+    };
+    const entry = goldens.algorithms["crop_resistant_hash"];
+    const fixtures = entry.fixtures;
+
+    const failures: string[] = [];
+    for (const fixtureName of Object.keys(fixtures).sort()) {
+      const expected = fixtures[fixtureName]["default"];
+      const img = loadPredecoded(fixtureName);
+      const mh = rih.cropResistantHash(img);
+      const got = mh.toString();
+      if (got !== expected) {
+        const gotSegs = got.split(",").length;
+        const expSegs = expected.split(",").length;
+        failures.push(
+          `${fixtureName}: got ${gotSegs} segs, want ${expSegs} segs\n` +
+          `    got:  ${got.slice(0, 80)}\n` +
+          `    want: ${expected.slice(0, 80)}`
+        );
+      }
+    }
+    if (failures.length > 0) {
+      throw new Error(`${failures.length} fixture failures:\n  ${failures.join("\n  ")}`);
+    }
+  });
+});
