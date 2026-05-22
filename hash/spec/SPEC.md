@@ -337,20 +337,29 @@ Haar filter coefficients: lowpass `[1/√2, 1/√2]`, highpass `[1/√2, -1/√2
 
 ### `whash(img, hash_size=N, mode='db4')` — Daubechies-4 variant
 
-Same pipeline as `whash_haar` (steps 1–12 above) but using the Daubechies-4 wavelet basis everywhere `'haar'` appears. Filter coefficients differ:
+**Important — the `mode` parameter is partial:** Python `imagehash.whash` hardcodes Haar for the `remove_max_haar_ll` LL-zeroing step regardless of `mode`. Only the *second* `wavedec2` (after LL removal) uses the requested wavelet basis. Pipeline:
 
-- Daubechies-4 lowpass `h0 = (1+√3)/(4√2)`, `h1 = (3+√3)/(4√2)`, `h2 = (3−√3)/(4√2)`, `h3 = (1−√3)/(4√2)`
-- Highpass `g_k = (−1)^k · h_{3−k}` (quadrature mirror)
+1. Convert to grayscale, resize to `(image_scale, image_scale)` via Lanczos (steps 1–6 of `whash_haar`).
+2. `pixels = numpy.asarray(image) / 255.0` — float64.
+3. **Haar (not db4)** wavedec2 at `ll_max_level`; zero the LL band; **Haar** waverec2 back. This is the `remove_max_haar_ll` step — `whash` hardcodes Haar here.
+4. **db4** `pywt.wavedec2(pixels, 'db4', level=dwt_level)` — this is where the mode parameter applies.
+5. `ll = coeffs[0]` — the LL band after `dwt_level` db4 decompositions.
+6. `med = median(ll)`; `bit = ll > med`; pack to hex.
 
-The db4 filter has length 4 (vs. 2 for Haar) so:
-- Output size after one decomposition level is `(N + 3) // 2` per dimension when using `'symmetric'` mode (PyWavelets' default), **not** exactly `N/2` like Haar. Ports must compute the per-level output shape via PyWavelets' `pywt.dwt_coeff_len(input_len, filter_len, 'symmetric')` semantics.
-- Edge handling uses `'symmetric'` mode: the input is reflected (without repeating the boundary value) before convolution. `[a, b, c, d]` extended becomes `[…, d, c, b, a, a, b, c, d, d, c, b, a, …]`. Sample exactly as PyWavelets does.
-- `wavedec2` recursively applies `dwt2` `dwt_level` times to the LL band only. The recursive output structure matches `whash_haar`: `[cA_n, (cH_n, cV_n, cD_n), …, (cH_1, cV_1, cD_1)]`.
-- `waverec2` is `wavedec2`'s inverse using db4 synthesis filters.
+Daubechies-4 filter coefficients (from pywt's `Wavelet('db4')`):
+- Lowpass `h0..h7` (length 8, not 4 — db4 means "4-vanishing-moments Daubechies", which has an 8-tap filter)
+- Highpass derived from lowpass via quadrature mirror
+- Read coefficients from `spec/db4_cases.json` (`filter_coefficients_lowpass`, `filter_coefficients_highpass`, `synthesis_lowpass`, `synthesis_highpass`) for byte-exact reproduction
 
-The LL-zeroing trick from step 8 of `whash_haar` applies identically.
+Boundary handling:
+- `'symmetric'` mode (pywt default): whole-sample symmetric. Input `[a, b, c, d]` extended as `[…, c, b, a, a, b, c, d, d, c, b, …]` with period `2*len`. (The earlier spec version incorrectly described this as half-sample symmetric — pywt's default is whole-sample.)
+- Per-level output length: `pywt.dwt_coeff_len(input_len, filter_len=8, 'symmetric') = (input_len + 7) // 2`
 
-**Fixtures with `null` goldens** for `whash_db4`: same rule as `whash_haar` — when `hash_size` exceeds the fixture's natural decomposition depth, the Python reference asserts and we record `null`. Ports skip those entries.
+`wavedec2` recursively applies `dwt2` `dwt_level` times to the LL band; output structure is `[cA_n, (cH_n, cV_n, cD_n), …, (cH_1, cV_1, cD_1)]`. `waverec2` is the synthesis inverse.
+
+**Fixtures with `null` goldens** for `whash_db4`: same rule as `whash_haar` — when `hash_size` exceeds the fixture's natural decomposition depth, the Python reference raises and we record `null`. Ports skip those entries.
+
+**Known ULP-level numerical noise:** the db4 LL-median comparison on certain inputs (e.g. `checker-256.png` at `hash_size=16`) lands within ~1e-16 of zero. PyWavelets' C inner loop with SIMD/FMA may resolve the sign differently than a port's high-level double accumulation. Bit flips at exactly the median tie-point are acceptable: ports tracking such cases should document them in `DECODER_NOTES.md`. The remaining 21 × 2 − 2 = ~40 cases pass byte-exact.
 
 ### `colorhash(img, binbits=B)`
 
