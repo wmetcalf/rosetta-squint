@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rosetta-image-decode.example/formats.schema.json",
+  "title": "rosetta-image-decode format registry",
+  "type": "object",
+  "required": ["schema_version", "version", "formats"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "formats": {
+      "type": "object",
+      "required": ["bmp", "png", "gif", "jpeg", "webp", "tiff", "heic"],
+      "additionalProperties": false,
+      "properties": {
+        "bmp":  { "$ref": "#/$defs/formatEntry" },
+        "png":  { "$ref": "#/$defs/formatEntry" },
+        "gif":  { "$ref": "#/$defs/formatEntry" },
+        "jpeg": { "$ref": "#/$defs/formatEntry" },
+        "webp": { "$ref": "#/$defs/formatEntry" },
+        "tiff": { "$ref": "#/$defs/formatEntry" },
+        "heic": { "$ref": "#/$defs/formatEntry" }
+      }
+    }
+  },
+  "$defs": {
+    "formatEntry": {
+      "type": "object",
+      "required": ["status", "subspec", "reference_lib", "reference_version", "fixture_count", "ports_implemented"],
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["planned", "supported", "deprecated"]
+        },
+        "subspec": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "pattern": "^SPEC\\.md#" }
+          ]
+        },
+        "reference_lib": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "minLength": 1 }
+          ]
+        },
+        "reference_version": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "minLength": 1 }
+          ]
+        },
+        "fixture_count": { "type": "integer", "minimum": 0 },
+        "ports_implemented": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["java", "go", "rust", "js", "swift"] },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}

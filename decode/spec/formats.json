@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "version": "0.1.0",
+  "formats": {
+    "bmp":  { "status": "supported", "subspec": "SPEC.md#§10-bmp", "reference_lib": "Pillow built-in BMP plugin", "reference_version": "11.0.0", "fixture_count": 30, "ports_implemented": ["java", "go", "rust", "js", "swift"] },
+    "png":  { "status": "supported", "subspec": "SPEC.md#§11-png", "reference_lib": "Pillow built-in PNG plugin", "reference_version": "11.0.0", "fixture_count": 46, "ports_implemented": ["java", "go", "rust", "js", "swift"] },
+    "gif":  { "status": "supported", "subspec": "SPEC.md#§12-gif", "reference_lib": "Pillow built-in GIF plugin", "reference_version": "11.0.0", "fixture_count": 15, "ports_implemented": ["java", "go", "rust", "js", "swift"] },
+    "jpeg": { "status": "supported", "subspec": "SPEC.md#§13-jpeg", "reference_lib": "libjpeg-turbo (via Pillow)", "reference_version": "11.0.0", "fixture_count": 15, "ports_implemented": ["java", "go", "rust", "js", "swift"] },
+    "webp": { "status": "supported", "subspec": "SPEC.md#§14-webp", "reference_lib": "libwebp (via Pillow)", "reference_version": "11.0.0", "fixture_count": 12, "ports_implemented": ["java", "go", "rust", "js", "swift"] },
+    "tiff": { "status": "supported", "subspec": "SPEC.md#§15-tiff", "reference_lib": "libtiff (via Pillow)", "reference_version": "11.0.0", "fixture_count": 10, "ports_implemented": ["java", "go", "rust", "js", "swift"] },
+    "heic": { "status": "supported", "subspec": "SPEC.md#§16-heic", "reference_lib": "libheif 1.17.6 (system)", "reference_version": "1.17.6", "fixture_count": 10, "ports_implemented": ["java", "go", "rust", "js", "swift"] }
+  }
+}

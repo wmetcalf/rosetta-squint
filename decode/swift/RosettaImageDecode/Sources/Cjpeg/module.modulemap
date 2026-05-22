@@ -1,0 +1,5 @@
+module Cjpeg [system] {
+    header "shim.h"
+    link "turbojpeg"
+    export *
+}

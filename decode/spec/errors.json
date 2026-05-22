@@ -1,0 +1,165 @@
+{
+  "fixtures": {
+    "bmp/invalid/bad-signature.bmp": {
+      "expected_detail_substring": "",
+      "expected_kind": "unsupportedFormat",
+      "format": null
+    },
+    "bmp/invalid/bitcount-3.bmp": {
+      "expected_detail_substring": "biBitCount",
+      "expected_kind": "corruptInput",
+      "format": "bmp"
+    },
+    "bmp/invalid/bitfields-zero-mask.bmp": {
+      "expected_detail_substring": "mask is zero",
+      "expected_kind": "corruptInput",
+      "format": "bmp"
+    },
+    "bmp/invalid/embedded-jpeg.bmp": {
+      "expected_detail_substring": "embedded JPEG",
+      "expected_kind": "unsupportedFeature",
+      "format": "bmp"
+    },
+    "bmp/invalid/embedded-png.bmp": {
+      "expected_detail_substring": "embedded PNG",
+      "expected_kind": "unsupportedFeature",
+      "format": "bmp"
+    },
+    "bmp/invalid/planes-not-1.bmp": {
+      "expected_detail_substring": "biPlanes",
+      "expected_kind": "corruptInput",
+      "format": "bmp"
+    },
+    "bmp/invalid/rle8-overrun.bmp": {
+      "expected_detail_substring": "RLE",
+      "expected_kind": "corruptInput",
+      "format": "bmp"
+    },
+    "bmp/invalid/too-large.bmp": {
+      "expected_detail_substring": "MAX_PIXELS",
+      "expected_kind": "imageTooLarge",
+      "format": "bmp"
+    },
+    "bmp/invalid/truncated-header.bmp": {
+      "expected_detail_substring": "",
+      "expected_kind": "truncated",
+      "format": "bmp"
+    },
+    "bmp/invalid/truncated-pixels.bmp": {
+      "expected_detail_substring": "",
+      "expected_kind": "truncated",
+      "format": "bmp"
+    },
+    "bmp/invalid/zero-width.bmp": {
+      "expected_detail_substring": "biWidth",
+      "expected_kind": "corruptInput",
+      "format": "bmp"
+    },
+    "gif/invalid/bad-magic.gif": {
+      "expected_detail_substring": "",
+      "expected_kind": "unsupportedFormat",
+      "format": null
+    },
+    "gif/invalid/truncated-data.gif": {
+      "expected_detail_substring": "",
+      "expected_kind": "corruptInput",
+      "format": "gif"
+    },
+    "gif/invalid/truncated-header.gif": {
+      "expected_detail_substring": "",
+      "expected_kind": "corruptInput",
+      "format": "gif"
+    },
+    "heic/invalid/avif.heic": {
+      "expected_detail_substring": "",
+      "expected_kind": "unsupportedFormat",
+      "format": null
+    },
+    "heic/invalid/bad-magic.heic": {
+      "expected_detail_substring": "",
+      "expected_kind": "unsupportedFormat",
+      "format": null
+    },
+    "heic/invalid/truncated.heic": {
+      "expected_detail_substring": "",
+      "expected_kind": "corruptInput",
+      "format": "heic"
+    },
+    "jpeg/invalid/bad-magic.jpg": {
+      "expected_detail_substring": "",
+      "expected_kind": "unsupportedFormat",
+      "format": null
+    },
+    "jpeg/invalid/cmyk.jpg": {
+      "expected_detail_substring": "CMYK",
+      "expected_kind": "unsupportedFeature",
+      "format": "jpeg"
+    },
+    "jpeg/invalid/corrupt-quantization.jpg": {
+      "expected_detail_substring": "",
+      "expected_kind": "corruptInput",
+      "format": "jpeg"
+    },
+    "jpeg/invalid/truncated-data.jpg": {
+      "expected_detail_substring": "",
+      "expected_kind": "corruptInput",
+      "format": "jpeg"
+    },
+    "jpeg/invalid/truncated-header.jpg": {
+      "expected_detail_substring": "",
+      "expected_kind": "corruptInput",
+      "format": "jpeg"
+    },
+    "png/invalid/bad-magic.png": {
+      "expected_detail_substring": "",
+      "expected_kind": "unsupportedFormat",
+      "format": null
+    },
+    "png/invalid/invalid-bit-depth.png": {
+      "expected_detail_substring": "",
+      "expected_kind": "corruptInput",
+      "format": "png"
+    },
+    "png/invalid/too-large.png": {
+      "expected_detail_substring": "MAX_PIXELS",
+      "expected_kind": "imageTooLarge",
+      "format": "png"
+    },
+    "png/invalid/truncated-header.png": {
+      "expected_detail_substring": "",
+      "expected_kind": "corruptInput",
+      "format": "png"
+    },
+    "tiff/invalid/bad-magic.tif": {
+      "expected_detail_substring": "",
+      "expected_kind": "unsupportedFormat",
+      "format": null
+    },
+    "tiff/invalid/corrupt-tag.tif": {
+      "expected_detail_substring": "",
+      "expected_kind": "corruptInput",
+      "format": "tiff"
+    },
+    "tiff/invalid/truncated.tif": {
+      "expected_detail_substring": "",
+      "expected_kind": "corruptInput",
+      "format": "tiff"
+    },
+    "webp/invalid/bad-magic.webp": {
+      "expected_detail_substring": "",
+      "expected_kind": "unsupportedFormat",
+      "format": null
+    },
+    "webp/invalid/corrupt-vp8.webp": {
+      "expected_detail_substring": "",
+      "expected_kind": "corruptInput",
+      "format": "webp"
+    },
+    "webp/invalid/truncated.webp": {
+      "expected_detail_substring": "",
+      "expected_kind": "corruptInput",
+      "format": "webp"
+    }
+  },
+  "schema_version": 1
+}

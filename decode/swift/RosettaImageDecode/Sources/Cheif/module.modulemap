@@ -1,0 +1,5 @@
+module Cheif [system] {
+    header "shim.h"
+    link "heif"
+    export *
+}

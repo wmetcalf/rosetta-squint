@@ -1,0 +1,175 @@
+package imagedecode
+
+import (
+	"testing"
+)
+
+func TestGroup3DetectsAllValidBmpFixtures(t *testing.T) {
+	fixtures := listValidFixtures(t, "bmp")
+	for _, rel := range fixtures {
+		bytes := readFixture(t, rel)
+		f, ok := DetectFormat(bytes)
+		if !ok || f != Bmp {
+			t.Errorf("%s: expected Bmp detection, got %v ok=%v", rel, f, ok)
+		}
+	}
+}
+
+func TestGroup3RejectsBadSignature(t *testing.T) {
+	bytes := readFixture(t, "bmp/invalid/bad-signature.bmp")
+	_, ok := DetectFormat(bytes)
+	if ok {
+		t.Errorf("expected DetectFormat to return ok=false for bad signature")
+	}
+}
+
+func TestGroup3SupportedFormats(t *testing.T) {
+	supported := SupportedFormats()
+	found := false
+	for _, f := range supported {
+		if f == Bmp {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("SupportedFormats should contain Bmp")
+	}
+}
+
+func TestGroup3DetectsAllValidPngFixtures(t *testing.T) {
+	fixtures := listValidFixtures(t, "png")
+	for _, rel := range fixtures {
+		b := readFixture(t, rel)
+		f, ok := DetectFormat(b)
+		if !ok || f != Png {
+			t.Errorf("%s: expected Png detection, got %v ok=%v", rel, f, ok)
+		}
+	}
+}
+
+func TestGroup3SupportedFormatsContainsPng(t *testing.T) {
+	found := false
+	for _, f := range SupportedFormats() {
+		if f == Png {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("SupportedFormats should contain Png")
+	}
+}
+
+func TestGroup3DetectsAllValidGifFixtures(t *testing.T) {
+	fixtures := listValidFixtures(t, "gif")
+	for _, rel := range fixtures {
+		b := readFixture(t, rel)
+		f, ok := DetectFormat(b)
+		if !ok || f != Gif {
+			t.Errorf("%s: expected Gif detection, got %v ok=%v", rel, f, ok)
+		}
+	}
+}
+
+func TestGroup3SupportedFormatsContainsGif(t *testing.T) {
+	found := false
+	for _, f := range SupportedFormats() {
+		if f == Gif {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("SupportedFormats should contain Gif")
+	}
+}
+
+func TestGroup3DetectsAllValidJpegFixtures(t *testing.T) {
+	fixtures := listValidFixtures(t, "jpeg")
+	for _, rel := range fixtures {
+		b := readFixture(t, rel)
+		f, ok := DetectFormat(b)
+		if !ok || f != Jpeg {
+			t.Errorf("%s: expected Jpeg detection, got %v ok=%v", rel, f, ok)
+		}
+	}
+}
+
+func TestGroup3SupportedFormatsContainsJpeg(t *testing.T) {
+	found := false
+	for _, f := range SupportedFormats() {
+		if f == Jpeg {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("SupportedFormats should contain Jpeg")
+	}
+}
+
+func TestGroup3DetectsAllValidWebpFixtures(t *testing.T) {
+	fixtures := listValidFixtures(t, "webp")
+	for _, rel := range fixtures {
+		b := readFixture(t, rel)
+		f, ok := DetectFormat(b)
+		if !ok || f != Webp {
+			t.Errorf("%s: expected Webp detection, got %v ok=%v", rel, f, ok)
+		}
+	}
+}
+
+func TestGroup3SupportedFormatsContainsWebp(t *testing.T) {
+	found := false
+	for _, f := range SupportedFormats() {
+		if f == Webp {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("SupportedFormats should contain Webp")
+	}
+}
+
+func TestGroup3DetectsAllValidTiffFixtures(t *testing.T) {
+	fixtures := listValidFixtures(t, "tiff")
+	for _, rel := range fixtures {
+		b := readFixture(t, rel)
+		f, ok := DetectFormat(b)
+		if !ok || f != Tiff {
+			t.Errorf("%s: expected Tiff detection, got %v ok=%v", rel, f, ok)
+		}
+	}
+}
+
+func TestGroup3SupportedFormatsContainsTiff(t *testing.T) {
+	found := false
+	for _, f := range SupportedFormats() {
+		if f == Tiff {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("SupportedFormats should contain Tiff")
+	}
+}
+
+func TestGroup3DetectsAllValidHeicFixtures(t *testing.T) {
+	fixtures := listValidFixtures(t, "heic")
+	for _, rel := range fixtures {
+		b := readFixture(t, rel)
+		f, ok := DetectFormat(b)
+		if !ok || f != Heic {
+			t.Errorf("%s: expected Heic detection, got %v ok=%v", rel, f, ok)
+		}
+	}
+}
+
+func TestGroup3SupportedFormatsContainsHeic(t *testing.T) {
+	found := false
+	for _, f := range SupportedFormats() {
+		if f == Heic {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("SupportedFormats should contain Heic")
+	}
+}

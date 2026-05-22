@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+
+# OS / editor
+.DS_Store
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# Per-language port artifacts (added by sub-projects; ignored from day one)
+# Java
+java/target/
+java/.mvn/wrapper/maven-wrapper.jar
+
+# Go
+go/**/*.test
+go/**/coverage.out
+
+# Rust
+rust/**/target/
+rust/**/Cargo.lock.user
+
+# JS/TS
+js/**/node_modules/
+js/**/dist/
+js/**/*.tsbuildinfo
+
+# Swift
+swift/**/.build/
+swift/**/.swiftpm/
+
+# maven-shade-plugin transient artifact
+java/rosetta-image-decode/dependency-reduced-pom.xml
