@@ -14,6 +14,9 @@ public final class SpecPath {
     public static final Path DCT_CASES = SPEC.resolve("dct_cases.json");
     public static final Path HAAR_CASES = SPEC.resolve("haar_cases.json");
     public static final Path DB4_CASES = SPEC.resolve("db4_cases.json");
+    public static final Path GAUSSIAN_BLUR_CASES = SPEC.resolve("gaussian_blur_cases.json");
+    public static final Path MEDIAN_FILTER_CASES = SPEC.resolve("median_filter_cases.json");
+    public static final Path SEGMENTATION_CASES = SPEC.resolve("segmentation_cases.json");
 
     private SpecPath() {}
 }

@@ -14,5 +14,9 @@ public final class Hex {
         return new ImageHash(bits);
     }
 
+    public static ImageMultiHash hexToMultiHash(String hex) {
+        return ImageMultiHash.fromHex(hex);
+    }
+
     private Hex() {}
 }
