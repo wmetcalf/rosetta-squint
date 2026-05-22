@@ -1,16 +1,29 @@
-import { createRequire } from "node:module";
 import { DecodeError } from "../errors.js";
 import type { DecodedImage } from "../types.js";
 import { checkDimensions } from "./limits.js";
 
-// utif2 is CommonJS; use createRequire to import it from our ESM context.
-const require = createRequire(import.meta.url);
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const UTIF = require("utif2") as {
+// utif2 is shipped as CommonJS. Use a dynamic ESM import with default interop;
+// modern bundlers (esbuild, vite, rollup, webpack 5+) handle CJS→ESM for npm
+// packages automatically. Browser users without a bundler need to load utif2
+// separately and call decodeTiff with the UTIF object — see decodeTiffWithUtif.
+interface UTIFLib {
   decode(buf: ArrayBuffer): UTIF_IFD[];
   decodeImage(buf: ArrayBuffer, ifd: UTIF_IFD): void;
   toRGBA8(ifd: UTIF_IFD): Uint8Array;
-};
+}
+
+let utifPromise: Promise<UTIFLib> | null = null;
+async function loadUtif(): Promise<UTIFLib> {
+  if (!utifPromise) {
+    utifPromise = (async () => {
+      const mod = await import("utif2");
+      // CJS interop: utif2's CJS module.exports lands on either default or root.
+      const utif: any = (mod as any).default ?? mod;
+      return utif as UTIFLib;
+    })();
+  }
+  return utifPromise;
+}
 
 interface UTIF_IFD {
   width: number;
@@ -18,7 +31,8 @@ interface UTIF_IFD {
   [key: string]: unknown;
 }
 
-export function decodeTiff(bytes: Uint8Array): DecodedImage {
+export async function decodeTiff(bytes: Uint8Array): Promise<DecodedImage> {
+  const UTIF = await loadUtif();
   // Produce a clean ArrayBuffer slice (Node Buffer.buffer may share a pool).
   const ab = bytes.buffer.slice(
     bytes.byteOffset,

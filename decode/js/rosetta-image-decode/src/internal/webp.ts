@@ -1,8 +1,7 @@
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
 import { DecodeError } from "../errors.js";
 import type { DecodedImage } from "../types.js";
 import { checkDimensions } from "./limits.js";
+import { loadWasmModule } from "./loadWasm.js";
 
 // @jsquash/webp: community-maintained libwebp WASM fork of squoosh's webp codec.
 import { init, default as webpDecode } from "@jsquash/webp/decode.js";
@@ -13,13 +12,12 @@ async function ensureWasmInit(): Promise<void> {
   if (wasmInitPromise) return wasmInitPromise;
 
   wasmInitPromise = (async () => {
-    // Locate the WASM binary next to the JS codec files
+    // Resolves to file:// in Node, http(s):// or blob: in browser.
     const wasmUrl = new URL(
       "../../node_modules/@jsquash/webp/codec/dec/webp_dec.wasm",
       import.meta.url,
     );
-    const wasmBytes = readFileSync(fileURLToPath(wasmUrl));
-    const wasmModule = await WebAssembly.compile(wasmBytes);
+    const wasmModule = await loadWasmModule(wasmUrl);
     await init(wasmModule);
   })();
 

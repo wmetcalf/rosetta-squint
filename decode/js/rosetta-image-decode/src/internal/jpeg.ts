@@ -1,8 +1,7 @@
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
 import { DecodeError } from "../errors.js";
 import type { DecodedImage } from "../types.js";
 import { checkDimensions } from "./limits.js";
+import { loadWasmModule } from "./loadWasm.js";
 
 // @jsquash/jpeg: community-maintained mozjpeg WASM fork of squoosh's jpeg codec.
 // Uses the same mozjpeg C library as Rust's mozjpeg-sys, ensuring byte-exact output.
@@ -14,13 +13,13 @@ async function ensureWasmInit(): Promise<void> {
   if (wasmInitPromise) return wasmInitPromise;
 
   wasmInitPromise = (async () => {
-    // Locate the WASM binary next to the JS codec files
+    // Locate the WASM binary; in Node this resolves to a file:// URL,
+    // in a browser to a normal URL relative to the bundle's location.
     const wasmUrl = new URL(
       "../../node_modules/@jsquash/jpeg/codec/dec/mozjpeg_dec.wasm",
       import.meta.url,
     );
-    const wasmBytes = readFileSync(fileURLToPath(wasmUrl));
-    const wasmModule = await WebAssembly.compile(wasmBytes);
+    const wasmModule = await loadWasmModule(wasmUrl);
     await init(wasmModule);
   })();
 

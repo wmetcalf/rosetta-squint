@@ -25,7 +25,7 @@ export async function decode(bytes: Uint8Array): Promise<DecodedImage> {
     case "webp":
       return await decodeWebp(bytes);
     case "tiff":
-      return decodeTiff(bytes);
+      return await decodeTiff(bytes);
     case "heic":
       return await decodeHeic(bytes);
     default:
