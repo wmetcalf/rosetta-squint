@@ -158,7 +158,15 @@ def main() -> int:
             ref = results[ref_name]
             agreement = all(v == ref for v in results.values())
             short_ref = ref[:12] + ("…" if len(ref) > 12 else "")
-            if agreement:
+            if errors:
+                # Some ports errored. Even if the ones that returned all agreed,
+                # surface the errors — silent skip would hide individual-port
+                # regressions (stale npm install, missing system library, etc.).
+                failed += 1
+                ports_passed = ",".join(sorted(results.keys()))
+                err_summary = "; ".join(f"{name}: {e}" for name, e in sorted(errors.items()))
+                print(f"WARN {fixture.name}/{algo}@{size}: {short_ref}  ports=[{ports_passed}]  ERRORED: {err_summary}")
+            elif agreement:
                 ports_passed = ",".join(sorted(results.keys()))
                 print(f"OK   {fixture.name}/{algo}@{size}: {short_ref}  ports=[{ports_passed}]")
             else:
