@@ -1,0 +1,19 @@
+{
+  "name": "rosetta-squint-playwright-example",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "demo": "tsx visual-regression.ts",
+    "demo:install-deps": "npm install && npx playwright install chromium"
+  },
+  "dependencies": {
+    "playwright": "^1.50.0",
+    "rosetta-squint": "file:../../squint/js/rosetta-squint"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "tsx": "^4",
+    "typescript": "^5.5"
+  }
+}
