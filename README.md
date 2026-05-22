@@ -96,12 +96,15 @@ End-to-end CLI cost per hash (process startup + decode + algorithm + print), mea
 
 | Algorithm | Rust | Swift | Go | Python | JS (Node) | Java |
 |---|---:|---:|---:|---:|---:|---:|
-| `phash` @ 8 | **9.8 ms** | 21.6 ms | 28.2 ms | 274 ms | 146 ms | 188 ms |
-| `dhash` @ 8 | **8.4 ms** | 19.3 ms | 27.5 ms | 157 ms | 133 ms | 157 ms |
 | `average_hash` @ 8 | **9.3 ms** | 20.9 ms | 25.2 ms | 154 ms | 151 ms | 173 ms |
-| `colorhash` @ 3 | **9.9 ms** | 22.7 ms | 29.5 ms | 175 ms | 163 ms | 183 ms |
+| `phash` @ 8 | **9.8 ms** | 21.6 ms | 28.2 ms | 274 ms | 146 ms | 188 ms |
+| `phash_simple` @ 8 | **10.3 ms** | 20.5 ms | 29.7 ms | 245 ms | 152 ms | 199 ms |
+| `dhash` @ 8 | **8.4 ms** | 19.3 ms | 27.5 ms | 157 ms | 133 ms | 157 ms |
+| `dhash_vertical` @ 8 | **12.7 ms** | 22.5 ms | 31.4 ms | 172 ms | 169 ms | 177 ms |
 | `whash_haar` @ 8 | **22.4 ms** | 39.9 ms | 42.8 ms | 173 ms | 224 ms | 210 ms |
 | `whash_db4` @ 8 | **21.9 ms** | 47.2 ms | 56.4 ms | 148 ms | 245 ms | 203 ms |
+| `whash_db4_robust` @ 8 | **27.0 ms** | 51.4 ms | 53.6 ms | 185 ms | 274 ms | 205 ms |
+| `colorhash` @ 3 | **9.9 ms** | 22.7 ms | 29.5 ms | 175 ms | 163 ms | 183 ms |
 | `crop_resistant_hash` | **23.8 ms** | 74.5 ms | 58.1 ms | 300 ms | 371 ms | 243 ms |
 
 **The numbers are end-to-end CLI invocation costs.** For one-shot use (e.g. a CI script that hashes one screenshot per build), this is what you'd actually pay. For workloads that amortise startup — long-running services, batch processing thousands of images — the JIT/VM ports (Python, JS, Java) end up dramatically faster than the table suggests, because most of their cost is paid once at process launch (Python imports `numpy`/`scipy`/`PIL`/`PyWavelets`; Java boots the JVM; Node initialises the mozjpeg WASM module).
