@@ -1,0 +1,3 @@
+# Built binaries — built locally per platform
+decode-go
+*.exe

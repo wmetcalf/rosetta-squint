@@ -5,6 +5,7 @@ let package = Package(
     name: "RosettaImageDecode",
     products: [
         .library(name: "RosettaImageDecode", targets: ["RosettaImageDecode"]),
+        .executable(name: "DecodeCLI", targets: ["DecodeCLI"]),
     ],
     dependencies: [
         .package(url: "https://github.com/tayloraswift/swift-png", "4.0.0"..<"4.4.0"),
@@ -39,6 +40,10 @@ let package = Package(
                 "Ctiff",
                 "Cheif",
             ]
+        ),
+        .executableTarget(
+            name: "DecodeCLI",
+            dependencies: ["RosettaImageDecode"]
         ),
         .testTarget(
             name: "RosettaImageDecodeTests",

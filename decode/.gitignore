@@ -32,3 +32,6 @@ js/**/*.tsbuildinfo
 # Swift
 swift/**/.build/
 swift/**/.swiftpm/
+
+# maven-shade-plugin transient artifact
+java/rosetta-image-decode/dependency-reduced-pom.xml
