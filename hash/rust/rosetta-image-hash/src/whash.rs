@@ -150,3 +150,86 @@ pub fn whash_db4(img: &DynamicImage, hash_size: usize) -> Result<Hash, ImageHash
     }
     Ok(Hash::from_bits_unchecked(bits))
 }
+
+/// ε threshold for `whash_db4_robust`. Coefficients with `|c| < EPS` snap to 0
+/// before median + threshold. See `spec/SPEC.md` §whash_db4_robust.
+pub const WHASH_DB4_ROBUST_EPS: f64 = 1e-12;
+
+/// Cross-port-stable variant of `whash_db4`. Identical pipeline up to the LL
+/// band, then snaps coefficients with `|c| < WHASH_DB4_ROBUST_EPS` to exactly
+/// zero before computing the median and threshold. Real-world photos produce
+/// the same hash as `whash_db4`; pathological symmetric inputs produce a
+/// deterministic hash across every port instead of relying on PyWavelets'
+/// C+SIMD/FMA accumulation sign. **NOT byte-exact-compatible** with Python
+/// `imagehash.whash(mode='db4')` for those pathological cases.
+pub fn whash_db4_robust(img: &DynamicImage, hash_size: usize) -> Result<Hash, ImageHashError> {
+    if hash_size < 2 {
+        return Err(ImageHashError::InvalidHashSize(hash_size));
+    }
+    if !hash_size.is_power_of_two() {
+        return Err(ImageHashError::NotPowerOfTwo(hash_size));
+    }
+
+    let rgb = img_rgb::to_rgb(img);
+    let gray = rgb_to_gray(&rgb);
+    let h = gray.len();
+    let w = gray[0].len();
+
+    let min_side = w.min(h);
+    let image_natural_scale = 1usize << (min_side as f64).log2().floor() as usize;
+    let image_scale = image_natural_scale.max(hash_size);
+
+    let ll_max_level = (image_scale as f64).log2() as usize;
+    let level = (hash_size as f64).log2() as usize;
+    if level > ll_max_level {
+        return Err(ImageHashError::HashSizeTooLarge {
+            level,
+            ll_max_level,
+        });
+    }
+    let dwt_level = ll_max_level - level;
+
+    let resized = lanczos::resize(&gray, image_scale, image_scale);
+    let mut pixels: Vec<Vec<f64>> = Vec::with_capacity(image_scale);
+    for y in 0..image_scale {
+        let mut row = Vec::with_capacity(image_scale);
+        for x in 0..image_scale {
+            row.push(f64::from(resized[y][x]) / 255.0);
+        }
+        pixels.push(row);
+    }
+
+    let mut full_dec = haar::wavedec2(&pixels, ll_max_level);
+    for row in full_dec.ca.iter_mut() {
+        for v in row.iter_mut() {
+            *v = 0.0;
+        }
+    }
+    let modified = haar::waverec2(&full_dec);
+
+    let dec = db4::wavedec2(&modified, dwt_level);
+    // SNAP near-zero LL coefficients to exactly 0 — the only difference vs whash_db4.
+    let ll: Vec<Vec<f64>> = dec.ca.iter().map(|row| {
+        row.iter().map(|&v| if v.abs() < WHASH_DB4_ROBUST_EPS { 0.0 } else { v }).collect()
+    }).collect();
+
+    let n = ll.len() * ll[0].len();
+    let mut flat: Vec<f64> = Vec::with_capacity(n);
+    for row in &ll {
+        flat.extend_from_slice(row);
+    }
+    let mut sorted = flat.clone();
+    sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    let median = if n % 2 == 1 {
+        sorted[n / 2]
+    } else {
+        (sorted[n / 2 - 1] + sorted[n / 2]) / 2.0
+    };
+
+    let mut bits: Vec<Vec<bool>> = Vec::with_capacity(ll.len());
+    for row in &ll {
+        let row_bits: Vec<bool> = row.iter().map(|v| *v > median).collect();
+        bits.push(row_bits);
+    }
+    Ok(Hash::from_bits_unchecked(bits))
+}

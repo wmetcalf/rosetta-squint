@@ -19,7 +19,7 @@ mod phash;
 pub use phash::{phash, phash_simple, phash_simple_with_factor, phash_with_factor};
 
 mod whash;
-pub use whash::{whash_db4, whash_haar};
+pub use whash::{whash_db4, whash_db4_robust, whash_haar, WHASH_DB4_ROBUST_EPS};
 
 mod colorhash;
 pub use colorhash::{colorhash, colorhash_bin_encode};

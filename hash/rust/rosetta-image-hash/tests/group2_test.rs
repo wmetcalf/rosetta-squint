@@ -1,6 +1,6 @@
 mod testkit;
 
-use rosetta_image_hash::{average_hash, dhash_vertical, phash_simple, whash_db4};
+use rosetta_image_hash::{average_hash, dhash_vertical, phash_simple, whash_db4, whash_db4_robust};
 use testkit::{algorithm_cases, load_predecoded};
 
 #[test]
@@ -154,6 +154,27 @@ fn whash_db4_goldens() {
                     c.fixture, c.size, h.to_hex(), c.hex
                 ));
             }
+        }
+    }
+    if !failures.is_empty() {
+        panic!("{} failures:\n  {}", failures.len(), failures.join("\n  "));
+    }
+}
+
+#[test]
+fn whash_db4_robust_goldens() {
+    // Bolt-on variant: snap |c| < 1e-12 to 0 before threshold. Cross-port stable.
+    // Goldens come from our spec/regenerate.py _whash_db4_robust helper.
+    let cases = algorithm_cases("whash_db4_robust");
+    let mut failures: Vec<String> = Vec::new();
+    for c in &cases {
+        let img = load_predecoded(&c.fixture);
+        let h = whash_db4_robust(&img, c.size).expect("compute");
+        if h.to_hex() != c.hex {
+            failures.push(format!(
+                "fixture={} size={} got={} want={}",
+                c.fixture, c.size, h.to_hex(), c.hex
+            ));
         }
     }
     if !failures.is_empty() {
