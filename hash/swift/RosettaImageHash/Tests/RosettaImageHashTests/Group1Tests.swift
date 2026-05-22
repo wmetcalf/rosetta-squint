@@ -268,6 +268,57 @@ final class ImgRGBTests: XCTestCase {
 	}
 }
 
+final class Db4DwtTests: XCTestCase {
+    private struct Db4Case1D: Decodable {
+        let n: Int
+        let input: [Double]
+        let cA: [Double]
+        let cD: [Double]
+    }
+    private struct Db4Case2D: Decodable {
+        let h: Int
+        let w: Int
+        let input: [[Double]]
+        let cA: [[Double]]
+        let cH: [[Double]]
+        let cV: [[Double]]
+        let cD: [[Double]]
+    }
+    private struct Db4Doc: Decodable {
+        let cases_1d: [Db4Case1D]
+        let cases_2d: [Db4Case2D]
+    }
+
+    private let tol = 1e-9
+
+    func testDb4Cases() throws {
+        let path = "\(TestKit.SPEC_DIR)/db4_cases.json"
+        let data = try Data(contentsOf: URL(fileURLWithPath: path))
+        let doc = try JSONDecoder().decode(Db4Doc.self, from: data)
+
+        for c in doc.cases_1d {
+            let (gotA, gotD) = db4Dwt1d(c.input)
+            XCTAssertEqual(gotA.count, c.cA.count, "1D n=\(c.n) cA length")
+            XCTAssertEqual(gotD.count, c.cD.count, "1D n=\(c.n) cD length")
+            for k in 0..<c.cA.count {
+                XCTAssertEqual(gotA[k], c.cA[k], accuracy: tol, "1D n=\(c.n) cA[\(k)]")
+                XCTAssertEqual(gotD[k], c.cD[k], accuracy: tol, "1D n=\(c.n) cD[\(k)]")
+            }
+        }
+
+        for c in doc.cases_2d {
+            let ll = db4Wavedec2(c.input, level: 1)
+            XCTAssertEqual(ll.count, c.cA.count, "2D \(c.h)x\(c.w) cA rows")
+            for y in 0..<c.cA.count {
+                XCTAssertEqual(ll[y].count, c.cA[y].count, "2D \(c.h)x\(c.w) cA row \(y) cols")
+                for x in 0..<c.cA[y].count {
+                    XCTAssertEqual(ll[y][x], c.cA[y][x], accuracy: tol, "2D \(c.h)x\(c.w) cA[\(y)][\(x)]")
+                }
+            }
+        }
+    }
+}
+
 final class ColorhashBinEncodeTests: XCTestCase {
     func testB4QuirkyEncoding() {
         // v=8 with B=4 must produce [T,T,F,F] (0xc), NOT [T,F,F,F] (standard binary 0x8).
