@@ -1,0 +1,13 @@
+[package]
+name = "rosetta-squint"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.83"
+description = "Cross-language byte-exact perceptual image hashing — decode + hash in one call"
+license = "BSD-2-Clause"
+
+[dependencies]
+rosetta-image-hash = { path = "../../../hash/rust/rosetta-image-hash" }
+rosetta-image-decode = { path = "../../../decode/rust/rosetta-image-decode" }
+image = { version = "0.25", default-features = false }
+thiserror = "2"

@@ -1,0 +1,18 @@
+/home/coz/rosetta-squint/squint/rust/rosetta-squint/target/debug/deps/rosetta_image_decode-33fabc3400694b4b.d: /home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/lib.rs /home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/bmp.rs /home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/gif.rs /home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/heic.rs /home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/jpeg.rs /home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/png.rs /home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/tiff.rs /home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/webp.rs /home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/decode.rs /home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/error.rs /home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/limits.rs /home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/types.rs
+
+/home/coz/rosetta-squint/squint/rust/rosetta-squint/target/debug/deps/librosetta_image_decode-33fabc3400694b4b.rlib: /home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/lib.rs /home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/bmp.rs /home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/gif.rs /home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/heic.rs /home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/jpeg.rs /home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/png.rs /home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/tiff.rs /home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/webp.rs /home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/decode.rs /home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/error.rs /home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/limits.rs /home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/types.rs
+
+/home/coz/rosetta-squint/squint/rust/rosetta-squint/target/debug/deps/librosetta_image_decode-33fabc3400694b4b.rmeta: /home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/lib.rs /home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/bmp.rs /home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/gif.rs /home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/heic.rs /home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/jpeg.rs /home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/png.rs /home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/tiff.rs /home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/webp.rs /home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/decode.rs /home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/error.rs /home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/limits.rs /home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/types.rs
+
+/home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/lib.rs:
+/home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/bmp.rs:
+/home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/gif.rs:
+/home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/heic.rs:
+/home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/jpeg.rs:
+/home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/png.rs:
+/home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/tiff.rs:
+/home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/webp.rs:
+/home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/decode.rs:
+/home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/error.rs:
+/home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/limits.rs:
+/home/coz/rosetta-squint/decode/rust/rosetta-image-decode/src/types.rs:
