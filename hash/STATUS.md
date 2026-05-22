@@ -17,13 +17,16 @@ Every port produces the same hex output as the Python `imagehash` package for th
 | `dhash_vertical` (pre-3.0 back-compat) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `whash` (Haar) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `whash` db4 mode | ✓ | ✓¹ | ✓¹ | ✓¹ | ✓¹ | ✓¹ |
+| `whash_db4_robust` (ours, snap-to-zero bolt-on) | — | ✓² | ✓² | ✓² | ✓² | ✓² |
 | `colorhash` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | hex round-trip (`hex_to_hash`, `hex_to_flathash`) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Hamming distance (`Hash.subtract`) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `crop_resistant_hash` + `ImageMultiHash` | ✓ | — | — | — | — | — |
 | `old_hex_to_hash` (pre-4.0 migration) | ✓ | — | — | — | — | — |
 
-¹ `whash_db4`: 39 of 42 golden cases byte-exact across all ports. Three pathological synthetic fixtures (`checker-256.png` at sizes 8 & 16, `line-art-icon-256.png` at size 16) sit at a ULP-level median tie point where PyWavelets' C+SIMD/FMA accumulation resolves the sign differently than portable double arithmetic. Each port skips these three goldens with a documented `ULP_EXEMPT` set; real-world photos are unaffected. See `spec/SPEC.md` §whash_db4.
+¹ `whash_db4`: 39–41 of 42 golden cases byte-exact across ports. A handful of pathological synthetic fixtures (`checker-256.png`, `line-art-icon-256.png`) sit at a ULP-level median tie point where PyWavelets' C+SIMD/FMA accumulation resolves the sign differently than portable double arithmetic. Each port skips a documented `ULP_EXEMPT` set; real-world photos are unaffected. See `spec/SPEC.md` §whash_db4.
+
+² `whash_db4_robust` is our cross-port-stable bolt-on (NOT in upstream Python imagehash). Identical pipeline to `whash_db4` up to the LL band, then snaps `|coef| < 1e-12 → 0` before median + threshold. **All 42 goldens pass byte-exact across all 5 ports — no exemptions needed.** Real-world photos produce the same hash as `whash_db4`. Pathological symmetric inputs (checkerboards, etc.) produce a deterministic hash across every port — at the cost of those hashes differing from Python `imagehash.whash(mode='db4')` on the same inputs. Use `whash_db4` for upstream-Python parity; use `whash_db4_robust` for cross-port stability on untrusted inputs. See `spec/SPEC.md` §whash_db4_robust.
 
 The remaining gaps (`crop_resistant_hash` and `old_hex_to_hash`) have a written design at [`docs/superpowers/specs/2026-05-21-rosetta-image-hash-crop-resistant-design.md`](../imagehash/docs/superpowers/specs/2026-05-21-rosetta-image-hash-crop-resistant-design.md) but are deferred — `crop_resistant_hash` requires byte-exact ports of PIL `GaussianBlur(radius=2)` and `MedianFilter(size=3)` plus a new `ImageMultiHash` type, scoped as ~3× the effort of any prior algorithm.
 
