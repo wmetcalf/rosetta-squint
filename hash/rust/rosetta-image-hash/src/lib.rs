@@ -13,13 +13,13 @@ mod average;
 pub use average::average_hash;
 
 mod dhash;
-pub use dhash::dhash;
+pub use dhash::{dhash, dhash_vertical};
 
 mod phash;
-pub use phash::{phash, phash_with_factor};
+pub use phash::{phash, phash_simple, phash_simple_with_factor, phash_with_factor};
 
 mod whash;
-pub use whash::whash_haar;
+pub use whash::{whash_db4, whash_haar};
 
 mod colorhash;
 pub use colorhash::{colorhash, colorhash_bin_encode};

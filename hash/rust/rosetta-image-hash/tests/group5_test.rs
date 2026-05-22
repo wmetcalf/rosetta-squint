@@ -116,3 +116,28 @@ fn whash_rejects_non_power_of_two() {
 fn colorhash_rejects_binbits_below_one() {
     assert!(rosetta_image_hash::colorhash(&tiny_rgb_image(), 0).is_err());
 }
+
+#[test]
+fn phash_simple_rejects_hash_size_below_two() {
+    assert!(rosetta_image_hash::phash_simple(&tiny_rgb_image(), 1).is_err());
+    assert!(rosetta_image_hash::phash_simple(&tiny_rgb_image(), 0).is_err());
+}
+
+#[test]
+fn dhash_vertical_rejects_hash_size_below_two() {
+    assert!(rosetta_image_hash::dhash_vertical(&tiny_rgb_image(), 1).is_err());
+    assert!(rosetta_image_hash::dhash_vertical(&tiny_rgb_image(), 0).is_err());
+}
+
+#[test]
+fn whash_db4_rejects_hash_size_below_two() {
+    assert!(rosetta_image_hash::whash_db4(&small_rgb_image(), 1).is_err());
+}
+
+#[test]
+fn whash_db4_rejects_non_power_of_two() {
+    assert!(matches!(
+        rosetta_image_hash::whash_db4(&small_rgb_image(), 3),
+        Err(ImageHashError::NotPowerOfTwo(3))
+    ));
+}
