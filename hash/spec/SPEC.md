@@ -359,7 +359,30 @@ Boundary handling:
 
 **Fixtures with `null` goldens** for `whash_db4`: same rule as `whash_haar` — when `hash_size` exceeds the fixture's natural decomposition depth, the Python reference raises and we record `null`. Ports skip those entries.
 
-**Known ULP-level numerical noise:** the db4 LL-median comparison on certain inputs (e.g. `checker-256.png` at `hash_size=16`) lands within ~1e-16 of zero. PyWavelets' C inner loop with SIMD/FMA may resolve the sign differently than a port's high-level double accumulation. Bit flips at exactly the median tie-point are acceptable: ports tracking such cases should document them in `DECODER_NOTES.md`. The remaining 21 × 2 − 2 = ~40 cases pass byte-exact.
+**Known ULP-level numerical noise:** the db4 LL-median comparison on certain inputs (e.g. `checker-256.png` at `hash_size=16`) lands within ~1e-16 of zero. PyWavelets' C inner loop with SIMD/FMA may resolve the sign differently than a port's high-level double accumulation. Bit flips at exactly the median tie-point are acceptable: ports tracking such cases should document them in `DECODER_NOTES.md`. The remaining 21 × 2 − 2 = ~40 cases pass byte-exact. Callers who need cross-port stability on pathological inputs should use `whash_db4_robust` below.
+
+### `whash_db4_robust(img, hash_size=N)` — cross-port-stable bolt-on
+
+**Not an `imagehash` upstream algorithm.** This is a rosetta-image-hash extension that resolves the `whash_db4` ULP tie-point ambiguity at the cost of byte-exact Python parity on pathological synthetic inputs.
+
+Pipeline identical to `whash_db4` (steps 1–4 of that section) through producing the db4 LL band. Then, **before** computing the median and threshold:
+
+```
+WHASH_DB4_ROBUST_EPS = 1e-12
+dwt_low = where(abs(dwt_low) < WHASH_DB4_ROBUST_EPS, 0.0, dwt_low)
+```
+
+I.e. any coefficient whose absolute value is below ε is snapped to exactly zero. Real-world db4 LL coefficients for natural images are O(0.1)–O(10), so for real photos `whash_db4_robust(img, N) == whash_db4(img, N)`. For pathological symmetric inputs (checkerboards, certain line-art patterns), the snap collapses noise to deterministic zero and all ports produce identical hashes — at the cost of those hashes differing from Python `imagehash.whash(mode='db4')`.
+
+**Reference implementation:** `spec/regenerate.py::_whash_db4_robust()`. Goldens are produced from this Python helper (not from upstream imagehash).
+
+**ε choice:** `1e-12` is comfortably above the float64 accumulation noise floor of db4 wavedec2 on `pixels = uint8 / 255.0` inputs (typically ~1e-17) and comfortably below any real signal in natural images. The constant is fixed across all ports.
+
+**When to use:**
+- `whash_db4`: when you need byte-exact compatibility with Python `imagehash` on any input. Storage/lookup against pre-existing imagehash output.
+- `whash_db4_robust`: when cross-port stability matters more than upstream parity. Hashing untrusted inputs that might be synthetic patterns. New deployments not tied to existing imagehash hashes.
+
+Both functions produce a square `Hash` of bit shape `(N, N)`.
 
 ### `colorhash(img, binbits=B)`
 

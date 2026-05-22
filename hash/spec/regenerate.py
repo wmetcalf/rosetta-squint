@@ -35,15 +35,56 @@ DECODED_DIR = SPEC_DIR / "decoded"
 GOLDENS_PATH = SPEC_DIR / "goldens.json"
 
 ALGO_HASH_SIZES = {
-    "average_hash":    [4, 8, 16],
-    "dhash":           [4, 8, 16],
-    "dhash_vertical":  [4, 8, 16],
-    "phash":           [4, 8, 16],
-    "phash_simple":    [4, 8, 16],
-    "whash_haar":      [8, 16],
-    "whash_db4":       [8, 16],
+    "average_hash":     [4, 8, 16],
+    "dhash":            [4, 8, 16],
+    "dhash_vertical":   [4, 8, 16],
+    "phash":            [4, 8, 16],
+    "phash_simple":     [4, 8, 16],
+    "whash_haar":       [8, 16],
+    "whash_db4":        [8, 16],
+    "whash_db4_robust": [8, 16],
 }
 COLORHASH_BINBITS = [3, 4]
+
+# Our-invention bolt-on. NOT in upstream imagehash. ε threshold for snapping
+# near-zero db4 coefficients to exactly zero before median+threshold, so
+# pathological symmetric inputs (where the LL band is mathematically 0 +
+# float noise) produce a deterministic cross-port hash instead of relying on
+# pywt's C+SIMD/FMA accumulation to land on a specific side of zero.
+# For real photos, LL coefficients are far above ε, so output matches the
+# strict whash_db4. See SPEC.md.
+WHASH_DB4_ROBUST_EPS = 1e-12
+
+
+def _whash_db4_robust(img, hash_size: int):
+    """Reference implementation of the robust variant. Used to produce goldens.
+
+    Mirrors imagehash.whash(mode='db4') exactly through the dwt_low stage,
+    then applies the snap-to-zero step before median + threshold.
+    """
+    import imagehash as _imagehash
+    image_natural_scale = 2 ** int(np.log2(min(img.size)))
+    image_scale = max(image_natural_scale, hash_size)
+    ll_max_level = int(np.log2(image_scale))
+    level = int(np.log2(hash_size))
+    assert hash_size & (hash_size - 1) == 0, "hash_size must be power of 2"
+    assert level <= ll_max_level, "hash_size in a wrong range"
+    dwt_level = ll_max_level - level
+    L = img.convert("L").resize((image_scale, image_scale), _imagehash.ANTIALIAS)
+    pixels = np.asarray(L) / 255.0
+    # Haar LL-removal (matches whash regardless of mode)
+    coeffs = pywt.wavedec2(pixels, "haar", level=ll_max_level)
+    coeffs = list(coeffs)
+    coeffs[0] *= 0
+    pixels = pywt.waverec2(coeffs, "haar")
+    # db4 final decomposition
+    coeffs = pywt.wavedec2(pixels, "db4", level=dwt_level)
+    dwt_low = coeffs[0]
+    # SNAP near-zero to exactly zero — the only difference from strict whash_db4
+    dwt_low = np.where(np.abs(dwt_low) < WHASH_DB4_ROBUST_EPS, 0.0, dwt_low)
+    med = np.median(dwt_low)
+    diff = dwt_low > med
+    return _imagehash.ImageHash(diff)
 
 
 def write_decoded(fixtures: list[Path], decoded_dir: Path) -> dict[str, str]:
@@ -101,6 +142,11 @@ def compute_goldens(fixtures: list[Path]) -> dict:
                 algorithms["whash_db4"]["fixtures"].setdefault(fix.name, {})[str(size)] = str(imagehash.whash(img, hash_size=size, mode="db4", remove_max_haar_ll=True))
             except (AssertionError, ValueError):
                 algorithms["whash_db4"]["fixtures"].setdefault(fix.name, {})[str(size)] = None
+        for size in ALGO_HASH_SIZES["whash_db4_robust"]:
+            try:
+                algorithms["whash_db4_robust"]["fixtures"].setdefault(fix.name, {})[str(size)] = str(_whash_db4_robust(img, size))
+            except (AssertionError, ValueError):
+                algorithms["whash_db4_robust"]["fixtures"].setdefault(fix.name, {})[str(size)] = None
         for binbits in COLORHASH_BINBITS:
             algorithms["colorhash"]["fixtures"].setdefault(fix.name, {})[str(binbits)] = str(imagehash.colorhash(img, binbits=binbits))
 
