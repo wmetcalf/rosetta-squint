@@ -15,8 +15,14 @@
       "import": "./dist/browser.js"
     }
   },
-  "files": ["dist", "README.md", "LICENSE"],
-  "engines": { "node": ">=18" },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
   "license": "BSD-2-Clause",
   "scripts": {
     "build": "tsc",
@@ -29,6 +35,8 @@
   "devDependencies": {
     "@types/node": "^20",
     "@types/pngjs": "^6",
+    "esbuild": "^0.28.0",
+    "playwright": "^1.60.0",
     "typescript": "^5.5",
     "vitest": "^2"
   }
