@@ -27,6 +27,16 @@ function decodePngFromSpec(fixture: string): RgbImage {
 	return rih.decodePng(bytes);
 }
 
+// db4 LL coefficients can land at the median tie point (~1e-17 from 0) on
+// pathological inputs. PyWavelets' C+SIMD resolves the sign differently than
+// portable double arithmetic. Documented in spec/SPEC.md whash_db4 section.
+// Mirrors the Group-2 exemptions; matches Java / Go / Swift ports.
+const DB4_ULP_EXEMPT = new Set([
+	"whash_db4:checker-256.png:8",
+	"whash_db4:checker-256.png:16",
+	"whash_db4:line-art-icon-256.png:16",
+]);
+
 function run(
 	name: string,
 	exempt: Set<string>,
@@ -36,6 +46,7 @@ function run(
 ) {
 	for (const c of algorithmCases(name)) {
 		if (exempt.has(c.fixture)) continue;
+		if (DB4_ULP_EXEMPT.has(`${name}:${c.fixture}:${c.size}`)) continue;
 		const img = decodePngFromSpec(c.fixture);
 		const h = compute(img, c.size);
 		if (h.toHex() !== c.hex) {
