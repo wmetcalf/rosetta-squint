@@ -13,6 +13,7 @@ public final class SpecPath {
     public static final Path HSV_CASES = SPEC.resolve("hsv_cases.json");
     public static final Path DCT_CASES = SPEC.resolve("dct_cases.json");
     public static final Path HAAR_CASES = SPEC.resolve("haar_cases.json");
+    public static final Path DB4_CASES = SPEC.resolve("db4_cases.json");
 
     private SpecPath() {}
 }
