@@ -12,16 +12,34 @@ license = { text = "BSD-2-Clause" }
 authors = [
     { name = "Will Metcalf", email = "william.metcalf@gmail.com" },
 ]
+# Tight pinning policy: the cross-port byte-exact guarantee depends on the
+# specific upstream versions our spec/goldens.json was generated against.
+# A Pillow/imagehash/PyWavelets/numpy/scipy upgrade *may* change algorithm
+# output in ways that diverge from our 5 non-Python ports. We only relax
+# these pins when we cut a new rosetta-imagehash release after re-running
+# all goldens against the new versions. See "Version policy" in README.
+#
+# To intentionally use looser pins (e.g. for compatibility with another
+# dependency in your environment), install with:
+#   pip install rosetta-imagehash[unpinned]
+# and verify your output matches against spec/goldens.json yourself.
 dependencies = [
-    "imagehash>=4.3.2,<5.0",
+    "imagehash==4.3.2",
     "numpy>=1.26,<2.0",
-    "Pillow>=10.4,<13",
+    "Pillow==10.4.*",       # tested against 10.4.0; allow patch-level only
     "PyWavelets>=1.5,<2.0",
 ]
 
 [project.optional-dependencies]
 test = [
     "pytest>=7",
+]
+# Opt-in escape hatch for users who need to share a Python environment with
+# packages requiring a different Pillow or imagehash version. Caveat
+# emptor — cross-port byte-exact parity is no longer guaranteed.
+unpinned = [
+    "imagehash>=4.3.2,<5.0",
+    "Pillow>=10.4,<13",
 ]
 
 [project.urls]

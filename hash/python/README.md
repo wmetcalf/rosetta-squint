@@ -22,6 +22,27 @@ pip install -e .              # from python/
 
 Not yet on PyPI.
 
+### Version policy
+
+The wrapper pins upstream dependencies to the exact versions our goldens were validated against:
+
+| Dep | Pinned to | Why |
+|---|---|---|
+| `imagehash` | `==4.3.2` | Algorithm output is what generates `spec/goldens.json`. New upstream release → potential drift → release of `rosetta-imagehash` after re-validation. |
+| `Pillow` | `==10.4.*` | PIL's Lanczos resize, `Image.crop` rounding, `ImageFilter.GaussianBlur` box-radius formula, and grayscale conversion are all involved in our hash pipeline. A Pillow major-version bump can change any of these and silently break parity with the 5 other ports. |
+| `PyWavelets` | `>=1.5,<2.0` | db4 filter coefficients are mathematical constants; less drift risk, but bound the major version. |
+| `numpy` | `>=1.26,<2.0` | NumPy 2.0 changed some default dtypes and behaviors; pin to 1.x. |
+
+This is intentional. The upstream-tracker workflow (`.github/workflows/upstream-tracker.yml`) catches new upstream releases weekly and surfaces the goldens diff so a human can decide whether to bump and re-release.
+
+If you need to share a Python environment with packages requiring different Pillow / imagehash versions, install with the unpinned extra:
+
+```bash
+pip install rosetta-imagehash[unpinned]
+```
+
+**Caveat:** with `[unpinned]` the cross-port byte-exact guarantee is no longer enforced by the wrapper — verify your own output matches `spec/goldens.json` before relying on it. The 5 non-Python ports are unaffected (they don't link to Pillow at all).
+
 ## Usage
 
 ```python
