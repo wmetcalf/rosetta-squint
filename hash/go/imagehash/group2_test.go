@@ -132,18 +132,17 @@ func TestDHashVerticalGoldens(t *testing.T) {
 // byte-exact due to floating-point accumulation differences between Go's pure-Go
 // db4 implementation and pywt's C code.
 //
-// These fixtures contain synthetic checker or line-art patterns that produce
-// theoretically-zero db4 coefficients. After 3-5 levels of decomposition,
-// the floating-point noise from each level accumulates differently between
-// pywt's C convolution loop and Go's sequential summation. The near-zero
-// coefficients fall on different sides of the median, flipping a few bits.
+// The db4 DWT uses column-then-row traversal (matching pywt's C implementation
+// and the Rust port) which resolves most ULP-level discrepancies. The remaining
+// exempt case involves a pathological checker pattern at size=16 where the
+// floating-point noise at the median boundary still differs by 1-2 ULPs.
 //
 // The Go implementation is mathematically correct (within 1e-10 of pywt)
 // and produces correct hashes for all photographic and non-synthetic images.
+// Use whash_db4_robust (TestWHashDb4RobustGoldens) for cross-port stability
+// on all inputs including pathological ones.
 var db4FPPrecisionExempt = map[string]bool{
-	"checker-256.png-8":        true,
-	"checker-256.png-16":       true,
-	"line-art-icon-256.png-16": true,
+	"checker-256.png-16": true,
 }
 
 func TestWHashDb4Goldens(t *testing.T) {
@@ -162,6 +161,26 @@ func TestWHashDb4Goldens(t *testing.T) {
 			h, err := imagehash.WHashDb4(img, c.Size)
 			if err != nil {
 				t.Fatalf("WHashDb4: %v", err)
+			}
+			if got := h.ToHex(); got != c.Hex {
+				t.Errorf("fixture=%s size=%d: got %q, want %q", c.Fixture, c.Size, got, c.Hex)
+			}
+		})
+	}
+}
+
+func TestWHashDb4RobustGoldens(t *testing.T) {
+	cases, err := testkit.AlgorithmCasesFromRoot("whash_db4_robust")
+	if err != nil {
+		t.Fatalf("load goldens: %v", err)
+	}
+	for _, c := range cases {
+		c := c
+		t.Run(fmt.Sprintf("%s-size-%d", c.Fixture, c.Size), func(t *testing.T) {
+			img := testkit.LoadPreDecodedFromRoot(t, c.Fixture)
+			h, err := imagehash.WHashDb4Robust(img, c.Size)
+			if err != nil {
+				t.Fatalf("WHashDb4Robust: %v", err)
 			}
 			if got := h.ToHex(); got != c.Hex {
 				t.Errorf("fixture=%s size=%d: got %q, want %q", c.Fixture, c.Size, got, c.Hex)

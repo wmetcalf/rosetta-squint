@@ -92,87 +92,80 @@ type WavedecResult struct {
 	InputSizes [][2]int // [i] = (h, w) of input at level i (0 = first level)
 }
 
-// Dwt2 applies a single 2-D db4 DWT. Row-wise first (axis=1), then column-wise (axis=0).
+// Dwt2 applies a single 2-D db4 DWT.
+// Column-wise first (axis=0), then row-wise (axis=1), matching pywt's C
+// implementation order for ULP-level parity on pathological inputs.
 func Dwt2(x [][]float64) (cA, cH, cV, cD [][]float64) {
 	h := len(x)
 	w := len(x[0])
 	outH := CoeffLen(h)
 	outW := CoeffLen(w)
 
-	// Row pass: for each row, apply DWT1D along columns.
-	rowLo := make([][]float64, h)
-	rowHi := make([][]float64, h)
-	for y := 0; y < h; y++ {
-		rowLo[y], rowHi[y] = dwt1d(x[y], outW)
+	// Column pass: for each column, apply DWT1D along rows (axis=0).
+	colLo := makeGrid(outH, w)
+	colHi := makeGrid(outH, w)
+	col := make([]float64, h)
+	for xc := 0; xc < w; xc++ {
+		for y := 0; y < h; y++ {
+			col[y] = x[y][xc]
+		}
+		lo, hi := dwt1d(col, outH)
+		for y := 0; y < outH; y++ {
+			colLo[y][xc] = lo[y]
+			colHi[y][xc] = hi[y]
+		}
 	}
 
-	// Column pass: for each output column, apply DWT1D along rows.
+	// Row pass: for each row of colLo and colHi, apply DWT1D along columns (axis=1).
 	cA = makeGrid(outH, outW)
 	cH = makeGrid(outH, outW)
 	cV = makeGrid(outH, outW)
 	cD = makeGrid(outH, outW)
 
-	col := make([]float64, h)
-	for xc := 0; xc < outW; xc++ {
-		for y := 0; y < h; y++ {
-			col[y] = rowLo[y][xc]
+	for y := 0; y < outH; y++ {
+		lo, hi := dwt1d(colLo[y], outW)
+		for xc := 0; xc < outW; xc++ {
+			cA[y][xc] = lo[xc] // LL
+			cV[y][xc] = hi[xc] // LH
 		}
-		lo, hi := dwt1d(col, outH)
-		for y := 0; y < outH; y++ {
-			cA[y][xc] = lo[y]
-			cH[y][xc] = hi[y]
-		}
-		for y := 0; y < h; y++ {
-			col[y] = rowHi[y][xc]
-		}
-		lo, hi = dwt1d(col, outH)
-		for y := 0; y < outH; y++ {
-			cV[y][xc] = lo[y]
-			cD[y][xc] = hi[y]
+		lo, hi = dwt1d(colHi[y], outW)
+		for xc := 0; xc < outW; xc++ {
+			cH[y][xc] = lo[xc] // HL
+			cD[y][xc] = hi[xc] // HH
 		}
 	}
 	return
 }
 
-// Idwt2 inverts a single 2-D db4 DWT. Column-wise first, then row-wise.
+// Idwt2 inverts a single 2-D db4 DWT.
+// Row-wise first, then column-wise — inverse of the column-then-row forward DWT.
 // targetH and targetW are the original input dimensions (to crop IDWT output).
 func Idwt2(cA, cH, cV, cD [][]float64, targetH, targetW int) [][]float64 {
 	sh := len(cA)
-	sw := len(cA[0])
 
-	// Column inverse: recover rows of lo (= rowLo) and hi (= rowHi).
-	rowLo := makeGrid(targetH, sw)
-	rowHi := makeGrid(targetH, sw)
-	col := make([]float64, sh)
-	for xc := 0; xc < sw; xc++ {
-		for y := 0; y < sh; y++ {
-			col[y] = cA[y][xc]
-		}
-		hi := make([]float64, sh)
-		for y := 0; y < sh; y++ {
-			hi[y] = cH[y][xc]
-		}
-		colOut := idwt1d(col, hi, targetH)
-		for y := 0; y < targetH; y++ {
-			rowLo[y][xc] = colOut[y]
-		}
-		for y := 0; y < sh; y++ {
-			col[y] = cV[y][xc]
-		}
-		for y := 0; y < sh; y++ {
-			hi[y] = cD[y][xc]
-		}
-		colOut = idwt1d(col, hi, targetH)
-		for y := 0; y < targetH; y++ {
-			rowHi[y][xc] = colOut[y]
-		}
+	// Row inverse: recover colLo and colHi (the intermediate column-pass outputs).
+	colLo := makeGrid(sh, targetW)
+	colHi := makeGrid(sh, targetW)
+	for y := 0; y < sh; y++ {
+		rowOut := idwt1d(cA[y], cV[y], targetW)
+		copy(colLo[y], rowOut)
+		rowOut = idwt1d(cH[y], cD[y], targetW)
+		copy(colHi[y], rowOut)
 	}
 
-	// Row inverse.
+	// Column inverse: recover original signal.
 	out := makeGrid(targetH, targetW)
-	for y := 0; y < targetH; y++ {
-		row := idwt1d(rowLo[y], rowHi[y], targetW)
-		copy(out[y], row)
+	col := make([]float64, sh)
+	hiCol := make([]float64, sh)
+	for xc := 0; xc < targetW; xc++ {
+		for y := 0; y < sh; y++ {
+			col[y] = colLo[y][xc]
+			hiCol[y] = colHi[y][xc]
+		}
+		colOut := idwt1d(col, hiCol, targetH)
+		for y := 0; y < targetH; y++ {
+			out[y][xc] = colOut[y]
+		}
 	}
 	return out
 }
