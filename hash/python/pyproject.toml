@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rosetta-imagehash"
+version = "0.1.0"
+description = "Cross-port-stable extensions to Python imagehash, mirroring the 5 ports of rosetta-image-hash"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "BSD-2-Clause" }
+authors = [
+    { name = "Will Metcalf", email = "william.metcalf@gmail.com" },
+]
+dependencies = [
+    "imagehash>=4.3.2,<5.0",
+    "numpy>=1.26,<2.0",
+    "Pillow>=10.4,<13",
+    "PyWavelets>=1.5,<2.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7",
+]
+
+[project.urls]
+Homepage = "https://github.com/wmetcalf/rosetta-image-hash"
+
+[tool.setuptools.packages.find]
+include = ["rosetta_imagehash*"]
+exclude = ["tests*"]
