@@ -17,6 +17,9 @@
   },
   "engines": { "node": ">=18" },
   "license": "BSD-2-Clause",
+  "bin": {
+    "squint-cli": "./scripts/squint-cli.mjs"
+  },
   "scripts": {
     "build": "tsc",
     "test": "vitest run",

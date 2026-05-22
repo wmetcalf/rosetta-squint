@@ -5,6 +5,7 @@ let package = Package(
     name: "RosettaSquint",
     products: [
         .library(name: "RosettaSquint", targets: ["RosettaSquint"]),
+        .executable(name: "SquintCLI", targets: ["SquintCLI"]),
     ],
     dependencies: [
         .package(path: "../../../hash/swift/RosettaImageHash"),
@@ -17,6 +18,10 @@ let package = Package(
                 .product(name: "RosettaImageHash", package: "RosettaImageHash"),
                 .product(name: "RosettaImageDecode", package: "RosettaImageDecode"),
             ]
+        ),
+        .executableTarget(
+            name: "SquintCLI",
+            dependencies: ["RosettaSquint"]
         ),
         .testTarget(
             name: "RosettaSquintTests",
