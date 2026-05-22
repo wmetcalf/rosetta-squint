@@ -1,7 +1,9 @@
 import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 import * as rih from "../src/index.js";
-import { algorithmCases, loadPredecoded } from "./testkit.js";
+import { algorithmCases, loadPredecoded, SPEC_DIR } from "./testkit.js";
 
 describe("average_hash goldens", () => {
   it("byte-exact across all fixtures × sizes", () => {
@@ -192,5 +194,47 @@ describe("colorhash bin encoding (Group 1)", () => {
   it("B=3 simple cases", () => {
     expect(rih.colorhashBinEncode(0, 3)).toEqual([false, false, false]);
     expect(rih.colorhashBinEncode(7, 3)).toEqual([true, true, true]);
+  });
+});
+
+interface CropResistantGoldens {
+  default_params: {
+    hash_func: string;
+    limit_segments: null | number;
+    segment_threshold: number;
+    min_segment_size: number;
+    segmentation_image_size: number;
+  };
+  fixtures: Record<string, { default: string }>;
+}
+
+describe("crop_resistant_hash goldens", () => {
+  it("byte-exact comma-separated hex across all fixtures", () => {
+    const goldensPath = join(SPEC_DIR, "goldens.json");
+    const goldens = JSON.parse(readFileSync(goldensPath, "utf8")) as {
+      algorithms: { crop_resistant_hash: CropResistantGoldens };
+    };
+    const entry = goldens.algorithms["crop_resistant_hash"];
+    const fixtures = entry.fixtures;
+
+    const failures: string[] = [];
+    for (const fixtureName of Object.keys(fixtures).sort()) {
+      const expected = fixtures[fixtureName]["default"];
+      const img = loadPredecoded(fixtureName);
+      const mh = rih.cropResistantHash(img);
+      const got = mh.toString();
+      if (got !== expected) {
+        const gotSegs = got.split(",").length;
+        const expSegs = expected.split(",").length;
+        failures.push(
+          `${fixtureName}: got ${gotSegs} segs, want ${expSegs} segs\n` +
+          `    got:  ${got.slice(0, 80)}\n` +
+          `    want: ${expected.slice(0, 80)}`
+        );
+      }
+    }
+    if (failures.length > 0) {
+      throw new Error(`${failures.length} fixture failures:\n  ${failures.join("\n  ")}`);
+    }
   });
 });

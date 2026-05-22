@@ -13,3 +13,5 @@ export { whashDb4 } from "./whashDb4.js";
 export { whashDb4Robust } from "./whashDb4Robust.js";
 export { colorhash, colorhashBinEncode } from "./colorhash.js";
 export { decodePng } from "./decodePng.js";
+export { ImageMultiHash, hexToMultiHash } from "./multiHash.js";
+export { cropResistantHash } from "./cropResistantHash.js";
