@@ -55,3 +55,31 @@ pub fn algorithm_cases(algorithm: &str) -> Vec<AlgorithmCase> {
     }
     out
 }
+
+/// A golden case for algorithms that don't use a numeric size (e.g. crop_resistant_hash).
+#[derive(Debug, Clone)]
+pub struct FixtureCase {
+    pub fixture: String,
+    pub hex: String,
+}
+
+/// Returns cases for an algorithm whose fixtures have a single `"default"` key.
+pub fn fixture_cases(algorithm: &str) -> Vec<FixtureCase> {
+    let g = load();
+    let entry = g
+        .algorithms
+        .get(algorithm)
+        .unwrap_or_else(|| panic!("algorithm {algorithm:?} not in goldens.json"));
+    let mut out = Vec::new();
+    for (fixture, sizes) in &entry.fixtures {
+        if let Some(hex_opt) = sizes.get("default") {
+            if let Some(hex) = hex_opt {
+                out.push(FixtureCase {
+                    fixture: fixture.clone(),
+                    hex: hex.clone(),
+                });
+            }
+        }
+    }
+    out
+}

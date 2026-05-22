@@ -1,7 +1,7 @@
 mod testkit;
 
-use rosetta_image_hash::{average_hash, dhash_vertical, phash_simple, whash_db4, whash_db4_robust};
-use testkit::{algorithm_cases, load_predecoded};
+use rosetta_image_hash::{average_hash, crop_resistant_hash, dhash_vertical, phash_simple, whash_db4, whash_db4_robust};
+use testkit::{algorithm_cases, fixture_cases, load_predecoded};
 
 #[test]
 fn average_hash_goldens() {
@@ -208,4 +208,26 @@ fn bin_encoding_b3() {
     use rosetta_image_hash::colorhash_bin_encode;
     assert_eq!(colorhash_bin_encode(0, 3), vec![false, false, false]);
     assert_eq!(colorhash_bin_encode(7, 3), vec![true, true, true]);
+}
+
+#[test]
+fn crop_resistant_hash_goldens() {
+    let cases = fixture_cases("crop_resistant_hash");
+    let mut failures: Vec<String> = Vec::new();
+
+    for c in &cases {
+        let img = load_predecoded(&c.fixture);
+        let mh = crop_resistant_hash(&img).expect("compute");
+        let got = mh.to_hex();
+        if got != c.hex {
+            failures.push(format!(
+                "fixture={} got={} want={}",
+                c.fixture, got, c.hex
+            ));
+        }
+    }
+
+    if !failures.is_empty() {
+        panic!("{} crop_resistant_hash failures:\n  {}", failures.len(), failures.join("\n  "));
+    }
 }

@@ -6,7 +6,7 @@ pub mod lanczos_case;
 pub mod predecoded;
 pub mod spec_path;
 
-pub use goldens::{algorithm_cases, AlgorithmCase};
+pub use goldens::{algorithm_cases, fixture_cases, AlgorithmCase, FixtureCase};
 pub use lanczos_case::{load_lanczos_case, LanczosCase};
 pub use predecoded::load_predecoded;
 pub use spec_path::SPEC_DIR;

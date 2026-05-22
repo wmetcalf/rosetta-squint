@@ -10,3 +10,6 @@ pub mod haar;
 pub mod db4;
 pub mod bitpack;
 pub mod img_rgb;
+pub mod pil_gaussian_blur;
+pub mod pil_median_filter;
+pub mod find_segments;

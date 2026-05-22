@@ -1,7 +1,7 @@
 //! rosetta-image-hash — Byte-exact Rust port of Python imagehash 4.3.2.
 //!
-//! Public API: `Hash`, `ImageHashError`, `hex_to_hash`, `hex_to_flathash`, and
-//! the five algorithm functions. All return `Result<Hash, ImageHashError>`.
+//! Public API: `Hash`, `ImageMultiHash`, `ImageHashError`, `hex_to_hash`,
+//! `hex_to_flathash`, `hex_to_multihash`, and the algorithm functions.
 
 #[doc(hidden)]
 pub mod internal;
@@ -23,6 +23,12 @@ pub use whash::{whash_db4, whash_db4_robust, whash_haar, WHASH_DB4_ROBUST_EPS};
 
 mod colorhash;
 pub use colorhash::{colorhash, colorhash_bin_encode};
+
+mod multihash;
+pub use multihash::{hex_to_multihash, ImageMultiHash};
+
+mod crop_resistant;
+pub use crop_resistant::crop_resistant_hash;
 
 use std::fmt;
 
