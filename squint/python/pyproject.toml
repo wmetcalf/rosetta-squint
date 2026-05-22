@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rosetta-squint"
+version = "0.1.0"
+description = "Cross-language byte-exact perceptual image hashing — decode + hash in one call"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "BSD-2-Clause" }
+authors = [
+    { name = "Will Metcalf", email = "william.metcalf@gmail.com" },
+]
+# Tight upstream pins — bumped only when we cut a new rosetta-squint release
+# after re-validating goldens. See ../../hash/python/README.md for the policy.
+#
+# Note: `rosetta-imagehash` is a sibling local package in this repo. Until
+# the project is on PyPI, install it manually from ../../hash/python BEFORE
+# installing this package:
+#     pip install -e ../../hash/python
+#     pip install -e .
+# Once on PyPI, this dependency will be specified normally.
+dependencies = [
+    "rosetta-imagehash>=0.1.0,<0.2",
+    "Pillow==10.4.*",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=7"]
+
+[project.urls]
+Homepage = "https://github.com/wmetcalf/rosetta-squint"
+
+[tool.setuptools.packages.find]
+include = ["rosetta_squint*"]
+exclude = ["tests*"]
