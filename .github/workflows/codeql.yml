@@ -58,7 +58,7 @@ jobs:
           sudo apt-get install -y \
             libturbojpeg libturbojpeg0-dev libturbojpeg-java \
             libwebp-dev libsharpyuv-dev libtiff-dev \
-            libheif-dev libheif-plugin-libde265 libde265-dev libde265-0 \
+            libheif-dev libde265-dev libde265-0 \
             pkg-config
       - name: Autobuild Java (hash + decode + squint)
         if: matrix.language == 'java'

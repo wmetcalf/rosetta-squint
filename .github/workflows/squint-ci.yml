@@ -39,7 +39,7 @@ jobs:
           sudo apt-get install -y \
             libjpeg-turbo8-dev libturbojpeg libturbojpeg0-dev libturbojpeg-java \
             libwebp-dev libsharpyuv-dev libtiff-dev \
-            libheif-dev libheif-plugin-libde265 libde265-dev libde265-0 \
+            libheif-dev libde265-dev libde265-0 \
             pkg-config
 
       # ── Python
@@ -63,7 +63,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
       - name: Install system libs for Rust HEIC
         if: matrix.port == 'rust'
-        run: sudo apt-get update -qq && sudo apt-get install -y libheif-dev libheif-plugin-libde265 libde265-dev pkg-config
+        run: sudo apt-get update -qq && sudo apt-get install -y libheif-dev libde265-dev pkg-config
       - name: Cache cargo (squint)
         if: matrix.port == 'rust'
         uses: actions/cache@v4
@@ -146,7 +146,7 @@ jobs:
           sudo apt-get install -y \
             libjpeg-turbo8-dev libturbojpeg libturbojpeg0-dev libturbojpeg-java \
             libwebp-dev libsharpyuv-dev libtiff-dev \
-            libheif-dev libheif-plugin-libde265 libde265-dev libde265-0 \
+            libheif-dev libde265-dev libde265-0 \
             pkg-config
 
       - name: Set up toolchains
@@ -202,7 +202,7 @@ jobs:
       - name: Install system libs + toolchains
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y libjpeg-turbo8-dev libturbojpeg libturbojpeg0-dev libturbojpeg-java libwebp-dev libsharpyuv-dev libtiff-dev libheif-dev libheif-plugin-libde265 libde265-dev libde265-0 pkg-config
+          sudo apt-get install -y libjpeg-turbo8-dev libturbojpeg libturbojpeg0-dev libturbojpeg-java libwebp-dev libsharpyuv-dev libtiff-dev libheif-dev libde265-dev libde265-0 pkg-config
       - uses: dtolnay/rust-toolchain@stable
       - uses: actions/setup-go@v5
         with: { go-version: '1.22' }
@@ -374,7 +374,7 @@ jobs:
           sudo apt-get install -y \
             libjpeg-turbo8-dev libturbojpeg libturbojpeg0-dev libturbojpeg-java \
             libwebp-dev libsharpyuv-dev libtiff-dev \
-            libheif-dev libheif-plugin-libde265 libde265-dev libde265-0 \
+            libheif-dev libde265-dev libde265-0 \
             pkg-config
 
       # Rust — clippy
@@ -385,7 +385,7 @@ jobs:
           components: clippy
       - name: Install libheif for clippy (squint Rust still chains decode)
         if: matrix.port == 'rust'
-        run: sudo apt-get update -qq && sudo apt-get install -y libheif-dev libheif-plugin-libde265 libde265-dev pkg-config
+        run: sudo apt-get update -qq && sudo apt-get install -y libheif-dev libde265-dev pkg-config
       - name: Cache cargo (squint lint)
         if: matrix.port == 'rust'
         uses: actions/cache@v4
