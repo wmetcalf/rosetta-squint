@@ -38,7 +38,7 @@ fn main() -> ExitCode {
         "whash_db4" => whash_db4(path, size).map(|h| h.to_hex()),
         "whash_db4_robust" => whash_db4_robust(path, size).map(|h| h.to_hex()),
         "colorhash" => colorhash(path, size).map(|h| h.to_hex()),
-        "crop_resistant_hash" => crop_resistant_hash(path).map(|mh| mh.to_hex()),
+        "crop_resistant_hash" => crop_resistant_hash(path, None).map(|mh| mh.to_hex()),
         _ => {
             eprintln!("unknown algo: {}", algo);
             return ExitCode::from(2);

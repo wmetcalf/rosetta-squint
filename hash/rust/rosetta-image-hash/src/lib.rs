@@ -16,7 +16,7 @@ mod dhash;
 pub use dhash::{dhash, dhash_vertical};
 
 mod phash;
-pub use phash::{phash, phash_simple, phash_simple_with_factor, phash_with_factor};
+pub use phash::{phash, phash_simple, phash_simple_with_factor, phash_with_factor, SNAP_EPS};
 
 mod whash;
 pub use whash::{whash_db4, whash_db4_robust, whash_haar, WHASH_DB4_ROBUST_EPS};

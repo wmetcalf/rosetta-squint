@@ -1,5 +1,5 @@
 import { Hash, ImageHashError, type RgbImage } from "./hash.js";
-import { toRgb } from "./internal/imgRgb.js";
+import { toRgb, validateRgbImage } from "./internal/imgRgb.js";
 import { resize } from "./internal/lanczos.js";
 import { toGray } from "./internal/pilGray.js";
 
@@ -7,6 +7,10 @@ import { toGray } from "./internal/pilGray.js";
  * ahash: convert to grayscale, Lanczos resize to NxN, threshold against mean.
  */
 export function averageHash(img: RgbImage, hashSize: number): Hash {
+  validateRgbImage(img);
+  if (!Number.isInteger(hashSize)) {
+    throw new ImageHashError("InvalidHashSize", `hashSize must be an integer, got ${hashSize}`);
+  }
   if (hashSize < 2) {
     throw new ImageHashError("InvalidHashSize", `hashSize must be >= 2, got ${hashSize}`);
   }

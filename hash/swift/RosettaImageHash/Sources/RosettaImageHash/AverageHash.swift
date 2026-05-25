@@ -2,6 +2,7 @@ import Foundation
 
 /// ahash: convert to grayscale, Lanczos resize to NxN, threshold against mean.
 public func averageHash(_ image: RGBImage, hashSize: Int) throws -> Hash {
+    try image.validate()
     guard hashSize >= 2 else { throw ImageHashError.invalidHashSize(hashSize) }
     let rgb = ImgRGB.toRGB(image)
     let gray = rgbToGray(rgb.data, width: rgb.width, height: rgb.height)

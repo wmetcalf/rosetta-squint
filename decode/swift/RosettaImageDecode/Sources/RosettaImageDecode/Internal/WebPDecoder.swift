@@ -3,6 +3,14 @@ import Cwebp
 
 internal enum WebPDecoder {
     static func decode(bytes: [UInt8]) throws -> DecodedImage {
+        // Sniff VP8X canvas dimensions BEFORE invoking libwebp. WebPGetInfo
+        // rejects oversized VP8X canvases (returning 0) which surfaces as
+        // corruptInput; this pre-check produces the canonical imageTooLarge
+        // required by Spec §3.1.
+        if let dims = DimensionSniff.sniffWebpDimensions(bytes) {
+            try Limits.checkDimensions(width: dims.0, height: dims.1, format: .webp)
+        }
+
         // Get image info: width, height
         var width: Int32 = 0
         var height: Int32 = 0

@@ -86,7 +86,7 @@ public final class WHashDb4 {
         Db4Dwt.WavedecResult db4Dec = Db4Dwt.wavedec2(modified, dwtLevel);
         double[][] ll = db4Dec.cA;
 
-        // Median threshold
+        // Median threshold with snap-to-threshold tie-break.
         int llH = ll.length, llW = ll[0].length;
         int n = llH * llW;
         double[] flat = new double[n];
@@ -98,10 +98,13 @@ public final class WHashDb4 {
         Arrays.sort(sorted);
         double median = (n % 2 == 1) ? sorted[n / 2] : (sorted[n / 2 - 1] + sorted[n / 2]) / 2.0;
 
+        // Snap-to-threshold tie-break: deterministic bit 0 on ties.
+        // See spec/SPEC.md §"Threshold tie-break".
+        double threshold = median + PHash.SNAP_EPS;
         boolean[][] bits = new boolean[llH][llW];
         for (int y = 0; y < llH; y++)
             for (int x = 0; x < llW; x++)
-                bits[y][x] = ll[y][x] > median;
+                bits[y][x] = ll[y][x] > threshold;
 
         return new ImageHash(bits);
     }

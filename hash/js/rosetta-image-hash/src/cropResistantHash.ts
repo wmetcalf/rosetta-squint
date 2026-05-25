@@ -22,7 +22,7 @@
 
 import type { RgbImage } from "./hash.js";
 import { rgbToGray } from "./averageHash.js";
-import { toRgb } from "./internal/imgRgb.js";
+import { toRgb, validateRgbImage } from "./internal/imgRgb.js";
 import { resize as lanczosResize } from "./internal/lanczos.js";
 import { pilGaussianBlur } from "./internal/pilGaussianBlur.js";
 import { pilMedianFilter } from "./internal/pilMedianFilter.js";
@@ -89,6 +89,7 @@ export function cropResistantHash(
   img: RgbImage,
   limitSegments?: number,
 ): ImageMultiHash {
+  validateRgbImage(img);
   // 1. Keep original for per-segment cropping
   const orig = img;
 

@@ -89,7 +89,7 @@ func main() {
 			hex = h.ToHex()
 		}
 	case "crop_resistant_hash":
-		mh, e := squint.CropResistantHash(path)
+		mh, e := squint.CropResistantHash(path, nil)
 		err = e
 		if e == nil {
 			hex = mh.ToHex()

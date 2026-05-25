@@ -10,6 +10,7 @@ mod png;
 mod tiff;
 mod webp;
 mod decode;
+pub(crate) mod dimension_sniff;
 mod error;
 pub(crate) mod limits;
 mod types;

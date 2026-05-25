@@ -1,0 +1,43 @@
+# golangci-lint config for rosetta-image-hash (Go port).
+#
+# Security/correctness focus per the CI lint job. We deliberately omit the
+# noisy stylistic linters (gofmt-as-a-lint, nlreturn, lll, varnamelen, etc.)
+# because the codebase is FFI-heavy and many idioms are upstream-driven.
+
+run:
+  timeout: 5m
+  # Allow the cgo packages we depend on (turbojpeg / heif via decode) to be
+  # analyzed if present; otherwise tests for pure-Go packages still pass.
+  build-tags: []
+
+linters:
+  disable-all: true
+  enable:
+    - govet
+    - staticcheck
+    - errcheck
+    - gosec
+    - ineffassign
+    - unused
+
+linters-settings:
+  gosec:
+    # G104 (unchecked errors): errcheck already covers this and is less noisy.
+    # G304 (file paths via variables): unavoidable in a library that takes
+    # caller-supplied paths.
+    excludes:
+      - G104
+      - G304
+  errcheck:
+    check-type-assertions: false
+    check-blank: false
+
+issues:
+  # Don't fail on test files for gosec.
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gosec
+        - errcheck
+  max-issues-per-linter: 0
+  max-same-issues: 0

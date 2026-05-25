@@ -159,3 +159,103 @@ def test_hex_to_multihash_roundtrip():
     s = str(mh)
     restored = rs.hex_to_multihash(s)
     assert str(restored) == s
+
+
+# ─── HEIC tests — exercise the ctypes-around-system-libheif bridge ──────────
+#
+# rosetta_squint decodes HEIC via a ctypes wrapper around system libheif
+# (instead of pillow-heif), because pillow-heif bundles libheif 1.21.2 and
+# diverges ±1 px from the system libheif 1.17.6 that the 5 native ports link
+# to. These tests confirm:
+#   (a) HEIC happy-path: decode and hash succeed
+#   (b) HEIC alpha handling: RGBA fixture decodes as RGBA
+#   (c) HEIC negative paths: malformed/AVIF inputs raise rather than panic
+#
+# The HEIC bridge has historically been the largest ctypes-FFI surface in
+# the project — these tests guard against regressions in the HeifError
+# struct handling, handle ownership, plane stride trust, etc. (S-M3, S-M4).
+
+HEIC_RGB = DECODE_FIXTURES / "heic" / "valid" / "16x16.heic"
+HEIC_RGBA = DECODE_FIXTURES / "heic" / "valid" / "16x16-rgba.heic"
+HEIC_LOSSLESS = DECODE_FIXTURES / "heic" / "valid" / "16x16-lossless.heic"
+HEIC_AVIF = DECODE_FIXTURES / "heic" / "invalid" / "avif.heic"
+HEIC_BAD = DECODE_FIXTURES / "heic" / "invalid" / "bad-magic.heic"
+HEIC_TRUNCATED = DECODE_FIXTURES / "heic" / "invalid" / "truncated.heic"
+
+
+def _maybe_skip_heic():
+    """Skip the HEIC tests cleanly if libheif isn't installed at all."""
+    try:
+        from rosetta_squint._impl import _load_libheif_xplat
+        _load_libheif_xplat()
+    except OSError as e:
+        pytest.skip(f"system libheif unavailable — skipping HEIC tests: {e}")
+
+
+def test_heic_decode_rgb_hashes_successfully():
+    _maybe_skip_heic()
+    if not HEIC_RGB.exists():
+        pytest.skip(f"missing fixture {HEIC_RGB}")
+    h = rs.phash(HEIC_RGB, 8)
+    # phash output is always 16 lowercase hex chars
+    assert len(str(h)) == 16
+    assert all(c in "0123456789abcdef" for c in str(h))
+
+
+def test_heic_path_equals_bytes():
+    """HEIC must round-trip through path and bytes APIs identically."""
+    _maybe_skip_heic()
+    if not HEIC_RGB.exists():
+        pytest.skip(f"missing fixture {HEIC_RGB}")
+    h_path = rs.phash(HEIC_RGB, 8)
+    h_bytes = rs.phash_bytes(HEIC_RGB.read_bytes(), 8)
+    assert str(h_path) == str(h_bytes)
+
+
+def test_heic_rgba_decodes():
+    """RGBA HEIC must decode cleanly — exercises has_alpha_channel + RGBA chroma path."""
+    _maybe_skip_heic()
+    if not HEIC_RGBA.exists():
+        pytest.skip(f"missing fixture {HEIC_RGBA}")
+    # Decode independently to verify mode/dimensions; then hash via squint.
+    img = rs.decode_file(HEIC_RGBA)
+    assert img.mode in ("RGB", "RGBA")
+    assert img.size == (16, 16)
+    h = rs.dhash(HEIC_RGBA, 8)
+    assert len(str(h)) == 16
+
+
+def test_heic_lossless_decodes():
+    """Lossless HEIC must decode cleanly."""
+    _maybe_skip_heic()
+    if not HEIC_LOSSLESS.exists():
+        pytest.skip(f"missing fixture {HEIC_LOSSLESS}")
+    h = rs.average_hash(HEIC_LOSSLESS, 8)
+    assert len(str(h)) == 16
+
+
+def test_heic_invalid_avif_raises():
+    """AVIF brand inside a HEIC ftyp is intentionally unsupported in v1."""
+    _maybe_skip_heic()
+    if not HEIC_AVIF.exists():
+        pytest.skip(f"missing fixture {HEIC_AVIF}")
+    with pytest.raises(Exception):  # noqa: BLE001 — any exception is acceptable
+        rs.phash(HEIC_AVIF, 8)
+
+
+def test_heic_invalid_bad_magic_raises():
+    """A file whose ftyp brand isn't in the HEIC family must fail."""
+    _maybe_skip_heic()
+    if not HEIC_BAD.exists():
+        pytest.skip(f"missing fixture {HEIC_BAD}")
+    with pytest.raises(Exception):  # noqa: BLE001
+        rs.phash(HEIC_BAD, 8)
+
+
+def test_heic_invalid_truncated_raises():
+    """A truncated HEIC must surface a libheif diagnostic, not silently produce garbage."""
+    _maybe_skip_heic()
+    if not HEIC_TRUNCATED.exists():
+        pytest.skip(f"missing fixture {HEIC_TRUNCATED}")
+    with pytest.raises(Exception):  # noqa: BLE001
+        rs.phash(HEIC_TRUNCATED, 8)

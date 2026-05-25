@@ -1,0 +1,33 @@
+# golangci-lint config for rosetta-squint (Go port).
+# Security/correctness-focused; matches the policy in sibling halves.
+
+run:
+  timeout: 5m
+
+linters:
+  disable-all: true
+  enable:
+    - govet
+    - staticcheck
+    - errcheck
+    - gosec
+    - ineffassign
+    - unused
+
+linters-settings:
+  gosec:
+    excludes:
+      - G104
+      - G304
+  errcheck:
+    check-type-assertions: false
+    check-blank: false
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gosec
+        - errcheck
+  max-issues-per-linter: 0
+  max-same-issues: 0

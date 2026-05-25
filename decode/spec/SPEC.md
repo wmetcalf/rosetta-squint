@@ -107,6 +107,70 @@ Ports MUST:
 Group 4 (error semantics) tests MUST include at least one fixture per
 format that triggers `imageTooLarge`.
 
+### §3.2 Tolerance divergence on malformed input
+
+This spec guarantees **byte-exact agreement across ports for inputs the
+decoder accepts as valid**. It does NOT guarantee that every port reaches
+the same accept/reject decision on every malformed input.
+
+Differential fuzzing (`tools/cross-squint-diff/differential_fuzz.py`)
+surfaces three known classes of cross-port tolerance drift:
+
+1. **Java GIF over-permissive LZW**: `javax.imageio.GIFImageReader`
+   accepts LZW streams with out-of-range codes by filling the affected
+   pixels with the last valid color. Every other port (Go `image/gif`,
+   in-tree TS GIF decoder, Rust `image` crate gif feature, Swift in-tree
+   GIF decoder, Python PIL) rejects with `corruptInput`. A future revision
+   may replace `javax.imageio` with the in-tree LZW decoder used by JS
+   for consistency.
+2. **JPEG decoder strictness — TurboJPEG vs libjpeg-turbo direct**: Go,
+   Java, and Swift use TurboJPEG (`tjDecompress2`), which strictly rejects
+   "premature end of data segment" on truncated SOS. JS, Python, and Rust
+   use libjpeg-turbo directly (via @jsquash/jpeg, PIL, mozjpeg-sys), which
+   zero-fills the missing data and produces a decoded output. All three
+   "lenient" ports agree byte-exact among themselves but produce a
+   different hex than the three "strict" ports would (which reject).
+3. **JPEG decode output divergence on tail-corrupt input**: Python (PIL)
+   uses different IDCT/upsampling defaults than the other lenient ports;
+   in `hex-disagreement` findings, Python produces a markedly different
+   hash from JS/Rust/Swift on the same tail-corrupt JPEG.
+
+**Implication for callers handling untrusted input**: the safe contract
+is "if any port returns an error, treat as un-hashable". Don't compare
+hashes across ports when one port errored and another succeeded — that
+case violates the byte-exact invariant.
+
+A `imageTooLarge` fixture pre-decode check (§3.1) prevents the
+decompression-bomb category, but tolerance-level drift on otherwise-
+hostile input is a known limitation in v1.
+
+#### Why these aren't aligned in v1
+
+For each tolerance class, alignment was investigated and intentionally deferred:
+
+- **Java GIF lenient LZW**: a separate fix replaces `javax.imageio.GIFImageReader`
+  with the same in-tree pure-Java LZW decoder the JS port uses. See
+  `decode/java/.../internal/GIFDecoder.java`.
+- **JPEG strictness alignment**: configuring all 6 ports to the same strictness
+  level requires either (a) making libjpeg-turbo strict by intercepting the
+  `emit_message` callback to treat truncation warnings as fatal errors —
+  infeasible in JS (the @jsquash WASM build doesn't expose this) and in
+  Python (PIL's libjpeg integration swallows the warning), OR (b) making
+  TurboJPEG (`tjDecompress2`) accept truncation, which the public TurboJPEG
+  API does not expose. **The v1 contract is: callers depending on byte-exact
+  agreement across ports MUST treat any one port erroring as "input is not
+  decodable" and skip the hash.** The cross-port lenient/strict split affects
+  only inputs where any port errors; for inputs all 6 ports accept, the
+  pixels (and therefore hashes) agree byte-exact.
+- **PIL upsampling on tail-corrupt JPEG**: hex-disagreements where Python (PIL)
+  produces a markedly different hash from JS/Rust/Swift on tail-corrupt JPEGs
+  reflect different libjpeg-turbo configuration in PIL's own bindings. This
+  is the same root cause as the strictness split — invisible to callers
+  treating any port error as "skip hashing".
+
+The differential fuzzer (`make differential-fuzz`) is wired in CI and can
+detect any new tolerance divergence introduced by future changes.
+
 ---
 
 ## §4 Format Detection (magic byte prefixes)

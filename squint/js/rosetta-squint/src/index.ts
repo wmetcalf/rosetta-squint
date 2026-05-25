@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { open, lstat } from "node:fs/promises";
 import { decode, type DecodedImage } from "rosetta-image-decode";
 import * as rih from "rosetta-image-hash";
 
@@ -6,6 +6,14 @@ import * as rih from "rosetta-image-hash";
 export type { Hash } from "rosetta-image-hash";
 export type { Format } from "rosetta-image-decode";
 export { ImageMultiHash, hexToHash, hexToFlathash, hexToMultiHash } from "rosetta-image-hash";
+
+/**
+ * Maximum allowed size for path-based decode inputs. Refuse anything larger
+ * BEFORE reading bytes. Callers that genuinely need to process images larger
+ * than this should decode via rosetta-image-decode directly after explicit
+ * validation.
+ */
+export const MAX_FILE_SIZE = 256 * 1024 * 1024; // 256 MiB
 
 /** Adapt a rosetta-image-decode DecodedImage into the rosetta-image-hash RgbImage shape. */
 function decodedToRgbImage(d: DecodedImage): rih.RgbImage {
@@ -23,10 +31,75 @@ export async function decodeBytes(bytes: Uint8Array): Promise<rih.RgbImage> {
     return decodedToRgbImage(decoded);
 }
 
-/** Read a file from disk and decode. */
+/** Read a file from disk and decode.
+ *
+ * Refuses symlinks (via `lstat`), non-regular files (FIFOs, /dev/zero,
+ * character devices, etc.) and files larger than MAX_FILE_SIZE BEFORE
+ * reading bytes — without these guards `readFile("/dev/zero")` would loop
+ * until OOM and a 300 MiB sparse file would allocate 300 MiB even though
+ * it contains no image. Callers who genuinely want symlink resolution
+ * must do it explicitly (e.g. `fs.promises.realpath`) before calling
+ * this function.
+ *
+ * Node's `fs.open` doesn't directly expose `O_NOFOLLOW`, so we lstat the
+ * path first and reject symlinks. The window between the lstat and the
+ * subsequent open is narrow — the attacker would have to swap the target
+ * between those two syscalls, much harder than swapping the symlink
+ * destination across an unrelated stat→read window.
+ *
+ * The file is then opened ONCE via `fs.open`, and `fhandle.stat()` plus
+ * `fhandle.read()` operate on the same fd. `fhandle.stat()` ultimately
+ * calls fstat(2) on the open descriptor, not stat(2) on the path, which
+ * closes the TOCTOU window between the size check and the read. The read
+ * is bounded by `MAX_FILE_SIZE + 1` so a concurrent writer that grows the
+ * file after the size check is still rejected.
+ */
 export async function decodeFile(path: string): Promise<rih.RgbImage> {
-    const bytes = new Uint8Array(await readFile(path));
-    return decodeBytes(bytes);
+    // Lstat-then-open is unfortunately not atomic on Node — there's no
+    // public API for O_NOFOLLOW. The race is much narrower than the
+    // stat→read race we already close below.
+    const linkStat = await lstat(path);
+    if (linkStat.isSymbolicLink()) {
+        throw new TypeError(`symlink not allowed: ${path}`);
+    }
+    const fh = await open(path, "r");
+    try {
+        const st = await fh.stat();
+        if (!st.isFile()) {
+            throw new Error(`not a regular file: ${path}`);
+        }
+        if (st.size > MAX_FILE_SIZE) {
+            throw new Error(
+                `input file too large: ${st.size} bytes (max ${MAX_FILE_SIZE} `
+                + `bytes / 256 MiB). For images above this threshold, decode `
+                + `via rosetta-image-decode directly after explicit validation.`,
+            );
+        }
+        // Read up to MAX_FILE_SIZE+1 bytes so a concurrent writer that
+        // grows the file post-stat is rejected rather than silently
+        // exceeding the cap.
+        const cap = Math.min(st.size, MAX_FILE_SIZE) + 1;
+        const buf = new Uint8Array(cap);
+        let total = 0;
+        while (total < cap) {
+            const { bytesRead } = await fh.read(
+                buf, total, cap - total, total,
+            );
+            if (bytesRead === 0) break;
+            total += bytesRead;
+        }
+        if (total > MAX_FILE_SIZE) {
+            throw new Error(
+                `input file too large: ${total} bytes (max ${MAX_FILE_SIZE} `
+                + `bytes / 256 MiB). For images above this threshold, decode `
+                + `via rosetta-image-decode directly after explicit validation.`,
+            );
+        }
+        const bytes = buf.subarray(0, total);
+        return decodeBytes(bytes);
+    } finally {
+        await fh.close();
+    }
 }
 
 // ---------------------------------------------------------------------------

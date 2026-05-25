@@ -73,71 +73,9 @@ func findAllSegments(
         return assignedInImage[y * width + x]
     }
 
-    /// Find the connected region starting from the first True pixel in `mask` (row-major).
-    func findRegion(mask: [Bool]) -> [Pixel] {
-        // Find first unassigned pixel in mask (row-major order)
-        var startY = -1, startX = -1
-        outer: for y in 0..<height {
-            for x in 0..<width {
-                if mask[y * width + x] {
-                    startY = y; startX = x
-                    break outer
-                }
-            }
-        }
-        guard startY >= 0 else { return [] }
-
-        var inRegion: [Pixel] = []
-        // BFS
-        var queue: [Pixel] = [Pixel(y: startY, x: startX)]
-        inRegion.append(Pixel(y: startY, x: startX))
-        markAssigned(startY, startX)
-        unassigned[startY * width + startX] = false
-
-        var head = 0
-        while head < queue.count {
-            let p = queue[head]; head += 1
-            let neighbors = [
-                (p.y - 1, p.x),
-                (p.y + 1, p.x),
-                (p.y, p.x - 1),
-                (p.y, p.x + 1),
-            ]
-            for (ny, nx) in neighbors {
-                if isAssigned(ny, nx) { continue }
-                // In-bounds and not assigned yet
-                if ny < 0 || ny >= height || nx < 0 || nx >= width {
-                    // This is a border pixel — count it but don't enqueue.
-                    // (Border pixels are already represented in borderCount, not re-added.)
-                    continue
-                }
-                if mask[ny * width + nx] {
-                    markAssigned(ny, nx)
-                    unassigned[ny * width + nx] = false
-                    let pix = Pixel(y: ny, x: nx)
-                    inRegion.append(pix)
-                    queue.append(pix)
-                } else {
-                    // Not in mask — mark as "seen" but DON'T add to region.
-                    // The Python code uses a not_in_region set for this;
-                    // we need to prevent re-visiting but NOT mark as assigned.
-                    // Use a temporary visited set via markAssigned since Python's
-                    // _find_region adds to segmented_pixels only for in-region pixels.
-                    // not_in_region pixels are visited but never added to segmented_pixels.
-                    // We track them separately below.
-                    continue
-                }
-            }
-        }
-        return inRegion
-    }
-
-    // The above BFS doesn't handle the "not_in_region" set correctly.
-    // Python's _find_region has two sets: in_region and not_in_region.
-    // Pixels in not_in_region are skipped in future iterations but NOT marked assigned.
-    // We need to faithfully reproduce this to match iteration order.
-    // Rewrite findRegion to match Python exactly.
-
+    // Python's `_find_region` uses two sets — `in_region` and `not_in_region`.
+    // `not_in_region` pixels are skipped in future iterations but NOT marked
+    // assigned. `findRegionExact` reproduces this exactly.
     func findRegionExact(mask: [Bool]) -> [Pixel] {
         var startY = -1, startX = -1
         outer: for y in 0..<height {

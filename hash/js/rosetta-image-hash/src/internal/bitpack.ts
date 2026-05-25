@@ -45,8 +45,9 @@ export function pack(bits: boolean[][]): string {
 export function unpackSquare(hex: string): boolean[][] {
   const bits = hexToBits(hex);
   const total = bits.length;
-  let n = 0;
-  while (n * n < total) n++;
+  // Math.sqrt is exact for perfect squares within Number.MAX_SAFE_INTEGER;
+  // the equality check below rejects any non-square `total`.
+  const n = Math.floor(Math.sqrt(total));
   if (n * n !== total) {
     throw new ImageHashError(
       "InvalidHex",

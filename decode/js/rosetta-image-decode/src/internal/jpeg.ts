@@ -1,7 +1,8 @@
 import { DecodeError } from "../errors.js";
 import type { DecodedImage } from "../types.js";
+import { sniffJpegDimensions } from "./dimensionSniff.js";
 import { checkDimensions } from "./limits.js";
-import { loadWasmModule } from "./loadWasm.js";
+import { loadWasmModule, resolvePackageWasmUrl } from "./loadWasm.js";
 
 // @jsquash/jpeg: community-maintained mozjpeg WASM fork of squoosh's jpeg codec.
 // Uses the same mozjpeg C library as Rust's mozjpeg-sys, ensuring byte-exact output.
@@ -13,15 +14,23 @@ async function ensureWasmInit(): Promise<void> {
   if (wasmInitPromise) return wasmInitPromise;
 
   wasmInitPromise = (async () => {
-    // Locate the WASM binary; in Node this resolves to a file:// URL,
-    // in a browser to a normal URL relative to the bundle's location.
-    const wasmUrl = new URL(
+    // Locate the WASM binary tolerantly: in Node, resolve via the package
+    // graph (handles hoisted node_modules layouts); in browsers, fall back
+    // to the bundler-relative URL pattern that esbuild/vite/webpack rewrite
+    // to point at the emitted asset path.
+    const wasmUrl = await resolvePackageWasmUrl(
+      "@jsquash/jpeg/codec/dec/mozjpeg_dec.wasm",
       "../../node_modules/@jsquash/jpeg/codec/dec/mozjpeg_dec.wasm",
       import.meta.url,
     );
     const wasmModule = await loadWasmModule(wasmUrl);
     await init(wasmModule);
   })();
+
+  // Reset on rejection so a transient failure (e.g., file missing during a
+  // hot-reload) doesn't permanently poison every future call with the same
+  // rejected promise.
+  wasmInitPromise.catch(() => { wasmInitPromise = null; });
 
   return wasmInitPromise;
 }
@@ -79,6 +88,15 @@ export async function decodeJpeg(bytes: Uint8Array): Promise<DecodedImage> {
   // Pre-decode CMYK check — mozjpeg calls exit(1) on CMYK images which kills Node
   if (detectCmyk(bytes)) {
     throw new DecodeError("unsupportedFeature", "jpeg", "CMYK color space is not supported");
+  }
+
+  // Sniff dimensions from the first SOF marker BEFORE the WASM decoder
+  // allocates the raster. Spec §3.1 requires this ordering: a file whose
+  // header declares a huge canvas must error with imageTooLarge rather
+  // than allocating then complaining.
+  const sniffed = sniffJpegDimensions(bytes);
+  if (sniffed) {
+    checkDimensions(sniffed.width, sniffed.height, "jpeg");
   }
 
   await ensureWasmInit();

@@ -57,6 +57,22 @@ public final class ImageHash {
         return true;
     }
 
+    /**
+     * Returns a full 32-bit Java {@code int} hash derived from every row's
+     * boolean array. Intentionally differs from Python {@code imagehash.ImageHash.__hash__},
+     * which deliberately truncates to an 8-bit bucket value to support
+     * coarse-grained bucketing of similar hashes (see Python source comment).
+     *
+     * <p><b>Migrating from Python?</b> If your Python code relied on
+     * {@code hash(img_hash) & 0xFF} for 8-bit bucket compression, replicate it
+     * here as {@code imgHash.hashCode() & 0xFF}. The low 8 bits are not
+     * guaranteed bit-for-bit identical to Python's value (the algorithms differ),
+     * but both reduce a hash to a single byte usable as a bucket key.
+     *
+     * <p>This implementation does NOT truncate so that the full-int variant can
+     * be used as a regular Java {@code Object} hashCode in {@link java.util.HashMap}
+     * and {@link java.util.HashSet} with proper collision resistance.
+     */
     @Override
     public int hashCode() {
         int h = 1;

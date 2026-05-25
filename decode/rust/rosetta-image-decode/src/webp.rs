@@ -15,6 +15,13 @@ use libwebp_sys::{
 use std::os::raw::c_int;
 
 pub(crate) fn decode_webp(bytes: &[u8]) -> Result<DecodedImage, DecodeError> {
+    // Sniff VP8X canvas dimensions BEFORE invoking libwebp. WebPGetFeatures
+    // rejects oversized VP8X canvases with VP8_STATUS_BITSTREAM_ERROR (which
+    // surfaces as corruptInput); this pre-check produces the canonical
+    // imageTooLarge required by Spec §3.1.
+    if let Some((w, h)) = crate::dimension_sniff::sniff_webp_dimensions(bytes) {
+        check_dimensions(w, h, Format::Webp)?;
+    }
     unsafe {
         // --- probe bitstream features (width, height, has_alpha) ---
         let mut features: WebPBitstreamFeatures = std::mem::zeroed();

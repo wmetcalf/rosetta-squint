@@ -12,6 +12,40 @@ import java.util.stream.Collectors;
  * - {@link #hashDiff} returns (matches, sumDistance).
  * - {@link #matches} uses the default bit_error_rate=0.25 if no hamming cutoff given.
  * - {@link #toString} is comma-separated hex of each segment hash.
+ *
+ * <h2>WARNING: equals() is NOT reflexive/symmetric/transitive — DO NOT use as a hash key</h2>
+ *
+ * <p>This class inherits Python's ImageMultiHash semantics where {@code equals(other)}
+ * is defined as a <em>similarity</em> check: {@code matches(other, regionCutoff=1)}.
+ * That means:
+ *
+ * <ul>
+ *   <li>{@code a.equals(b)} can be true while {@code b.equals(a)} is false
+ *       (the underlying {@link #hashDiff} loops over self's segments, not other's).</li>
+ *   <li>{@code a.equals(b) && b.equals(c)} does NOT imply {@code a.equals(c)}
+ *       (transitivity is broken by a Hamming-cutoff matching algorithm).</li>
+ *   <li>The {@link Object#hashCode} / {@link Object#equals} contract is therefore
+ *       violated — two "equal" instances may produce different hashCodes, and the
+ *       same instance compared to two near-matches may produce inconsistent results.</li>
+ * </ul>
+ *
+ * <p>Consequences:
+ *
+ * <ul>
+ *   <li><b>DO NOT</b> use {@code ImageMultiHash} as a key in {@link java.util.HashMap},
+ *       {@link java.util.HashSet}, {@link java.util.LinkedHashMap}, or any other hash-based
+ *       collection. Lookups will silently miss matches.</li>
+ *   <li>For exact-segment-by-segment equality (which DOES obey the equals contract),
+ *       compare {@link #segmentHashes()} lists directly:
+ *       {@code a.segmentHashes().equals(b.segmentHashes())}.</li>
+ *   <li>For similarity, prefer {@link #matches(ImageMultiHash, int)} or
+ *       {@link #subtract(ImageMultiHash)} directly — they are explicit about the
+ *       intent and don't pretend to satisfy the equality contract.</li>
+ * </ul>
+ *
+ * <p>This is preserved (rather than corrected to value-equality) to maintain
+ * byte-exact behavioral parity with the Python {@code imagehash.ImageMultiHash}
+ * reference implementation.
  */
 public final class ImageMultiHash {
 
@@ -79,8 +113,18 @@ public final class ImageMultiHash {
         for (ImageHash seg : segmentHashes) {
             int lowest = Integer.MAX_VALUE;
             for (ImageHash other_seg : other.segmentHashes) {
-                int d = seg.subtract(other_seg);
-                if (d < lowest) lowest = d;
+                // Mirrors Go's filter_map / Swift's try? semantics: shape-mismatch
+                // segment pairs are silently skipped rather than aborting the entire
+                // comparison mid-iteration. This keeps two multi-hashes that share a
+                // few matching segments comparable even when their segment shapes
+                // diverge (e.g. one was loaded from a hex string and the other built
+                // from a fresh crop_resistant_hash call with a different inner size).
+                try {
+                    int d = seg.subtract(other_seg);
+                    if (d < lowest) lowest = d;
+                } catch (IllegalArgumentException e) {
+                    continue;
+                }
             }
             if (lowest <= cutoff) {
                 matches++;
@@ -142,6 +186,29 @@ public final class ImageMultiHash {
                 .collect(Collectors.joining(","));
     }
 
+    /**
+     * Similarity-based equality (NON-SYMMETRIC, NON-TRANSITIVE).
+     *
+     * <p>Mirrors Python {@code ImageMultiHash.__eq__}: returns
+     * {@code matches(other, regionCutoff=1, hammingCutoff=null, bitErrorRate=null)}.
+     *
+     * <p><b>This violates the {@link Object#equals(Object)} contract</b>:
+     *
+     * <ul>
+     *   <li><b>Not symmetric:</b> {@code a.equals(b)} may differ from {@code b.equals(a)}
+     *       because {@link #hashDiff} loops over {@code this.segmentHashes}, not other's.</li>
+     *   <li><b>Not transitive:</b> Hamming-cutoff matching cannot satisfy transitivity.</li>
+     *   <li><b>Inconsistent with {@link #hashCode()}:</b> two "equal" multi-hashes may
+     *       produce different hashCodes (since hashCode is per-segment exact).</li>
+     * </ul>
+     *
+     * <p><b>DO NOT use ImageMultiHash as a key in HashMap/HashSet</b> — see class-level
+     * Javadoc. Use {@link #matches(ImageMultiHash, int)} or {@link #subtract(ImageMultiHash)}
+     * directly for similarity, or compare {@link #segmentHashes()} lists for exact equality.
+     *
+     * <p>Preserved as-is to match Python {@code imagehash.ImageMultiHash} semantics
+     * byte-for-byte.
+     */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -149,6 +216,16 @@ public final class ImageMultiHash {
         return matches(other, 1, null, null);
     }
 
+    /**
+     * Hash code based on the exact per-segment hashCodes of {@link #segmentHashes()}.
+     *
+     * <p><b>Inconsistent with {@link #equals(Object)}:</b> {@code equals} is a similarity
+     * check, but {@code hashCode} is exact-per-segment. Two instances that satisfy
+     * {@code a.equals(b)} may produce different {@code hashCode} values.
+     *
+     * <p>This is why {@code ImageMultiHash} <b>must not</b> be used as a key in
+     * hash-based collections — see class-level Javadoc.
+     */
     @Override
     public int hashCode() {
         return segmentHashes.stream()

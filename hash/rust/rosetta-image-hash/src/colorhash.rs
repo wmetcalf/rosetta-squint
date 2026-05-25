@@ -15,6 +15,11 @@ pub fn colorhash(img: &DynamicImage, binbits: usize) -> Result<Hash, ImageHashEr
     if binbits < 1 {
         return Err(ImageHashError::InvalidBinbits(binbits));
     }
+    // (1u64 << binbits) overflows for binbits >= 64. Cross-port practical limit is
+    // 30 (JS bitwise int range), so cap there for parity. Real use is binbits 3-8.
+    if binbits > 30 {
+        return Err(ImageHashError::InvalidBinbits(binbits));
+    }
     let rgb = img_rgb::to_rgb(img);
     let h = rgb.len();
     let w = rgb[0].len();

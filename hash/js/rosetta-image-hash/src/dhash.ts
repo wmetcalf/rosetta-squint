@@ -1,12 +1,16 @@
 import { Hash, ImageHashError, type RgbImage } from "./hash.js";
 import { rgbToGray } from "./averageHash.js";
-import { toRgb } from "./internal/imgRgb.js";
+import { toRgb, validateRgbImage } from "./internal/imgRgb.js";
 import { resize } from "./internal/lanczos.js";
 
 /**
  * dhash: grayscale → Lanczos to (W=N+1, H=N) → row-wise adjacent-column diff (strict >).
  */
 export function dhash(img: RgbImage, hashSize: number): Hash {
+  validateRgbImage(img);
+  if (!Number.isInteger(hashSize)) {
+    throw new ImageHashError("InvalidHashSize", `hashSize must be an integer, got ${hashSize}`);
+  }
   if (hashSize < 2) {
     throw new ImageHashError("InvalidHashSize", `hashSize must be >= 2, got ${hashSize}`);
   }

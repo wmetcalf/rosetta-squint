@@ -74,6 +74,9 @@ export async function whashDb4RobustBytes(bytes: Uint8Array, hashSize: number): 
 export async function colorhashBytes(bytes: Uint8Array, binbits: number): Promise<rih.Hash> {
   return rih.colorhash(await decodeBytes(bytes), binbits);
 }
-export async function cropResistantHashBytes(bytes: Uint8Array) {
-  return rih.cropResistantHash(await decodeBytes(bytes));
+export async function cropResistantHashBytes(
+  bytes: Uint8Array,
+  limitSegments?: number,
+) {
+  return rih.cropResistantHash(await decodeBytes(bytes), limitSegments);
 }

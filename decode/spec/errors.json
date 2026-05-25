@@ -60,6 +60,11 @@
       "expected_kind": "unsupportedFormat",
       "format": null
     },
+    "gif/invalid/too-large.gif": {
+      "expected_detail_substring": "MAX_PIXELS",
+      "expected_kind": "imageTooLarge",
+      "format": "gif"
+    },
     "gif/invalid/truncated-data.gif": {
       "expected_detail_substring": "",
       "expected_kind": "corruptInput",
@@ -80,6 +85,11 @@
       "expected_kind": "unsupportedFormat",
       "format": null
     },
+    "heic/invalid/too-large.heic": {
+      "expected_detail_substring": "MAX_PIXELS",
+      "expected_kind": "imageTooLarge",
+      "format": "heic"
+    },
     "heic/invalid/truncated.heic": {
       "expected_detail_substring": "",
       "expected_kind": "corruptInput",
@@ -98,6 +108,11 @@
     "jpeg/invalid/corrupt-quantization.jpg": {
       "expected_detail_substring": "",
       "expected_kind": "corruptInput",
+      "format": "jpeg"
+    },
+    "jpeg/invalid/too-large.jpg": {
+      "expected_detail_substring": "MAX_PIXELS",
+      "expected_kind": "imageTooLarge",
       "format": "jpeg"
     },
     "jpeg/invalid/truncated-data.jpg": {
@@ -140,6 +155,11 @@
       "expected_kind": "corruptInput",
       "format": "tiff"
     },
+    "tiff/invalid/too-large.tif": {
+      "expected_detail_substring": "MAX_PIXELS",
+      "expected_kind": "imageTooLarge",
+      "format": "tiff"
+    },
     "tiff/invalid/truncated.tif": {
       "expected_detail_substring": "",
       "expected_kind": "corruptInput",
@@ -153,6 +173,11 @@
     "webp/invalid/corrupt-vp8.webp": {
       "expected_detail_substring": "",
       "expected_kind": "corruptInput",
+      "format": "webp"
+    },
+    "webp/invalid/too-large.webp": {
+      "expected_detail_substring": "MAX_PIXELS",
+      "expected_kind": "imageTooLarge",
       "format": "webp"
     },
     "webp/invalid/truncated.webp": {

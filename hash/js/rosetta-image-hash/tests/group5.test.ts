@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { Hash, ImageHashError } from "../src/hash.js";
+import { ImageMultiHash } from "../src/multiHash.js";
 
 describe("Hash semantics (Group 5)", () => {
   it("Hamming distance is zero for equal hashes", () => {
@@ -126,6 +127,57 @@ describe("error semantics (Group 5)", () => {
     expect(() => colorhash(tinyImage(), 0)).toThrow(ImageHashError);
   });
 
+  it("colorhash rejects non-integer binbits (H-L1)", () => {
+    expect(() => colorhash(tinyImage(), 3.5)).toThrow(ImageHashError);
+    try {
+      colorhash(tinyImage(), 3.5);
+    } catch (e) {
+      expect((e as ImageHashError).kind).toBe("InvalidBinbits");
+    }
+  });
+
+  it("colorhash rejects binbits > 30 (H-L2)", () => {
+    expect(() => colorhash(tinyImage(), 31)).toThrow(ImageHashError);
+    try {
+      colorhash(tinyImage(), 31);
+    } catch (e) {
+      expect((e as ImageHashError).kind).toBe("InvalidBinbits");
+    }
+  });
+
+  it("averageHash rejects non-integer hashSize (H-L1)", () => {
+    expect(() => averageHash(tinyImage(), 8.5)).toThrow(ImageHashError);
+  });
+
+  it("phash rejects non-integer hashSize (H-L1)", () => {
+    expect(() => phash(tinyImage(), 8.5)).toThrow(ImageHashError);
+    try {
+      phash(tinyImage(), 8.5);
+    } catch (e) {
+      expect((e as ImageHashError).kind).toBe("InvalidHashSize");
+    }
+  });
+
+  it("phashSimple rejects non-integer hashSize (H-L1)", () => {
+    expect(() => phashSimple(tinyImage(), 8.5)).toThrow(ImageHashError);
+  });
+
+  it("dhash rejects non-integer hashSize (H-L1)", () => {
+    expect(() => dhash(tinyImage(), 8.5)).toThrow(ImageHashError);
+  });
+
+  it("dhashVertical rejects non-integer hashSize (H-L1)", () => {
+    expect(() => dhashVertical(tinyImage(), 8.5)).toThrow(ImageHashError);
+  });
+
+  it("whashHaar rejects non-integer hashSize (H-L1)", () => {
+    expect(() => whashHaar(smallImage(), 8.5)).toThrow(ImageHashError);
+  });
+
+  it("whashDb4 rejects non-integer hashSize (H-L1)", () => {
+    expect(() => whashDb4(smallImage(), 8.5)).toThrow(ImageHashError);
+  });
+
   it("hexToHash rejects non-square", () => {
     expect(() => hexToHash("12345")).toThrow(ImageHashError);
   });
@@ -136,5 +188,95 @@ describe("error semantics (Group 5)", () => {
 
   it("hexToFlathash rejects hashSize < 1", () => {
     expect(() => hexToFlathash("00", 0)).toThrow(ImageHashError);
+  });
+});
+
+import { cropResistantHash, whashDb4Robust } from "../src/index.js";
+
+describe("RgbImage buffer validation (Group 5)", () => {
+  function makeBadImg(width: number, height: number, dataLen: number, channels: 3 | 4): RgbImage {
+    return { width, height, data: new Uint8Array(dataLen), channels };
+  }
+
+  it("averageHash rejects mismatched data length", () => {
+    // expects 8*8*3 = 192 bytes; pass only 100
+    const img = makeBadImg(8, 8, 100, 3);
+    expect(() => averageHash(img, 8)).toThrow(ImageHashError);
+    try {
+      averageHash(img, 8);
+    } catch (e) {
+      expect((e as ImageHashError).kind).toBe("ShapeMismatch");
+    }
+  });
+
+  it("phash rejects mismatched data length", () => {
+    const img = makeBadImg(8, 8, 100, 3);
+    expect(() => phash(img, 8)).toThrow(ImageHashError);
+  });
+
+  it("phashSimple rejects mismatched data length", () => {
+    const img = makeBadImg(8, 8, 100, 3);
+    expect(() => phashSimple(img, 8)).toThrow(ImageHashError);
+  });
+
+  it("dhash rejects mismatched data length", () => {
+    const img = makeBadImg(8, 8, 100, 3);
+    expect(() => dhash(img, 8)).toThrow(ImageHashError);
+  });
+
+  it("dhashVertical rejects mismatched data length", () => {
+    const img = makeBadImg(8, 8, 100, 3);
+    expect(() => dhashVertical(img, 8)).toThrow(ImageHashError);
+  });
+
+  it("whashHaar rejects mismatched data length", () => {
+    const img = makeBadImg(32, 32, 100, 3);
+    expect(() => whashHaar(img, 8)).toThrow(ImageHashError);
+  });
+
+  it("whashDb4 rejects mismatched data length", () => {
+    const img = makeBadImg(32, 32, 100, 3);
+    expect(() => whashDb4(img, 8)).toThrow(ImageHashError);
+  });
+
+  it("whashDb4Robust rejects mismatched data length", () => {
+    const img = makeBadImg(32, 32, 100, 3);
+    expect(() => whashDb4Robust(img, 8)).toThrow(ImageHashError);
+  });
+
+  it("colorhash rejects mismatched data length", () => {
+    const img = makeBadImg(8, 8, 100, 3);
+    expect(() => colorhash(img, 3)).toThrow(ImageHashError);
+  });
+
+  it("cropResistantHash rejects mismatched data length", () => {
+    const img = makeBadImg(32, 32, 100, 3);
+    expect(() => cropResistantHash(img)).toThrow(ImageHashError);
+  });
+
+  it("accepts RGBA buffer with correct length", () => {
+    const img = { width: 8, height: 8, data: new Uint8Array(8 * 8 * 4), channels: 4 as const };
+    expect(() => averageHash(img, 8)).not.toThrow();
+  });
+
+  it("rejects RGBA with RGB-sized buffer", () => {
+    const img = { width: 8, height: 8, data: new Uint8Array(8 * 8 * 3), channels: 4 as const };
+    expect(() => averageHash(img, 8)).toThrow(ImageHashError);
+    try {
+      averageHash(img, 8);
+    } catch (e) {
+      expect((e as ImageHashError).kind).toBe("ShapeMismatch");
+    }
+  });
+});
+
+describe("ImageMultiHash construction (Group 5, H-L9)", () => {
+  it("rejects empty segmentHashes", () => {
+    expect(() => new ImageMultiHash([])).toThrow(ImageHashError);
+    try {
+      new ImageMultiHash([]);
+    } catch (e) {
+      expect((e as ImageHashError).kind).toBe("ShapeMismatch");
+    }
   });
 });

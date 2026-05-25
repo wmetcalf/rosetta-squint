@@ -324,8 +324,9 @@ fn crop_resistant_hash_png_path_and_bytes_agree() {
     let path = abs(PNG_LARGE_FIXTURE);
     let bytes = read_fixture(PNG_LARGE_FIXTURE);
 
-    let from_path = crop_resistant_hash(&path).expect("crop_resistant_hash path failed");
-    let from_bytes = crop_resistant_hash_bytes(&bytes).expect("crop_resistant_hash bytes failed");
+    let from_path = crop_resistant_hash(&path, None).expect("crop_resistant_hash path failed");
+    let from_bytes =
+        crop_resistant_hash_bytes(&bytes, None).expect("crop_resistant_hash bytes failed");
 
     assert!(!from_path.segment_hashes.is_empty());
     assert_eq!(from_path.to_hex(), from_bytes.to_hex());
@@ -336,12 +337,28 @@ fn crop_resistant_hash_png_chain_consistent() {
     let path = abs(PNG_LARGE_FIXTURE);
     let bytes = read_fixture(PNG_LARGE_FIXTURE);
 
-    let from_path = crop_resistant_hash(&path).expect("crop_resistant_hash path failed");
+    let from_path = crop_resistant_hash(&path, None).expect("crop_resistant_hash path failed");
     let img = img_from_bytes(&bytes);
-    let direct =
-        rosetta_image_hash::crop_resistant_hash(&img).expect("direct crop_resistant_hash failed");
+    let direct = rosetta_image_hash::crop_resistant_hash(&img, None)
+        .expect("direct crop_resistant_hash failed");
 
     assert_eq!(from_path.to_hex(), direct.to_hex());
+}
+
+#[test]
+fn crop_resistant_hash_limit_segments_caps_count() {
+    // Verifies the limit_segments parameter is forwarded end-to-end (squint → hash).
+    let path = abs(PNG_LARGE_FIXTURE);
+    let unlimited =
+        crop_resistant_hash(&path, None).expect("crop_resistant_hash unlimited failed");
+    if unlimited.segment_hashes.len() <= 1 {
+        // The chosen fixture only produces one segment; nothing to verify.
+        return;
+    }
+    let limited =
+        crop_resistant_hash(&path, Some(1)).expect("crop_resistant_hash limit=1 failed");
+    assert_eq!(limited.segment_hashes.len(), 1);
+    assert!(limited.segment_hashes.len() < unlimited.segment_hashes.len());
 }
 
 // ── print example hash for report ────────────────────────────────────────────

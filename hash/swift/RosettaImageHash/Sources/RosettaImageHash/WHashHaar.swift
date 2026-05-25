@@ -6,6 +6,7 @@ private func isPowerOfTwo(_ n: Int) -> Bool {
 
 /// whash with mode='haar', remove_max_haar_ll=true, image_scale=None.
 public func whashHaar(_ image: RGBImage, hashSize: Int) throws -> Hash {
+    try image.validate()
     guard hashSize >= 2 else { throw ImageHashError.invalidHashSize(hashSize) }
     guard isPowerOfTwo(hashSize) else { throw ImageHashError.notPowerOfTwo(hashSize) }
 

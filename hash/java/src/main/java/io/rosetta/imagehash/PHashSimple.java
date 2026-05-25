@@ -60,10 +60,13 @@ public final class PHashSimple {
         }
         double mean = sum / (hashSize * hashSize);
 
+        // Snap-to-threshold tie-break: deterministic bit 0 on ties.
+        // See spec/SPEC.md §"Threshold tie-break".
+        double threshold = mean + PHash.SNAP_EPS;
         boolean[][] bits = new boolean[hashSize][hashSize];
         for (int y = 0; y < hashSize; y++)
             for (int x = 0; x < hashSize; x++)
-                bits[y][x] = block[y][x] > mean;
+                bits[y][x] = block[y][x] > threshold;
 
         return new ImageHash(bits);
     }

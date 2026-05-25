@@ -6,7 +6,11 @@ import Foundation
 /// 6 bright hue bins (S>170). S==170 increments colorfulCount (denominator)
 /// but lands in neither hue histogram.
 public func colorhash(_ image: RGBImage, binbits: Int) throws -> Hash {
+    try image.validate()
     guard binbits >= 1 else { throw ImageHashError.invalidBinbits(binbits) }
+    // (1 << binbits) overflows for large binbits. Cross-port practical limit is
+    // 30 (JS bitwise int range), so cap there for parity. Real use is binbits 3-8.
+    guard binbits <= 30 else { throw ImageHashError.invalidBinbits(binbits) }
     let rgb = ImgRGB.toRGB(image)
     let data = rgb.data
     let w = rgb.width

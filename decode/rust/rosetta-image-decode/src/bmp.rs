@@ -61,6 +61,21 @@ fn read_u32_le(bytes: &[u8], i: usize) -> Result<u32, DecodeError> {
         .ok_or_else(|| truncated("unexpected end of data"))
 }
 
+/// Compute `offset + stride * height` with overflow checking.
+///
+/// On 64-bit targets, `usize` is wide enough that this can never overflow
+/// for any input passing `check_dimensions` (which caps width × height).
+/// On 32-bit targets, however, `stride * height` for a 2 GiB image plus the
+/// pixel-data offset could wrap back to a small value and pass the
+/// downstream `bytes.len() < needed` truncation check, leading to an OOB
+/// slice index. `checked_mul` + `checked_add` make this defense portable.
+fn checked_needed(offset: usize, stride: usize, height: usize) -> Result<usize, DecodeError> {
+    stride
+        .checked_mul(height)
+        .and_then(|n| n.checked_add(offset))
+        .ok_or_else(|| truncated("pixel data size overflow"))
+}
+
 fn parse_bmp_header(bytes: &[u8]) -> Result<BmpHeader, DecodeError> {
     if bytes.len() < 14 {
         return Err(truncated("file header truncated"));
@@ -175,7 +190,7 @@ fn parse_bmp_header(bytes: &[u8]) -> Result<BmpHeader, DecodeError> {
 
 fn decode_rgb24(bytes: &[u8], hdr: &BmpHeader) -> Result<DecodedImage, DecodeError> {
     let stride = ((hdr.width * 3 + 3) / 4) * 4;
-    let needed = hdr.pixel_data_offset + stride * hdr.height;
+    let needed = checked_needed(hdr.pixel_data_offset, stride, hdr.height)?;
     if bytes.len() < needed {
         return Err(truncated("pixel data truncated (24-bit RGB)"));
     }
@@ -205,7 +220,7 @@ fn decode_rgb24(bytes: &[u8], hdr: &BmpHeader) -> Result<DecodedImage, DecodeErr
 
 fn decode_rgb32(bytes: &[u8], hdr: &BmpHeader) -> Result<DecodedImage, DecodeError> {
     let stride = hdr.width * 4;
-    let needed = hdr.pixel_data_offset + stride * hdr.height;
+    let needed = checked_needed(hdr.pixel_data_offset, stride, hdr.height)?;
     if bytes.len() < needed {
         return Err(truncated("pixel data truncated (32-bit RGB)"));
     }
@@ -242,7 +257,10 @@ fn read_color_table(
     entry_count: usize,
 ) -> Result<Vec<[u8; 3]>, DecodeError> {
     let color_table_offset = 14 + hdr.dib_header_size;
-    let color_table_end = color_table_offset + entry_count * 4;
+    let color_table_end = entry_count
+        .checked_mul(4)
+        .and_then(|n| n.checked_add(color_table_offset))
+        .ok_or_else(|| truncated("color table size overflow"))?;
     if bytes.len() < color_table_end {
         return Err(truncated("color table truncated"));
     }
@@ -258,10 +276,24 @@ fn read_color_table(
     Ok(palette)
 }
 
+/// Clamp `biClrUsed` to the bit-depth maximum (PIL's behavior). A hostile BMP
+/// could declare `biClrUsed = 0x40000000` and otherwise drive multi-GB palette
+/// allocations. Match the Java/Go/JS/Swift clamp added in D-M1 for parity.
+///
+/// On 64-bit the `checked_mul`/`checked_add` color-table-size arithmetic
+/// already catches the OOM case, but the clamp is more efficient (clamps the
+/// allocation to ≤ 1 KiB) and removes the inconsistency between ports.
+fn clamp_entry_count(clr_used: usize, bit_depth_max: usize) -> usize {
+    if clr_used == 0 { bit_depth_max } else { clr_used.min(bit_depth_max) }
+}
+
 fn decode_pal8(bytes: &[u8], hdr: &BmpHeader) -> Result<DecodedImage, DecodeError> {
     let color_table_offset = 14 + hdr.dib_header_size;
-    let entry_count = if hdr.clr_used > 0 { hdr.clr_used } else { 256 };
-    let color_table_end = color_table_offset + entry_count * 4;
+    let entry_count = clamp_entry_count(hdr.clr_used, 256);
+    let color_table_end = entry_count
+        .checked_mul(4)
+        .and_then(|n| n.checked_add(color_table_offset))
+        .ok_or_else(|| truncated("color table size overflow"))?;
     if bytes.len() < color_table_end {
         return Err(truncated("color table truncated (8-bit paletted)"));
     }
@@ -275,7 +307,7 @@ fn decode_pal8(bytes: &[u8], hdr: &BmpHeader) -> Result<DecodedImage, DecodeErro
         ]);
     }
     let stride = ((hdr.width + 3) / 4) * 4;
-    let needed = hdr.pixel_data_offset + stride * hdr.height;
+    let needed = checked_needed(hdr.pixel_data_offset, stride, hdr.height)?;
     if bytes.len() < needed {
         return Err(truncated("pixel data truncated (8-bit paletted)"));
     }
@@ -308,11 +340,11 @@ fn decode_pal8(bytes: &[u8], hdr: &BmpHeader) -> Result<DecodedImage, DecodeErro
 }
 
 fn decode_pal4(bytes: &[u8], hdr: &BmpHeader) -> Result<DecodedImage, DecodeError> {
-    let entry_count = if hdr.clr_used > 0 { hdr.clr_used } else { 16 };
+    let entry_count = clamp_entry_count(hdr.clr_used, 16);
     let palette = read_color_table(bytes, hdr, entry_count)?;
     // Row stride: ceil(width*4 / 32) * 4 bytes = ((width * 4 + 31) / 32) * 4
     let stride = ((hdr.width * 4 + 31) / 32) * 4;
-    let needed = hdr.pixel_data_offset + stride * hdr.height;
+    let needed = checked_needed(hdr.pixel_data_offset, stride, hdr.height)?;
     if bytes.len() < needed {
         return Err(truncated("pixel data truncated (4-bit paletted)"));
     }
@@ -350,11 +382,11 @@ fn decode_pal4(bytes: &[u8], hdr: &BmpHeader) -> Result<DecodedImage, DecodeErro
 }
 
 fn decode_pal1(bytes: &[u8], hdr: &BmpHeader) -> Result<DecodedImage, DecodeError> {
-    let entry_count = if hdr.clr_used > 0 { hdr.clr_used } else { 2 };
+    let entry_count = clamp_entry_count(hdr.clr_used, 2);
     let palette = read_color_table(bytes, hdr, entry_count)?;
     // Row stride: ceil(width / 32) * 4 bytes = ((width + 31) / 32) * 4
     let stride = ((hdr.width + 31) / 32) * 4;
-    let needed = hdr.pixel_data_offset + stride * hdr.height;
+    let needed = checked_needed(hdr.pixel_data_offset, stride, hdr.height)?;
     if bytes.len() < needed {
         return Err(truncated("pixel data truncated (1-bit paletted)"));
     }
@@ -420,7 +452,7 @@ fn decode_bitfields(
     } else {
         hdr.width * 4
     };
-    let needed = hdr.pixel_data_offset + stride * hdr.height;
+    let needed = checked_needed(hdr.pixel_data_offset, stride, hdr.height)?;
     if bytes.len() < needed {
         return Err(truncated(format!(
             "pixel data truncated (BI_BITFIELDS {}-bit)",

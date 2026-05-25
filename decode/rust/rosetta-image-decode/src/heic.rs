@@ -4,6 +4,16 @@ use crate::types::{Channels, DecodedImage, Format};
 use libheif_rs::{ColorSpace, HeifContext, LibHeif, RgbChroma};
 
 pub(crate) fn decode_heic(bytes: &[u8]) -> Result<DecodedImage, DecodeError> {
+    // Sniff the container's primary-item ispe dimensions BEFORE invoking
+    // libheif. libheif returns dimensions from the underlying HEVC bitstream
+    // rather than the container's ispe, so a patched ispe is never visible
+    // via handle.width()/height() — without this pre-check the file decodes
+    // at its HEVC dimensions and the imageTooLarge guard never fires.
+    // Spec §3.1.
+    if let Some((w, h)) = crate::dimension_sniff::sniff_heic_dimensions(bytes) {
+        check_dimensions(w, h, Format::Heic)?;
+    }
+
     let ctx = HeifContext::read_from_bytes(bytes).map_err(|e| {
         DecodeError::new(
             DecodeErrorKind::CorruptInput,
@@ -53,6 +63,24 @@ pub(crate) fn decode_heic(bytes: &[u8]) -> Result<DecodedImage, DecodeError> {
             "no interleaved plane",
         )
     })?;
+
+    // Validate post-decode plane dimensions match the handle dimensions we
+    // capacity-checked with check_dimensions above. A mismatch (e.g. a
+    // corrupt input that causes libheif to return a smaller plane than
+    // advertised) would otherwise cause the row-copy below to OOB-read
+    // plane.data or under-fill the output buffer.
+    let handle_width = handle.width() as u32;
+    let handle_height = handle.height() as u32;
+    if plane.width != handle_width || plane.height != handle_height {
+        return Err(DecodeError::new(
+            DecodeErrorKind::CorruptInput,
+            Some(Format::Heic),
+            format!(
+                "plane dimensions {}x{} do not match handle dimensions {}x{}",
+                plane.width, plane.height, handle_width, handle_height
+            ),
+        ));
+    }
 
     let width = plane.width as usize;
     let height = plane.height as usize;

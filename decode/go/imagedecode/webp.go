@@ -5,6 +5,16 @@ import (
 )
 
 func decodeWebp(b []byte) (DecodedImage, error) {
+	// Sniff VP8X canvas dimensions BEFORE invoking libwebp. WebPGetFeatures
+	// rejects oversized VP8X canvases with VP8_STATUS_BITSTREAM_ERROR which
+	// surfaces as corruptInput; this pre-check produces the canonical
+	// imageTooLarge error required by Spec §3.1.
+	if w, h, ok := sniffWebpDimensions(b); ok {
+		if err := checkDimensions(w, h, Webp); err != nil {
+			return DecodedImage{}, err
+		}
+	}
+
 	// Use libwebp's WebPGetFeatures (via GetInfo) to detect alpha.
 	// This is authoritative: it reads the bitstream features directly.
 	webpWidth, webpHeight, hasAlpha, err := webp.GetInfo(b)

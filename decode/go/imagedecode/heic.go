@@ -1,10 +1,24 @@
 package imagedecode
 
 import (
+	"fmt"
+
 	"github.com/strukturag/libheif/go/heif"
 )
 
 func decodeHeic(b []byte) (DecodedImage, error) {
+	// Sniff the container's primary-item ispe dimensions BEFORE invoking
+	// libheif. libheif returns dimensions from the underlying HEVC bitstream
+	// rather than the container's ispe, so a patched ispe is never visible
+	// via handle.GetWidth/GetHeight — without this pre-check the file decodes
+	// at its HEVC dimensions and the imageTooLarge guard never fires.
+	// Spec §3.1.
+	if w, h, ok := sniffHeicDimensions(b); ok {
+		if err := checkDimensions(w, h, Heic); err != nil {
+			return DecodedImage{}, err
+		}
+	}
+
 	ctx, err := heif.NewContext()
 	if err != nil {
 		return DecodedImage{}, newError(CorruptInput, Heic, true, "heif.NewContext: "+err.Error())
@@ -43,6 +57,17 @@ func decodeHeic(b []byte) (DecodedImage, error) {
 
 	width := img.GetWidth(heif.ChannelInterleaved)
 	height := img.GetHeight(heif.ChannelInterleaved)
+	// Validate post-decode plane dimensions match the handle dimensions we
+	// capacity-checked above. A mismatch (e.g. a corrupt input that causes
+	// libheif to return a smaller plane than advertised) would otherwise
+	// cause the row-copy below to OOB-read src or under-fill out.
+	handleWidth := handle.GetWidth()
+	handleHeight := handle.GetHeight()
+	if width != handleWidth || height != handleHeight {
+		return DecodedImage{}, newError(CorruptInput, Heic, true,
+			fmt.Sprintf("plane dimensions %dx%d do not match handle dimensions %dx%d",
+				width, height, handleWidth, handleHeight))
+	}
 	stride := plane.Stride
 	bpp := 3
 	channels := RGB

@@ -39,4 +39,23 @@ final class Group4HexTests: XCTestCase {
 		let hex = "0000000000000000"
 		XCTAssertEqual(try hexToHash(hex).hex, hex)
 	}
+
+	// Spec: lowercase hex only — matches Rust/Go/Java/JS port behavior.
+	func testHexToHashRejectsUppercase() {
+		XCTAssertThrowsError(try hexToHash("ABCD")) { error in
+			guard case .invalidHex = error as? ImageHashError else {
+				XCTFail("expected .invalidHex for uppercase, got \(error)")
+				return
+			}
+		}
+	}
+
+	func testHexToHashRejectsMixedCase() {
+		XCTAssertThrowsError(try hexToHash("ffd7918181c9ffFF")) { error in
+			guard case .invalidHex = error as? ImageHashError else {
+				XCTFail("expected .invalidHex for mixed case, got \(error)")
+				return
+			}
+		}
+	}
 }

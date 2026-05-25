@@ -1,8 +1,9 @@
 import { Hash, ImageHashError, type RgbImage } from "./hash.js";
 import { rgbToGray } from "./averageHash.js";
 import { dct1d } from "./internal/dct.js";
-import { toRgb } from "./internal/imgRgb.js";
+import { toRgb, validateRgbImage } from "./internal/imgRgb.js";
 import { resize } from "./internal/lanczos.js";
+import { SNAP_EPS } from "./phash.js";
 
 /**
  * phashSimple: perceptual hash using 1-D row-wise DCT, mean threshold.
@@ -21,6 +22,10 @@ export function phashSimple(
   hashSize: number,
   highfreqFactor: number = 4,
 ): Hash {
+  validateRgbImage(img);
+  if (!Number.isInteger(hashSize)) {
+    throw new ImageHashError("InvalidHashSize", `hashSize must be an integer, got ${hashSize}`);
+  }
   if (hashSize < 2) {
     throw new ImageHashError("InvalidHashSize", `hashSize must be >= 2, got ${hashSize}`);
   }
@@ -51,17 +56,19 @@ export function phashSimple(
     }
   }
 
-  // Mean threshold
+  // Mean threshold with snap-to-threshold tie-break.
   let sum = 0;
   for (let i = 0; i < blockLen; i++) sum += block[i];
   const avg = sum / blockLen;
 
+  // Snap-to-threshold tie-break: deterministic bit 0 on ties.
+  const threshold = avg + SNAP_EPS;
   const bits: boolean[][] = [];
   let bi = 0;
   for (let y = 0; y < hashSize; y++) {
     const row: boolean[] = new Array(hashSize);
     for (let x = 0; x < hashSize; x++) {
-      row[x] = block[bi++] > avg;
+      row[x] = block[bi++] > threshold;
     }
     bits.push(row);
   }

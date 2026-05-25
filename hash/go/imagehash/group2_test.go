@@ -198,7 +198,7 @@ func TestCropResistantHashGoldens(t *testing.T) {
 		c := c
 		t.Run(c.Fixture, func(t *testing.T) {
 			img := testkit.LoadPreDecodedFromRoot(t, c.Fixture)
-			mh, err := imagehash.CropResistantHash(img)
+			mh, err := imagehash.CropResistantHash(img, nil)
 			if err != nil {
 				t.Fatalf("CropResistantHash: %v", err)
 			}
@@ -206,6 +206,42 @@ func TestCropResistantHashGoldens(t *testing.T) {
 				t.Errorf("fixture=%s: got %q, want %q", c.Fixture, got, c.Hex)
 			}
 		})
+	}
+}
+
+func TestCropResistantHashLimitSegmentsCapsCount(t *testing.T) {
+	// H-L7: verify limit_segments is respected.
+	cases, err := testkit.CropResistantCasesFromRoot()
+	if err != nil {
+		t.Fatalf("load goldens: %v", err)
+	}
+	for _, c := range cases {
+		img := testkit.LoadPreDecodedFromRoot(t, c.Fixture)
+		mhAll, err := imagehash.CropResistantHash(img, nil)
+		if err != nil {
+			t.Fatalf("CropResistantHash unlimited: %v", err)
+		}
+		if len(mhAll.SegmentHashes) <= 1 {
+			continue
+		}
+		one := 1
+		mh1, err := imagehash.CropResistantHash(img, &one)
+		if err != nil {
+			t.Fatalf("CropResistantHash limit=1: %v", err)
+		}
+		if len(mh1.SegmentHashes) != 1 {
+			t.Errorf("fixture=%s: expected 1 segment, got %d", c.Fixture, len(mh1.SegmentHashes))
+		}
+		oversize := len(mhAll.SegmentHashes) + 5
+		mhBig, err := imagehash.CropResistantHash(img, &oversize)
+		if err != nil {
+			t.Fatalf("CropResistantHash limit=%d: %v", oversize, err)
+		}
+		if len(mhBig.SegmentHashes) != len(mhAll.SegmentHashes) {
+			t.Errorf("fixture=%s: oversize limit dropped segments (%d != %d)",
+				c.Fixture, len(mhBig.SegmentHashes), len(mhAll.SegmentHashes))
+		}
+		return
 	}
 }
 

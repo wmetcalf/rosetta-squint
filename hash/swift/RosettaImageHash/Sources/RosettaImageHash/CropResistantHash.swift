@@ -20,6 +20,7 @@ public func cropResistantHash(
     minSegmentSize: Int = 500,
     segmentationImageSize: Int = 300
 ) throws -> ImageMultiHash {
+    try image.validate()
     // Step 1: keep the unmodified original for per-segment cropping.
     let origImage = image
 
@@ -112,7 +113,7 @@ public func cropResistantHash(
         hashes.append(h)
     }
 
-    return ImageMultiHash(segmentHashes: hashes)
+    return try ImageMultiHash(segmentHashes: hashes)
 }
 
 /// Extracts a rectangular sub-image from `src` without copying channels.

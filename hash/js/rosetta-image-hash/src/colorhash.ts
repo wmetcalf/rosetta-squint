@@ -1,5 +1,5 @@
 import { Hash, ImageHashError, type RgbImage } from "./hash.js";
-import { toRgb } from "./internal/imgRgb.js";
+import { toRgb, validateRgbImage } from "./internal/imgRgb.js";
 import { toGray } from "./internal/pilGray.js";
 import { toHsv } from "./internal/pilHsv.js";
 
@@ -13,8 +13,16 @@ import { toHsv } from "./internal/pilHsv.js";
  * Quirky bin encoding (SPEC.md §8): v=8, B=4 → [true,true,false,false] = 0xc.
  */
 export function colorhash(img: RgbImage, binbits: number): Hash {
+  validateRgbImage(img);
+  if (!Number.isInteger(binbits)) {
+    throw new ImageHashError("InvalidBinbits", `binbits must be an integer, got ${binbits}`);
+  }
   if (binbits < 1) {
     throw new ImageHashError("InvalidBinbits", `binbits must be >= 1, got ${binbits}`);
+  }
+  // (1 << binbits) overflows JS bitwise int range above 30. Practical use is binbits 3-8.
+  if (binbits > 30) {
+    throw new ImageHashError("InvalidBinbits", `binbits must be <= 30, got ${binbits}`);
   }
   const rgb = toRgb(img);
   const data = rgb.data;

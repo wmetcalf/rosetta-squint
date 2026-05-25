@@ -45,6 +45,28 @@ export function decodeGifFirstFrame(bytes: Uint8Array): GifFrame {
     } else if (intro === 0x2c) {
       // Image Descriptor
       const frame = parser.parseImageDescriptor();
+
+      // D-M2: per-frame dimension validation. The image descriptor declares
+      // frame dims independently of the LSD (canvas) dims; without this check
+      // a 16x16 LSD can still carry a 65535x65535 frame and drive ~4 GB of
+      // allocation in lzwDecode below. MAX_PIXELS check runs first so a
+      // decompression-bomb frame is flagged as imageTooLarge rather than
+      // shadowed by the canvas-extent check.
+      // 1) Frame pixel count itself must respect MAX_PIXELS.
+      checkDimensions(frame.width, frame.height, "gif");
+      // 2) Frame must lie within the canvas — otherwise input is corrupt.
+      if (
+        frame.left + frame.width > parser.lsdWidth ||
+        frame.top + frame.height > parser.lsdHeight
+      ) {
+        throw new DecodeError(
+          "corruptInput",
+          "gif",
+          `frame ${frame.width}x${frame.height} at (${frame.left},${frame.top}) ` +
+            `extends beyond canvas ${parser.lsdWidth}x${parser.lsdHeight}`,
+        );
+      }
+
       let palette: Uint8Array;
       if (frame.localColorTable !== null) {
         palette = frame.localColorTable;

@@ -64,11 +64,13 @@ func PHashSimpleWithFactor(img image.Image, hashSize, highfreqFactor int) (Hash,
 	}
 	mean := sum / float64(hashSize*hashSize)
 
+	// Snap-to-threshold tie-break: deterministic bit 0 on ties.
+	threshold := mean + SnapEps
 	bits := make([][]bool, hashSize)
 	for y := 0; y < hashSize; y++ {
 		bits[y] = make([]bool, hashSize)
 		for x := 0; x < hashSize; x++ {
-			bits[y][x] = block[y][x] > mean
+			bits[y][x] = block[y][x] > threshold
 		}
 	}
 	return newHashFromBits(bits), nil

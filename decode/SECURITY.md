@@ -103,4 +103,24 @@ This library has had one internal security review covering:
 - resource cleanup on error paths (verified correct in JNA HEIC wrapper)
 - ftyp brand whitelist narrowness (documented as intentional in spec)
 
-No external audit has been performed.
+External / fresh-eyes audits — Raptor, GPT-5.4, Claude (Opus 4.7) — landed 51 findings
+(6 HIGH, 19 MED, 26 LOW) resolved or deferred; see `AUDIT-claude.md` at the
+repository root for the consolidated report and per-finding status.
+
+## Fuzz coverage
+
+Two native fuzz harnesses run the full decoder pipeline against adversarial input:
+
+| Port | Harness | Run |
+|---|---|---|
+| Rust | `rust/rosetta-image-decode/fuzz/` via [cargo-fuzz](https://rust-fuzz.github.io/book/cargo-fuzz.html) | `cd rust/rosetta-image-decode && cargo +nightly fuzz run decode_any` |
+| Go | `go/imagedecode/fuzz_decode_test.go` via native Go 1.18 fuzz | `cd go/imagedecode && go test -run='^$' -fuzz=FuzzDecodeAny -fuzztime=60s` |
+
+The Rust harness produced the original `[0xFF, 0xD8]` truncated-SOI panic finding
+that motivated the in-tree libjpeg C shim. The Go harness covers the parallel
+Go-side parsers (cgo + native BMP/GIF) for the same property: `Decode()` never
+panics, regardless of input.
+
+JS/Java/Swift do not currently have fuzz harnesses. The cross-port-diff tests
+exercise the happy paths byte-exactly, but adversarial-input fuzz coverage
+remains a gap for those three ports.

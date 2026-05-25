@@ -81,3 +81,36 @@ func TestHexToFlathashRejectsZeroHashSize(t *testing.T) {
 		t.Errorf("expected error for hashSize=0")
 	}
 }
+
+// BestMatch now returns an error (rather than panicking) when others is empty.
+// See findings H-M5.
+func TestBestMatchEmptyOthersReturnsError(t *testing.T) {
+	hash, err := imagehash.HexToHash("0000000000000000")
+	if err != nil {
+		t.Fatalf("setup HexToHash: %v", err)
+	}
+	mh := imagehash.ImageMultiHash{SegmentHashes: []imagehash.Hash{hash}}
+	if _, err := mh.BestMatch(nil); err == nil {
+		t.Errorf("expected error for empty others (nil slice)")
+	}
+	if _, err := mh.BestMatch([]imagehash.ImageMultiHash{}); err == nil {
+		t.Errorf("expected error for empty others (empty slice)")
+	}
+}
+
+func TestBestMatchReturnsClosest(t *testing.T) {
+	hashA, _ := imagehash.HexToHash("0000000000000000")
+	hashB, _ := imagehash.HexToHash("ffffffffffffffff")
+	mh := imagehash.ImageMultiHash{SegmentHashes: []imagehash.Hash{hashA}}
+	candidates := []imagehash.ImageMultiHash{
+		{SegmentHashes: []imagehash.Hash{hashB}},
+		{SegmentHashes: []imagehash.Hash{hashA}},
+	}
+	best, err := mh.BestMatch(candidates)
+	if err != nil {
+		t.Fatalf("BestMatch: %v", err)
+	}
+	if best.ToHex() != "0000000000000000" {
+		t.Errorf("expected closest = all-zeros, got %s", best.ToHex())
+	}
+}

@@ -78,10 +78,15 @@ func (m ImageMultiHash) Matches(other ImageMultiHash, regionCutoff int) bool {
 	return matches >= regionCutoff
 }
 
-// BestMatch returns the ImageMultiHash from others that minimizes Subtract distance to m.
-func (m ImageMultiHash) BestMatch(others []ImageMultiHash) ImageMultiHash {
+// BestMatch returns the ImageMultiHash from others that minimizes Subtract
+// distance to m. Returns an error (rather than panicking) if others is empty.
+//
+// Signature note: this returns (ImageMultiHash, error) rather than just
+// ImageMultiHash so callers can handle empty-input as a recoverable error
+// instead of a process-aborting panic.
+func (m ImageMultiHash) BestMatch(others []ImageMultiHash) (ImageMultiHash, error) {
 	if len(others) == 0 {
-		panic("BestMatch called with empty others slice")
+		return ImageMultiHash{}, fmt.Errorf("BestMatch: others must be non-empty")
 	}
 	best := others[0]
 	bestDist := m.Subtract(others[0])
@@ -92,7 +97,7 @@ func (m ImageMultiHash) BestMatch(others []ImageMultiHash) ImageMultiHash {
 			best = o
 		}
 	}
-	return best
+	return best, nil
 }
 
 // ToHex returns the comma-separated hex string of all segment hashes.

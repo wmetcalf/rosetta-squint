@@ -216,12 +216,26 @@ func decodeBmpRgb32(b []byte, hdr *bmpHeader) (DecodedImage, error) {
 	return DecodedImage{Width: hdr.width, Height: hdr.height, Data: pixels, Channels: RGB, Format: Bmp}, nil
 }
 
+// clampEntryCount returns the palette entry count to use, bounded by what the
+// bit-depth can index. If clrUsed <= 0, the bit-depth maximum is used (default).
+// If clrUsed > bitDepthMax, the value is clamped to bitDepthMax (PIL-lenient
+// parsing). Defends against attacker-controlled values (e.g. 0x40000000) that
+// would overflow signed-32 arithmetic in colorTableEnd, bypass the truncation
+// check, and request multi-gigabyte palette allocations.
+func clampEntryCount(clrUsed, bitDepth int) int {
+	bitDepthMax := 1 << bitDepth
+	if clrUsed <= 0 {
+		return bitDepthMax
+	}
+	if clrUsed > bitDepthMax {
+		return bitDepthMax
+	}
+	return clrUsed
+}
+
 func decodeBmpPal8(b []byte, hdr *bmpHeader) (DecodedImage, error) {
 	colorTableOffset := 14 + hdr.dibHeaderSize
-	entryCount := hdr.clrUsed
-	if entryCount <= 0 {
-		entryCount = 256
-	}
+	entryCount := clampEntryCount(hdr.clrUsed, 8)
 	colorTableEnd := colorTableOffset + entryCount*4
 	if len(b) < colorTableEnd {
 		return DecodedImage{}, newError(Truncated, Bmp, true, "color table truncated (8-bit paletted)")
@@ -277,10 +291,7 @@ func readColorTable(b []byte, hdr *bmpHeader, entryCount int) ([][3]byte, error)
 }
 
 func decodeBmpPal4(b []byte, hdr *bmpHeader) (DecodedImage, error) {
-	entryCount := hdr.clrUsed
-	if entryCount <= 0 {
-		entryCount = 16
-	}
+	entryCount := clampEntryCount(hdr.clrUsed, 4)
 	palette, err := readColorTable(b, hdr, entryCount)
 	if err != nil {
 		return DecodedImage{}, err
@@ -318,10 +329,7 @@ func decodeBmpPal4(b []byte, hdr *bmpHeader) (DecodedImage, error) {
 }
 
 func decodeBmpPal1(b []byte, hdr *bmpHeader) (DecodedImage, error) {
-	entryCount := hdr.clrUsed
-	if entryCount <= 0 {
-		entryCount = 2
-	}
+	entryCount := clampEntryCount(hdr.clrUsed, 1)
 	palette, err := readColorTable(b, hdr, entryCount)
 	if err != nil {
 		return DecodedImage{}, err
@@ -422,14 +430,7 @@ func decodeBmpBitfields(b []byte, hdr *bmpHeader, bitsPerPixel int) (DecodedImag
 }
 
 func decodeBmpRle(b []byte, hdr *bmpHeader, bitsPerPixel int) (DecodedImage, error) {
-	entryCount := hdr.clrUsed
-	if entryCount <= 0 {
-		if bitsPerPixel == 8 {
-			entryCount = 256
-		} else {
-			entryCount = 16
-		}
-	}
+	entryCount := clampEntryCount(hdr.clrUsed, bitsPerPixel)
 	palette, err := readColorTable(b, hdr, entryCount)
 	if err != nil {
 		return DecodedImage{}, err

@@ -10,6 +10,13 @@ public struct RGBImage: Equatable {
 	public enum Channels: Equatable {
 		case rgb   // 3 bytes per pixel
 		case rgba  // 4 bytes per pixel; alpha composited against opaque black internally
+
+		public var bytesPerPixel: Int {
+			switch self {
+			case .rgb:  return 3
+			case .rgba: return 4
+			}
+		}
 	}
 
 	public init(width: Int, height: Int, data: [UInt8], channels: Channels) {
@@ -17,6 +24,44 @@ public struct RGBImage: Equatable {
 		self.height = height
 		self.data = data
 		self.channels = channels
+	}
+
+	/// Validates that the data buffer length matches width * height * bytesPerPixel
+	/// and that dimensions are positive. Throws `ImageHashError.shapeMismatch` on
+	/// mismatch. Every public hash function calls this at its entry point.
+	public func validate() throws {
+		guard width > 0, height > 0 else {
+			throw ImageHashError.shapeMismatch(
+				lhs: ImageHashError.ShapeKey(height, width),
+				rhs: ImageHashError.ShapeKey(0, 0)
+			)
+		}
+		// Compute width * height * bytesPerPixel with explicit overflow checks
+		// instead of `*`, which would trap on Int overflow (Swift Int is signed
+		// and arithmetic traps in debug AND release builds via overflow operators).
+		// A pathological caller can fabricate (width, height) outside the decode
+		// pipeline; surface a typed shapeMismatch rather than SIGABRT.
+		let (wh, owh) = width.multipliedReportingOverflow(by: height)
+		guard !owh else {
+			throw ImageHashError.shapeMismatch(
+				lhs: ImageHashError.ShapeKey(data.count, 1),
+				rhs: ImageHashError.ShapeKey(Int.max, 1)
+			)
+		}
+		let (whc, owhc) = wh.multipliedReportingOverflow(by: channels.bytesPerPixel)
+		guard !owhc else {
+			throw ImageHashError.shapeMismatch(
+				lhs: ImageHashError.ShapeKey(data.count, 1),
+				rhs: ImageHashError.ShapeKey(Int.max, 1)
+			)
+		}
+		guard data.count == whc else {
+			// Encode expected length in the rhs ShapeKey (height carries expected total bytes)
+			throw ImageHashError.shapeMismatch(
+				lhs: ImageHashError.ShapeKey(data.count, 1),
+				rhs: ImageHashError.ShapeKey(whc, 1)
+			)
+		}
 	}
 }
 

@@ -3,6 +3,16 @@ import Cheif
 
 internal enum HEICDecoder {
     static func decode(bytes: [UInt8]) throws -> DecodedImage {
+        // Sniff the container's primary-item ispe dimensions BEFORE invoking
+        // libheif. libheif returns dimensions from the underlying HEVC
+        // bitstream rather than the container's ispe, so a patched ispe is
+        // never visible via heif_image_handle_get_width/height — without
+        // this pre-check the file decodes at its HEVC dimensions and the
+        // imageTooLarge guard never fires. Spec §3.1.
+        if let dims = DimensionSniff.sniffHeicDimensions(bytes) {
+            try Limits.checkDimensions(width: dims.0, height: dims.1, format: .heic)
+        }
+
         guard let ctx = heif_context_alloc() else {
             throw DecodeError.corruptInput(format: .heic, detail: "heif_context_alloc failed")
         }
@@ -46,6 +56,17 @@ internal enum HEICDecoder {
 
         guard width > 0, height > 0 else {
             throw DecodeError.corruptInput(format: .heic, detail: "zero dimensions in HEIC image")
+        }
+
+        // Validate post-decode plane dimensions match the handle dimensions we
+        // capacity-checked above. A mismatch (e.g. a corrupt input that causes
+        // libheif to return a smaller plane than advertised) would otherwise
+        // cause the row-copy below to OOB-read planePtr or under-fill out.
+        guard width == handleWidth, height == handleHeight else {
+            throw DecodeError.corruptInput(
+                format: .heic,
+                detail: "plane dimensions \(width)x\(height) do not match handle dimensions \(handleWidth)x\(handleHeight)"
+            )
         }
 
         var stride: Int32 = 0

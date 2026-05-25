@@ -4,6 +4,7 @@ import (
 	"image"
 	"image/color"
 	"math"
+	"sort"
 
 	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/findsegments"
 	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/imgrgb"
@@ -12,6 +13,15 @@ import (
 	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/pilgray"
 	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/pilmedianfilter"
 )
+
+// sortSegsByLengthDesc sorts segments by pixel count descending, with stable
+// ordering so equal-sized segments preserve discovery order for cross-port
+// determinism. Matches Python `sorted(segs, key=len, reverse=True)`.
+func sortSegsByLengthDesc(segs []findsegments.Segment) {
+	sort.SliceStable(segs, func(i, j int) bool {
+		return len(segs[i]) > len(segs[j])
+	})
+}
 
 // pilRound implements Python's built-in round() (banker's rounding / round-half-to-even)
 // applied to a float64 value, matching PIL's _crop: map(int, map(round, box)).
@@ -42,9 +52,13 @@ const (
 //
 // Implements the algorithm from "Efficient Cropping-Resistant Robust Image Hashing"
 // (DOI 10.1109/ARES.2014.85), matching Python imagehash.crop_resistant_hash with
-// default parameters: hash_func=dhash, limit_segments=None,
-// segment_threshold=128, min_segment_size=500, segmentation_image_size=300.
-func CropResistantHash(img image.Image) (ImageMultiHash, error) {
+// default parameters: hash_func=dhash, segment_threshold=128,
+// min_segment_size=500, segmentation_image_size=300.
+//
+// limitSegments: pass a non-nil *int to keep only the N largest segments
+// (matches Python `sorted(segments, key=len, reverse=True)[:N]`). Pass nil
+// for the Python default (no limit).
+func CropResistantHash(img image.Image, limitSegments *int) (ImageMultiHash, error) {
 	// Step 1: keep original for per-segment cropping.
 	origBounds := img.Bounds()
 	origW := origBounds.Dx()
@@ -89,7 +103,15 @@ func CropResistantHash(img image.Image) (ImageMultiHash, error) {
 		segs = []findsegments.Segment{wholeImg}
 	}
 
-	// Step 8: (no limit_segments in default params)
+	// Step 8: optional limit — keep the N largest by pixel count.
+	// Matches Python: sorted(segments, key=len, reverse=True)[:N].
+	// sort.SliceStable preserves discovery order for equal-sized segments,
+	// which keeps cross-port output deterministic when sizes tie.
+	if limitSegments != nil && *limitSegments < len(segs) {
+		sortLimit := *limitSegments
+		sortSegsByLengthDesc(segs)
+		segs = segs[:sortLimit]
+	}
 
 	// Step 9: for each segment, compute bounding box, scale to original, crop, DHash.
 	scaleW := float64(origW) / float64(cropResistantSegSize)

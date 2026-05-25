@@ -389,7 +389,7 @@ func TestColorHash_JPEG_PathBytesAgree(t *testing.T) {
 
 func TestCropResistantHash_PNG_NonEmpty(t *testing.T) {
 	path := fixturePath("png", "photo-1024.png")
-	mh, err := squint.CropResistantHash(path)
+	mh, err := squint.CropResistantHash(path, nil)
 	if err != nil {
 		t.Fatalf("CropResistantHash: %v", err)
 	}
@@ -401,11 +401,11 @@ func TestCropResistantHash_PNG_NonEmpty(t *testing.T) {
 
 func TestCropResistantHash_PathBytesAgree(t *testing.T) {
 	path := fixturePath("png", "photo-1024.png")
-	mh1, err := squint.CropResistantHash(path)
+	mh1, err := squint.CropResistantHash(path, nil)
 	if err != nil {
 		t.Fatalf("CropResistantHash(path): %v", err)
 	}
-	mh2, err := squint.CropResistantHashBytes(readFile(t, path))
+	mh2, err := squint.CropResistantHashBytes(readFile(t, path), nil)
 	if err != nil {
 		t.Fatalf("CropResistantHashBytes: %v", err)
 	}
@@ -416,12 +416,32 @@ func TestCropResistantHash_PathBytesAgree(t *testing.T) {
 
 func TestCropResistantHash_JPEG_NonEmpty(t *testing.T) {
 	path := fixturePath("jpeg", "larger-photo-128.jpg")
-	mh, err := squint.CropResistantHash(path)
+	mh, err := squint.CropResistantHash(path, nil)
 	if err != nil {
 		t.Fatalf("CropResistantHash JPEG: %v", err)
 	}
 	if len(mh.SegmentHashes) == 0 {
 		t.Error("CropResistantHash JPEG: got zero segments")
+	}
+}
+
+func TestCropResistantHash_LimitSegmentsForwarded(t *testing.T) {
+	// H-L7: verify limitSegments is forwarded through the squint wrapper.
+	path := fixturePath("png", "photo-1024.png")
+	mhAll, err := squint.CropResistantHash(path, nil)
+	if err != nil {
+		t.Fatalf("CropResistantHash unlimited: %v", err)
+	}
+	if len(mhAll.SegmentHashes) <= 1 {
+		t.Skip("fixture only produced one segment; nothing to limit")
+	}
+	one := 1
+	mh1, err := squint.CropResistantHash(path, &one)
+	if err != nil {
+		t.Fatalf("CropResistantHash limit=1: %v", err)
+	}
+	if len(mh1.SegmentHashes) != 1 {
+		t.Errorf("CropResistantHash limit=1: got %d segments, want 1", len(mh1.SegmentHashes))
 	}
 }
 

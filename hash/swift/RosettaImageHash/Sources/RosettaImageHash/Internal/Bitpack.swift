@@ -45,8 +45,9 @@ enum Bitpack {
 	static func unpackSquare(_ hex: String) throws -> [[Bool]] {
 		let bits = try hexToBits(hex)
 		let total = bits.count
-		var n = 0
-		while n * n < total { n += 1 }
+		// Double-precision sqrt is exact for perfect squares within Int53 range;
+		// the equality check below rejects any non-square `total`.
+		let n = Int(Double(total).squareRoot())
 		guard n * n == total else {
 			throw ImageHashError.invalidHex("hex length \(hex.count) (\(total) bits) is not a square shape")
 		}
@@ -87,6 +88,11 @@ enum Bitpack {
 		var bits = [Bool](repeating: false, count: hex.count * 4)
 		var i = 0
 		for c in hex {
+			// Spec: lowercase hex only — matches Rust/Go/Java/JS port behavior.
+			// hexDigitValue accepts both A-F and a-f, so we add an explicit lowercase check.
+			guard c.isASCII, (c.isNumber || ("a"..."f").contains(c)) else {
+				throw ImageHashError.invalidHex("invalid char '\(c)' in '\(hex)'")
+			}
 			guard let v = c.hexDigitValue, v >= 0 && v < 16 else {
 				throw ImageHashError.invalidHex("invalid char '\(c)' in '\(hex)'")
 			}

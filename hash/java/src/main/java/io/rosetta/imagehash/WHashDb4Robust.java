@@ -88,7 +88,7 @@ public final class WHashDb4Robust {
                 if (Math.abs(ll[y][x]) < WHASH_DB4_ROBUST_EPS)
                     ll[y][x] = 0.0;
 
-        // Median threshold
+        // Median threshold with snap-to-threshold tie-break.
         int n = llH * llW;
         double[] flat = new double[n];
         int k = 0;
@@ -99,10 +99,13 @@ public final class WHashDb4Robust {
         Arrays.sort(sorted);
         double median = (n % 2 == 1) ? sorted[n / 2] : (sorted[n / 2 - 1] + sorted[n / 2]) / 2.0;
 
+        // Snap-to-threshold tie-break (on top of snap-to-zero): deterministic
+        // bit 0 on ties. See spec/SPEC.md §"Threshold tie-break".
+        double threshold = median + PHash.SNAP_EPS;
         boolean[][] bits = new boolean[llH][llW];
         for (int y = 0; y < llH; y++)
             for (int x = 0; x < llW; x++)
-                bits[y][x] = ll[y][x] > median;
+                bits[y][x] = ll[y][x] > threshold;
 
         return new ImageHash(bits);
     }

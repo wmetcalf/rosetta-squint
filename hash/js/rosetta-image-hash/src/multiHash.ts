@@ -6,11 +6,21 @@
  * because the matching algorithm weighs matches vs. unmatched segments.
  */
 
-import { Hash } from "./hash.js";
+import { Hash, ImageHashError } from "./hash.js";
 import { hexToHash } from "./hex.js";
 
 export class ImageMultiHash {
-  constructor(public readonly segmentHashes: Hash[]) {}
+  /**
+   * Throws `ImageHashError("ShapeMismatch", ...)` if `segmentHashes` is empty —
+   * matches Java's existing guard so all 5 ports reject empty multi-hashes at
+   * construction rather than failing later inside `hashDiff` (which would
+   * dereference `segmentHashes[0]`).
+   */
+  constructor(public readonly segmentHashes: Hash[]) {
+    if (segmentHashes.length === 0) {
+      throw new ImageHashError("ShapeMismatch", "ImageMultiHash requires at least one segment hash");
+    }
+  }
 
   /**
    * hash_diff: returns (matches, sumDistance) matching Python's hash_diff.

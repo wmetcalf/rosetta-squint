@@ -1,0 +1,580 @@
+name: squint-ci
+
+# Top-level CI for the squint/ convenience layer + tools/.
+#
+# decode/ and hash/ have their own per-half workflows (see decode/.github/
+# and hash/.github/). This one covers what neither sees:
+#   - The squint chain (decode + hash + path-API + bytes-API per port).
+#   - cross-squint-diff across all 6 ports (live byte-exact verification).
+#   - MAX_FILE_SIZE / non-regular-file guards on each squint port.
+#   - dep-audit for the squint Python/Rust/JS manifests, which the per-half
+#     CI's dep-audit jobs don't cover.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    # Weekly Monday 09:00 UTC — re-runs dep-audit so newly-published CVEs
+    # against pinned squint-side dependencies surface without a code push.
+    - cron: '0 9 * * 1'
+
+jobs:
+  # ─── Per-port squint test suites ─────────────────────────────────────────
+  squint-tests:
+    name: squint (${{ matrix.port }})
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        port: [python, rust, go, java, js, swift]
+    steps:
+      - uses: actions/checkout@v4
+
+      # System libraries needed by the decode side (which squint chains into).
+      - name: Install system libs
+        if: matrix.port != 'rust'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y \
+            libjpeg-turbo8-dev libturbojpeg libturbojpeg0-dev libturbojpeg-java \
+            libwebp-dev libsharpyuv-dev libtiff-dev \
+            libheif-dev libheif-plugin-libde265 libde265-dev libde265-0 \
+            pkg-config
+
+      # ── Python
+      - name: Set up Python 3.11
+        if: matrix.port == 'python'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Python — install + test
+        if: matrix.port == 'python'
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e hash/python
+          pip install -e squint/python
+          pip install pytest
+          cd squint/python && pytest -q
+
+      # ── Rust
+      - name: Set up Rust stable
+        if: matrix.port == 'rust'
+        uses: dtolnay/rust-toolchain@stable
+      - name: Install system libs for Rust HEIC
+        if: matrix.port == 'rust'
+        run: sudo apt-get update -qq && sudo apt-get install -y libheif-dev libheif-plugin-libde265 libde265-dev pkg-config
+      - name: Cache cargo (squint)
+        if: matrix.port == 'rust'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            squint/rust/rosetta-squint/target
+          key: cargo-squint-${{ runner.os }}-${{ hashFiles('squint/rust/rosetta-squint/Cargo.lock') }}
+      - name: Rust — cargo test
+        if: matrix.port == 'rust'
+        run: cd squint/rust/rosetta-squint && cargo test --no-fail-fast
+
+      # ── Go
+      - name: Set up Go 1.22
+        if: matrix.port == 'go'
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache-dependency-path: squint/go/squint/go.mod
+      - name: Go — go test
+        if: matrix.port == 'go'
+        run: cd squint/go/squint && go test -count=1 ./...
+
+      # ── Java
+      - name: Set up Java 17
+        if: matrix.port == 'java'
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      - name: Java — mvn test
+        if: matrix.port == 'java'
+        run: |
+          # Install sibling halves first (squint depends on hash + decode JARs).
+          cd hash/java && mvn -B -ntp -DskipTests -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 install
+          cd ../../decode/java/rosetta-image-decode && mvn -B -ntp -DskipTests -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 install
+          cd ../../../squint/java/rosetta-squint && mvn -B -ntp -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 test
+
+      # ── JS
+      - name: Set up Node 20
+        if: matrix.port == 'js'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: squint/js/rosetta-squint/package-lock.json
+      - name: JS — npm ci + test
+        if: matrix.port == 'js'
+        run: |
+          # The squint JS package has file: deps on the sibling halves; install
+          # those siblings first so npm can link them.
+          cd hash/js/rosetta-image-hash && npm ci && npm run build
+          cd ../../../decode/js/rosetta-image-decode && npm ci && npm run build
+          cd ../../../squint/js/rosetta-squint && npm install && npm test
+
+      # ── Swift
+      - name: Set up Swift 5.9
+        if: matrix.port == 'swift'
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: '5.9'
+      - name: Swift — swift test
+        if: matrix.port == 'swift'
+        run: cd squint/swift/RosettaSquint && swift test
+
+  # ─── Cross-squint live diff: build all CLIs, run the full grid ───────────
+  cross-squint-diff:
+    name: cross-squint-diff (all 6 ports byte-exact)
+    runs-on: ubuntu-22.04
+    # No `needs:` — let this run in parallel with squint-tests. The diff
+    # job rebuilds all CLIs anyway, so it doesn't reuse squint-tests output.
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system libs
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y \
+            libjpeg-turbo8-dev libturbojpeg libturbojpeg0-dev libturbojpeg-java \
+            libwebp-dev libsharpyuv-dev libtiff-dev \
+            libheif-dev libheif-plugin-libde265 libde265-dev libde265-0 \
+            pkg-config
+
+      - name: Set up toolchains
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: '5.9'
+
+      - name: Install Python wrappers
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e hash/python
+          pip install -e squint/python
+
+      - name: Build all squint CLIs
+        run: |
+          # Install Java/JS sibling halves first.
+          cd hash/java && mvn -B -ntp -DskipTests -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 install
+          cd ../../decode/java/rosetta-image-decode && mvn -B -ntp -DskipTests -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 install
+          cd ../../../hash/js/rosetta-image-hash && npm ci && npm run build
+          cd ../../../decode/js/rosetta-image-decode && npm ci && npm run build
+          cd ../../..
+          make build-all-squint-clis
+
+      - name: cross-squint-diff (regression mode — exits non-zero on any disagreement)
+        run: make cross-squint-diff
+
+  # ─── MAX_FILE_SIZE / non-regular-file smoke test ─────────────────────────
+  max-file-size-guards:
+    name: MAX_FILE_SIZE + isRegularFile smoke
+    runs-on: ubuntu-22.04
+    # No `needs:` — let this run independently of cross-squint-diff. The two
+    # jobs share no state (each rebuilds the CLIs from scratch), so a flake
+    # in cross-squint-diff shouldn't cancel a separate smoke test.
+    steps:
+      - uses: actions/checkout@v4
+
+      # Pull just enough to invoke the CLIs (built fresh below since we don't
+      # cache them across jobs).
+      - name: Install system libs + toolchains
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libjpeg-turbo8-dev libturbojpeg libturbojpeg0-dev libturbojpeg-java libwebp-dev libsharpyuv-dev libtiff-dev libheif-dev libheif-plugin-libde265 libde265-dev libde265-0 pkg-config
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-go@v5
+        with: { go-version: '1.22' }
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - uses: actions/setup-java@v4
+        with: { java-version: '17', distribution: 'temurin' }
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - uses: swift-actions/setup-swift@v2
+        with: { swift-version: '5.9' }
+
+      - name: Build all squint CLIs
+        run: |
+          python -m pip install --upgrade pip && pip install -e hash/python && pip install -e squint/python
+          cd hash/java && mvn -B -ntp -DskipTests -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 install
+          cd ../../decode/java/rosetta-image-decode && mvn -B -ntp -DskipTests -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 install
+          cd ../../../hash/js/rosetta-image-hash && npm ci && npm run build
+          cd ../../../decode/js/rosetta-image-decode && npm ci && npm run build
+          cd ../../..
+          make build-all-squint-clis
+
+      - name: Smoke-test 300 MiB file rejection (each port must error, not OOM/hang)
+        run: |
+          # Create a 300 MiB sparse file. Each port should error with
+          # "input file too large" before reading any bytes.
+          truncate -s 300M /tmp/big.bin
+          set +e
+          fail=0
+          # Java classpath: use env vars if set, else fall back through common
+          # platform locations (Debian/Ubuntu, RHEL, macOS-homebrew). Matches
+          # the `_probe_turbojpeg` pattern in tools/cross-squint-diff/.
+          : "${TURBOJPEG_LIB_PATH:=/usr/lib/x86_64-linux-gnu}"
+          : "${TURBOJPEG_JAR_PATH:=/usr/share/java/turbojpeg.jar}"
+          JAVA_CMD="java -Djava.library.path=$TURBOJPEG_LIB_PATH --enable-native-access=ALL-UNNAMED -cp squint/java/rosetta-squint/target/squint-cli.jar:$TURBOJPEG_JAR_PATH io.rosetta.squint.cli.SquintCli"
+          for cmd in \
+              "squint/rust/rosetta-squint/target/release/examples/squint-cli phash 8 /tmp/big.bin" \
+              "tools/cross-squint-diff/squint-go phash 8 /tmp/big.bin" \
+              "python3 tools/cross-squint-diff/squint_cli.py phash 8 /tmp/big.bin" \
+              "node squint/js/rosetta-squint/scripts/squint-cli.mjs phash 8 /tmp/big.bin" \
+              "squint/swift/RosettaSquint/.build/release/SquintCLI phash 8 /tmp/big.bin" \
+              "$JAVA_CMD phash 8 /tmp/big.bin"
+          do
+              echo "=== smoke: $cmd ==="
+              timeout 10s bash -c "$cmd" >/tmp/out 2>/tmp/err
+              rc=$?
+              if [ $rc -eq 0 ]; then
+                  echo "FAIL: command succeeded (should have rejected)"
+                  fail=1
+              elif [ $rc -eq 124 ]; then
+                  echo "FAIL: timed out (should have rejected immediately)"
+                  fail=1
+              else
+                  msg=$(cat /tmp/err | head -1)
+                  echo "OK: rejected (rc=$rc): $msg"
+              fi
+          done
+          rm -f /tmp/big.bin
+          [ $fail -eq 0 ]
+
+      - name: Smoke-test /dev/zero rejection (non-regular file)
+        run: |
+          set +e
+          fail=0
+          : "${TURBOJPEG_LIB_PATH:=/usr/lib/x86_64-linux-gnu}"
+          : "${TURBOJPEG_JAR_PATH:=/usr/share/java/turbojpeg.jar}"
+          JAVA_CMD="java -Djava.library.path=$TURBOJPEG_LIB_PATH --enable-native-access=ALL-UNNAMED -cp squint/java/rosetta-squint/target/squint-cli.jar:$TURBOJPEG_JAR_PATH io.rosetta.squint.cli.SquintCli"
+          for cmd in \
+              "squint/rust/rosetta-squint/target/release/examples/squint-cli phash 8 /dev/zero" \
+              "tools/cross-squint-diff/squint-go phash 8 /dev/zero" \
+              "python3 tools/cross-squint-diff/squint_cli.py phash 8 /dev/zero" \
+              "node squint/js/rosetta-squint/scripts/squint-cli.mjs phash 8 /dev/zero" \
+              "squint/swift/RosettaSquint/.build/release/SquintCLI phash 8 /dev/zero" \
+              "$JAVA_CMD phash 8 /dev/zero"
+          do
+              echo "=== smoke: $cmd ==="
+              timeout 10s bash -c "$cmd" >/tmp/out 2>/tmp/err
+              rc=$?
+              if [ $rc -eq 0 ]; then
+                  echo "FAIL: succeeded (should have rejected /dev/zero)"
+                  fail=1
+              elif [ $rc -eq 124 ]; then
+                  echo "FAIL: hung on /dev/zero (regular-file check missing)"
+                  fail=1
+              else
+                  msg=$(cat /tmp/err | head -1)
+                  echo "OK: rejected (rc=$rc): $msg"
+              fi
+          done
+          [ $fail -eq 0 ]
+
+  # ─── dep-audit for the squint manifests ──────────────────────────────────
+  dep-audit:
+    name: dep-audit squint (${{ matrix.ecosystem }})
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        ecosystem: [rust, js, python, go]
+    steps:
+      - uses: actions/checkout@v4
+
+      # Rust
+      - uses: dtolnay/rust-toolchain@stable
+        if: matrix.ecosystem == 'rust'
+      - name: Install cargo-audit
+        if: matrix.ecosystem == 'rust'
+        run: cargo install --locked cargo-audit
+      - name: cargo audit (squint)
+        if: matrix.ecosystem == 'rust'
+        run: cd squint/rust/rosetta-squint && cargo audit --deny warnings
+
+      # JS
+      - uses: actions/setup-node@v4
+        if: matrix.ecosystem == 'js'
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: squint/js/rosetta-squint/package-lock.json
+      - name: npm audit (squint)
+        if: matrix.ecosystem == 'js'
+        run: |
+          # squint depends on local file: siblings — install them first.
+          cd hash/js/rosetta-image-hash && npm ci
+          cd ../../../decode/js/rosetta-image-decode && npm ci
+          cd ../../../squint/js/rosetta-squint && npm install && npm audit --audit-level=high
+
+      # Python
+      - uses: actions/setup-python@v5
+        if: matrix.ecosystem == 'python'
+        with:
+          python-version: '3.11'
+      - name: pip-audit (squint)
+        if: matrix.ecosystem == 'python'
+        run: |
+          python -m pip install --upgrade pip pip-audit
+          pip-audit /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/squint/python/pyproject.toml || \
+            (cd squint/python && pip-audit .)
+
+      # Go — govulncheck against the squint Go module. Use a recent stable
+      # toolchain so stdlib CVEs in patch releases don't false-positive.
+      - uses: actions/setup-go@v5
+        if: matrix.ecosystem == 'go'
+        with:
+          go-version: 'stable'
+          cache-dependency-path: squint/go/squint/go.mod
+      - name: Install govulncheck
+        if: matrix.ecosystem == 'go'
+        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+      - name: govulncheck (squint Go module)
+        if: matrix.ecosystem == 'go'
+        run: cd squint/go/squint && govulncheck ./...
+
+  # ─── Static analysis (lint + type-check, per port) ───────────────────────
+  lint:
+    name: lint (${{ matrix.port }})
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        port: [rust, go, python, js, swift]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system libs (non-rust)
+        if: matrix.port != 'rust'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y \
+            libjpeg-turbo8-dev libturbojpeg libturbojpeg0-dev libturbojpeg-java \
+            libwebp-dev libsharpyuv-dev libtiff-dev \
+            libheif-dev libheif-plugin-libde265 libde265-dev libde265-0 \
+            pkg-config
+
+      # Rust — clippy
+      - name: Set up Rust stable
+        if: matrix.port == 'rust'
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - name: Install libheif for clippy (squint Rust still chains decode)
+        if: matrix.port == 'rust'
+        run: sudo apt-get update -qq && sudo apt-get install -y libheif-dev libheif-plugin-libde265 libde265-dev pkg-config
+      - name: Cache cargo (squint lint)
+        if: matrix.port == 'rust'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            squint/rust/rosetta-squint/target
+          key: cargo-lint-squint-${{ runner.os }}-${{ hashFiles('squint/rust/rosetta-squint/Cargo.lock') }}
+      - name: cargo clippy (squint)
+        if: matrix.port == 'rust'
+        run: cd squint/rust/rosetta-squint && cargo clippy --all-targets --all-features -- -D warnings
+
+      # Go — golangci-lint
+      - name: Set up Go 1.22
+        if: matrix.port == 'go'
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache-dependency-path: squint/go/squint/go.mod
+      - name: golangci-lint (squint)
+        if: matrix.port == 'go'
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          working-directory: squint/go/squint
+
+      # Python — ruff + mypy on the wrapper.
+      - name: Set up Python 3.11
+        if: matrix.port == 'python'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install ruff + mypy + wrappers
+        if: matrix.port == 'python'
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff mypy
+          pip install -e hash/python
+          pip install -e squint/python
+      - name: ruff check (squint Python wrapper)
+        if: matrix.port == 'python'
+        run: ruff check squint/python/rosetta_squint --line-length=120 || \
+             python -m flake8 squint/python/rosetta_squint --max-line-length=120
+      - name: mypy (squint Python wrapper)
+        if: matrix.port == 'python'
+        continue-on-error: true
+        run: mypy --strict --ignore-missing-imports squint/python/rosetta_squint
+
+      # JS — tsc --noEmit
+      - name: Set up Node 20
+        if: matrix.port == 'js'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: squint/js/rosetta-squint/package-lock.json
+      - name: tsc --noEmit (squint JS)
+        if: matrix.port == 'js'
+        run: |
+          # Install sibling halves so the file: deps resolve.
+          cd hash/js/rosetta-image-hash && npm ci && npm run build
+          cd ../../../decode/js/rosetta-image-decode && npm ci && npm run build
+          cd ../../../squint/js/rosetta-squint
+          npm install
+          if npm run | grep -qE '^  (typecheck|lint)$'; then
+            npm run typecheck 2>/dev/null || npm run lint 2>/dev/null || npx tsc --noEmit
+          else
+            npx tsc --noEmit
+          fi
+
+      # Swift — build is type-check; swift-format lint best-effort.
+      - name: Set up Swift 5.9
+        if: matrix.port == 'swift'
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: '5.9'
+      - name: swift build (squint type-check)
+        if: matrix.port == 'swift'
+        run: cd squint/swift/RosettaSquint && swift build
+      - name: swift-format lint (best-effort)
+        if: matrix.port == 'swift'
+        continue-on-error: true
+        run: |
+          if command -v swift-format >/dev/null 2>&1; then
+            swift-format lint --recursive squint/swift/RosettaSquint/Sources
+          else
+            echo "swift-format not available on this image; skipping"
+          fi
+
+  # ─── macOS-arm64 dry-run (squint chain, per port) ────────────────────────
+  macos-tests:
+    name: macos-arm64 squint (${{ matrix.port }})
+    runs-on: macos-14
+    if: github.event_name == 'push' || github.event_name == 'schedule'
+    strategy:
+      fail-fast: false
+      matrix:
+        port: [rust, go, python, java, js, swift]
+    env:
+      TURBOJPEG_LIB_PATH: /opt/homebrew/opt/jpeg-turbo/lib
+      TURBOJPEG_JAR_PATH: /opt/homebrew/share/java/turbojpeg.jar
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system libs (brew, non-rust)
+        if: matrix.port != 'rust' && matrix.port != 'js'
+        run: brew install libjpeg-turbo libwebp libheif libde265 pkg-config
+
+      # Python
+      - name: Set up Python 3.11
+        if: matrix.port == 'python'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Python — install + test
+        if: matrix.port == 'python'
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e hash/python
+          pip install -e squint/python
+          pip install pytest
+          cd squint/python && pytest -q
+
+      # Rust
+      - name: Set up Rust stable
+        if: matrix.port == 'rust'
+        uses: dtolnay/rust-toolchain@stable
+      - name: Install libheif (Rust)
+        if: matrix.port == 'rust'
+        run: brew install libheif libde265 pkg-config
+      - name: Rust — cargo test
+        if: matrix.port == 'rust'
+        run: cd squint/rust/rosetta-squint && cargo test --no-fail-fast
+
+      # Go
+      - name: Set up Go 1.22
+        if: matrix.port == 'go'
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache-dependency-path: squint/go/squint/go.mod
+      - name: Go — go test
+        if: matrix.port == 'go'
+        run: cd squint/go/squint && go test -count=1 ./...
+
+      # Java — needs hash + decode JARs installed first; continue-on-error so a
+      # path-glitch on macOS surfaces without blocking the matrix.
+      - name: Set up Java 17
+        if: matrix.port == 'java'
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      - name: Java — mvn test (squint chain)
+        if: matrix.port == 'java'
+        continue-on-error: true
+        run: |
+          ls -la /opt/homebrew/share/java/ 2>/dev/null || echo "(no homebrew java dir)"
+          ls -la /opt/homebrew/opt/jpeg-turbo/lib/ 2>/dev/null || echo "(no jpeg-turbo lib dir)"
+          cd hash/java && mvn -B -ntp -DskipTests -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 install
+          cd ../../decode/java/rosetta-image-decode && mvn -B -ntp -DskipTests -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 install
+          cd ../../../squint/java/rosetta-squint && mvn -B -ntp \
+            -Djava.library.path="$TURBOJPEG_LIB_PATH:/opt/homebrew/opt/webp/lib:/opt/homebrew/opt/libheif/lib" \
+            -Djna.library.path="$TURBOJPEG_LIB_PATH:/opt/homebrew/opt/webp/lib:/opt/homebrew/opt/libheif/lib" \
+            -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 test
+
+      # JS
+      - name: Set up Node 20
+        if: matrix.port == 'js'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: squint/js/rosetta-squint/package-lock.json
+      - name: JS — npm ci + test
+        if: matrix.port == 'js'
+        run: |
+          cd hash/js/rosetta-image-hash && npm ci && npm run build
+          cd ../../../decode/js/rosetta-image-decode && npm ci && npm run build
+          cd ../../../squint/js/rosetta-squint && npm install && npm test
+
+      # Swift — native
+      - name: Set up Swift 5.9
+        if: matrix.port == 'swift'
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: '5.9'
+      - name: Swift — swift test
+        if: matrix.port == 'swift'
+        run: cd squint/swift/RosettaSquint && swift test

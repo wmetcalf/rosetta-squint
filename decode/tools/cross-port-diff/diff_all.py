@@ -176,7 +176,15 @@ def cmp_fixtures(fixtures: Iterable[Path], ports: dict[str, list[str]]) -> int:
             line_parts.append(f"{name}={tag}")
         for name, err in errors.items():
             line_parts.append(f"{name}=ERROR")
-        if fixture_failed:
+        # A single-port error while every other port succeeded is still a
+        # regression — surface it as a WARN failure rather than burying it
+        # in the OK line. Matches the squint-side `diff_all_squint.py`
+        # post-S-M6 semantics; mirrored here to close F-L7.
+        if errors and not fixture_failed:
+            err_summary = "; ".join(f"{n}: {e}" for n, e in sorted(errors.items()))
+            print(f"WARN {rel}: {' '.join(line_parts)}  ERRORED: {err_summary}")
+            failures += 1
+        elif fixture_failed:
             print(f"DIFF {rel}: {' '.join(line_parts)}")
             failures += 1
         else:

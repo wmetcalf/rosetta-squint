@@ -11,6 +11,7 @@ import Foundation
 /// Note: despite the name, this is NOT simply phash with mean instead of median.
 /// It uses a 1-D (row-wise) DCT and skips column 0 (DC component).
 public func phashSimple(_ image: RGBImage, hashSize: Int, highfreqFactor: Int = 4) throws -> Hash {
+	try image.validate()
 	guard hashSize >= 2 else { throw ImageHashError.invalidHashSize(hashSize) }
 	let imgSize = hashSize * highfreqFactor
 
@@ -38,14 +39,17 @@ public func phashSimple(_ image: RGBImage, hashSize: Int, highfreqFactor: Int = 
 		}
 	}
 
-	// Mean threshold
+	// Mean threshold with snap-to-threshold tie-break.
 	let mean = block.reduce(0.0, +) / Double(block.count)
 
+	// Snap-to-threshold tie-break: deterministic bit 0 on ties.
+	// See spec/SPEC.md §"Threshold tie-break".
+	let threshold = mean + SNAP_EPS
 	var bits: [[Bool]] = []
 	for y in 0..<hashSize {
 		var row = [Bool](repeating: false, count: hashSize)
 		for x in 1...hashSize {
-			row[x - 1] = dctRows[y][x] > mean
+			row[x - 1] = dctRows[y][x] > threshold
 		}
 		bits.append(row)
 	}

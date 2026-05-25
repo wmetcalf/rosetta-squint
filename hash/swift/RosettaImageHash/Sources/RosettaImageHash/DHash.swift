@@ -2,6 +2,7 @@ import Foundation
 
 /// dhash: grayscale → Lanczos to (W=N+1, H=N) → row-wise adjacent-column diff (strict >).
 public func dhash(_ image: RGBImage, hashSize: Int) throws -> Hash {
+    try image.validate()
     guard hashSize >= 2 else { throw ImageHashError.invalidHashSize(hashSize) }
     let rgb = ImgRGB.toRGB(image)
     let gray = rgbToGray(rgb.data, width: rgb.width, height: rgb.height)

@@ -4,6 +4,10 @@ on:
   pull_request:
   push:
     branches: [main]
+  schedule:
+    # Weekly Monday 09:00 UTC — re-runs dep-audit + govulncheck so newly-published
+    # CVEs against pinned versions surface without waiting for a PR.
+    - cron: '0 9 * * 1'
 
 jobs:
   spec-drift:
@@ -107,6 +111,276 @@ jobs:
         run: cd js/rosetta-image-hash && npm ci && npm test
 
       # Swift
+      - name: Set up Swift 5.9
+        if: matrix.port == 'swift'
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: '5.9'
+      - name: Swift — swift test
+        if: matrix.port == 'swift'
+        run: cd swift/RosettaImageHash && swift test
+
+  dep-audit:
+    # Per-ecosystem vulnerability scan. Runs on PR/push and weekly.
+    # Independent of port-tests: advisories fail this job but do not
+    # block functional CI.
+    name: dep-audit (${{ matrix.ecosystem }})
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        ecosystem: [rust, js, python, go]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust stable
+        if: matrix.ecosystem == 'rust'
+        uses: dtolnay/rust-toolchain@stable
+      - name: Install cargo-audit
+        if: matrix.ecosystem == 'rust'
+        run: cargo install --locked cargo-audit
+      - name: cargo audit (hash crate)
+        if: matrix.ecosystem == 'rust'
+        run: cd rust/rosetta-image-hash && cargo audit --deny warnings
+
+      - name: Set up Node 20
+        if: matrix.ecosystem == 'js'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: js/rosetta-image-hash/package-lock.json
+      - name: npm audit (hash JS)
+        if: matrix.ecosystem == 'js'
+        run: cd js/rosetta-image-hash && npm ci && npm audit --audit-level=high
+
+      - name: Set up Python 3.11
+        if: matrix.ecosystem == 'python'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pip-audit
+        if: matrix.ecosystem == 'python'
+        run: python -m pip install --upgrade pip pip-audit
+      - name: pip-audit (spec deps)
+        if: matrix.ecosystem == 'python'
+        run: pip-audit -r spec/requirements.txt
+      - name: pip-audit (Python wrapper)
+        if: matrix.ecosystem == 'python'
+        run: cd python && pip-audit .
+
+      # Go — govulncheck (Go vulnerability database). Use a recent stable Go
+      # toolchain so stdlib CVEs fixed in patch releases don't false-positive.
+      - name: Set up Go stable
+        if: matrix.ecosystem == 'go'
+        uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+          cache-dependency-path: go/imagehash/go.mod
+      - name: Install govulncheck
+        if: matrix.ecosystem == 'go'
+        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+      - name: govulncheck (hash Go module)
+        if: matrix.ecosystem == 'go'
+        run: cd go/imagehash && govulncheck ./...
+
+  lint:
+    # Per-ecosystem static analysis. Catches lint/type-check regressions
+    # without running the test matrix.
+    name: lint (${{ matrix.port }})
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        port: [rust, go, python, js, swift]
+    steps:
+      - uses: actions/checkout@v4
+
+      # Rust — clippy with warnings treated as errors.
+      - name: Set up Rust stable
+        if: matrix.port == 'rust'
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - name: Cache cargo (lint)
+        if: matrix.port == 'rust'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            rust/rosetta-image-hash/target
+          key: cargo-lint-${{ runner.os }}-${{ hashFiles('rust/rosetta-image-hash/Cargo.lock') }}
+      - name: cargo clippy
+        if: matrix.port == 'rust'
+        run: cd rust/rosetta-image-hash && cargo clippy --all-targets --all-features -- -D warnings
+
+      # Go — golangci-lint via the official action.
+      - name: Set up Go 1.22
+        if: matrix.port == 'go'
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache-dependency-path: go/imagehash/go.sum
+      - name: golangci-lint
+        if: matrix.port == 'go'
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          working-directory: go/imagehash
+
+      # Python — ruff (fast, configured via pyproject if present) + mypy on the wrapper.
+      - name: Set up Python 3.11
+        if: matrix.port == 'python'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install ruff + mypy + wrapper
+        if: matrix.port == 'python'
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff mypy
+          pip install -e python
+      - name: ruff check (Python wrapper)
+        if: matrix.port == 'python'
+        run: ruff check python/rosetta_imagehash --line-length=120 || \
+             python -m flake8 python/rosetta_imagehash --max-line-length=120
+      - name: mypy (Python wrapper)
+        if: matrix.port == 'python'
+        continue-on-error: true
+        run: mypy --strict --ignore-missing-imports python/rosetta_imagehash
+
+      # JS/TS — tsc --noEmit (already implicit in npm test, but isolated here for clarity).
+      - name: Set up Node 20
+        if: matrix.port == 'js'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: js/rosetta-image-hash/package-lock.json
+      - name: tsc --noEmit
+        if: matrix.port == 'js'
+        run: |
+          cd js/rosetta-image-hash
+          npm ci
+          # Use the project's own typecheck script if present; otherwise tsc --noEmit.
+          if npm run | grep -qE '^  (typecheck|lint)$'; then
+            npm run typecheck 2>/dev/null || npm run lint 2>/dev/null || npx tsc --noEmit
+          else
+            npx tsc --noEmit
+          fi
+
+      # Swift — build is the type-check. swift-format lint if available; skip otherwise.
+      - name: Set up Swift 5.9
+        if: matrix.port == 'swift'
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: '5.9'
+      - name: swift build (type-check)
+        if: matrix.port == 'swift'
+        run: cd swift/RosettaImageHash && swift build
+      - name: swift-format lint (best-effort)
+        if: matrix.port == 'swift'
+        continue-on-error: true
+        run: |
+          if command -v swift-format >/dev/null 2>&1; then
+            swift-format lint --recursive swift/RosettaImageHash/Sources
+          else
+            echo "swift-format not available on this image; skipping"
+          fi
+
+  macos-tests:
+    # macOS-arm64 (macos-14) dry-run for cross-platform-claim verification.
+    # Runs only on main pushes + weekly cron to keep first-time CI cost bounded.
+    name: macos-arm64 (${{ matrix.port }})
+    runs-on: macos-14
+    if: github.event_name == 'push' || github.event_name == 'schedule'
+    strategy:
+      fail-fast: false
+      matrix:
+        port: [rust, go, python, java, js, swift]
+    env:
+      # Homebrew on Apple Silicon installs under /opt/homebrew. The Java
+      # cross-port harness already probes these env vars (see tools/cross-
+      # squint-diff/_probe_turbojpeg).
+      TURBOJPEG_LIB_PATH: /opt/homebrew/opt/jpeg-turbo/lib
+      TURBOJPEG_JAR_PATH: /opt/homebrew/share/java/turbojpeg.jar
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system libs (brew)
+        if: matrix.port != 'rust' && matrix.port != 'js'
+        run: brew install libjpeg-turbo libwebp libheif libde265 pkg-config
+
+      # Rust — should just work; libheif still needed for the decode-related
+      # tests that the hash crate may chain into (matches Ubuntu CI).
+      - name: Set up Rust stable
+        if: matrix.port == 'rust'
+        uses: dtolnay/rust-toolchain@stable
+      - name: Install libheif (Rust)
+        if: matrix.port == 'rust'
+        run: brew install libheif libde265 pkg-config
+      - name: Rust — cargo test
+        if: matrix.port == 'rust'
+        run: cd rust/rosetta-image-hash && cargo test --no-fail-fast
+
+      # Go
+      - name: Set up Go 1.22
+        if: matrix.port == 'go'
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache-dependency-path: go/imagehash/go.sum
+      - name: Go — go test
+        if: matrix.port == 'go'
+        run: cd go/imagehash && go test -count=1 ./...
+
+      # Python — not in the Ubuntu port-tests matrix; covered here for completeness.
+      - name: Set up Python 3.11
+        if: matrix.port == 'python'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Python — pytest
+        if: matrix.port == 'python'
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e python
+          pip install pytest
+          cd python && pytest -q
+
+      # Java — turbojpeg jar lives at /opt/homebrew/share/java on Apple Silicon;
+      # JNA needs the lib path on java.library.path.
+      - name: Set up Java 17
+        if: matrix.port == 'java'
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      - name: Java — mvn test
+        if: matrix.port == 'java'
+        continue-on-error: true
+        run: |
+          cd java
+          # Probe homebrew layouts so future image rev's don't silently break this.
+          ls -la /opt/homebrew/share/java/ 2>/dev/null || echo "(no homebrew java dir)"
+          ls -la /opt/homebrew/opt/jpeg-turbo/lib/ 2>/dev/null || echo "(no jpeg-turbo lib dir)"
+          mvn -B -ntp -Djava.library.path="$TURBOJPEG_LIB_PATH" test
+
+      # JS
+      - name: Set up Node 20
+        if: matrix.port == 'js'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: js/rosetta-image-hash/package-lock.json
+      - name: JS — npm ci + test
+        if: matrix.port == 'js'
+        run: cd js/rosetta-image-hash && npm ci && npm test
+
+      # Swift — native; should just work.
       - name: Set up Swift 5.9
         if: matrix.port == 'swift'
         uses: swift-actions/setup-swift@v2

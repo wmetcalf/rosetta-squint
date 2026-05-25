@@ -1,7 +1,7 @@
 import { Hash, ImageHashError, type RgbImage } from "./hash.js";
 import { rgbToGray } from "./averageHash.js";
 import { wavedec2, waverec2 } from "./internal/haar.js";
-import { toRgb } from "./internal/imgRgb.js";
+import { toRgb, validateRgbImage } from "./internal/imgRgb.js";
 import { resize } from "./internal/lanczos.js";
 
 function isPowerOfTwo(n: number): boolean {
@@ -12,6 +12,10 @@ function isPowerOfTwo(n: number): boolean {
  * whash with mode='haar', remove_max_haar_ll=true, image_scale=None.
  */
 export function whashHaar(img: RgbImage, hashSize: number): Hash {
+  validateRgbImage(img);
+  if (!Number.isInteger(hashSize)) {
+    throw new ImageHashError("InvalidHashSize", `hashSize must be an integer, got ${hashSize}`);
+  }
   if (hashSize < 2) {
     throw new ImageHashError("InvalidHashSize", `hashSize must be >= 2, got ${hashSize}`);
   }

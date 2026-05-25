@@ -74,7 +74,11 @@ public final class PNGDecoder {
         } catch (DecodeException e) {
             throw e;
         } catch (IOException e) {
-            // Dimension read failed; let ImageIO.read() below produce the real error.
+            // Header parse failed — a corrupt PNG, not a "we couldn't be bothered to
+            // check". Propagate as corruptInput rather than silently falling through
+            // to ImageIO.read() which might OOM on a malformed dim field.
+            throw new DecodeException(DecodeException.Kind.CORRUPT_INPUT, Format.PNG,
+                "PNG header dimension read failed: " + e.getMessage());
         }
 
         BufferedImage img;

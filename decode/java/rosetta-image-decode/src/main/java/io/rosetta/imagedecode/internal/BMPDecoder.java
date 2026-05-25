@@ -115,10 +115,34 @@ public final class BMPDecoder {
         return new DecodedImage(hdr.width, hdr.height, pixels, Channels.RGB, Format.BMP);
     }
 
+    /**
+     * Clamp biClrUsed to the maximum entries the given bit-depth can index.
+     * If biClrUsed == 0, return the bit-depth maximum (existing default).
+     * If biClrUsed > bitDepthMax, clamp to bitDepthMax (PIL-lenient parsing).
+     * Defends against attacker-controlled values (e.g. 0x40000000) that would
+     * overflow signed-32 arithmetic in colorTableEnd, bypass the truncation
+     * check, and request multi-gigabyte palette allocations. PIL itself caps
+     * clrUsed at the bit-depth max.
+     *
+     * <p><b>Signed-int convention:</b> BMP's biClrUsed is a u32 in the file but
+     * Java's {@code ByteBuffer.getInt} reads it as a signed int. A value
+     * {@code 0x80000000..0xFFFFFFFF} in the file becomes a negative int here,
+     * so the {@code <= 0} branch correctly returns the bit-depth max. If a
+     * future refactor stores biClrUsed as {@code long} (via
+     * {@code Integer.toUnsignedLong}), this {@code <= 0} check would silently
+     * accept huge unsigned values — keep the signed-int convention and the
+     * check in sync.
+     */
+    public static int clampEntryCount(int clrUsed, int bitDepth) {
+        int bitDepthMax = 1 << bitDepth;
+        if (clrUsed <= 0) return bitDepthMax;  // negative = u32 > Int.MAX_VALUE
+        return Math.min(clrUsed, bitDepthMax);
+    }
+
     private static DecodedImage decodePal8(byte[] bytes, BMPHeader hdr) throws DecodeException {
         // Color table immediately after DIB header
         int colorTableOffset = 14 + hdr.dibHeaderSize;
-        int entryCount = hdr.clrUsed > 0 ? hdr.clrUsed : 256;
+        int entryCount = clampEntryCount(hdr.clrUsed, 8);
         int colorTableEnd = colorTableOffset + entryCount * 4;
         if (bytes.length < colorTableEnd) {
             throw new DecodeException(DecodeException.Kind.TRUNCATED, Format.BMP,
@@ -180,7 +204,7 @@ public final class BMPDecoder {
     }
 
     private static DecodedImage decodePal4(byte[] bytes, BMPHeader hdr) throws DecodeException {
-        int entryCount = hdr.clrUsed > 0 ? hdr.clrUsed : 16;
+        int entryCount = clampEntryCount(hdr.clrUsed, 4);
         int[][] palette = readColorTable(bytes, hdr, entryCount);
         // Row stride: ceil(width*4 / 32) * 4 bytes = ((width * 4 + 31) / 32) * 4
         int stride = ((hdr.width * 4 + 31) / 32) * 4;
@@ -211,7 +235,7 @@ public final class BMPDecoder {
     }
 
     private static DecodedImage decodePal1(byte[] bytes, BMPHeader hdr) throws DecodeException {
-        int entryCount = hdr.clrUsed > 0 ? hdr.clrUsed : 2;
+        int entryCount = clampEntryCount(hdr.clrUsed, 1);
         int[][] palette = readColorTable(bytes, hdr, entryCount);
         // Row stride: ceil(width / 32) * 4 bytes = ((width + 31) / 32) * 4
         int stride = ((hdr.width + 31) / 32) * 4;
@@ -303,7 +327,7 @@ public final class BMPDecoder {
     }
 
     private static DecodedImage decodeRle(byte[] bytes, BMPHeader hdr, int bitsPerPixel) throws DecodeException {
-        int entryCount = hdr.clrUsed > 0 ? hdr.clrUsed : (bitsPerPixel == 8 ? 256 : 16);
+        int entryCount = clampEntryCount(hdr.clrUsed, bitsPerPixel);
         int[][] palette = readColorTable(bytes, hdr, entryCount);
 
         int xsize = hdr.width;
@@ -435,6 +459,25 @@ public final class BMPDecoder {
         @SuppressWarnings("unused")
         int bfSize = bb.getInt(2);
         int bfOffBits = bb.getInt(10);
+
+        // bfOffBits is a u32 in the BMP file. ByteBuffer.getInt reads it as
+        // signed int — values > Int.MAX_VALUE become negative. Reject those:
+        // every subsequent indexing operation in the decoder (decodeRgb24,
+        // decodeRgb32, decodeRle, ...) computes `bytes[bfOffBits + ...]` and
+        // a negative offset turns the truncation check `(long)stride*h >
+        // bytes.length - bfOffBits` into a false-negative followed by an
+        // ArrayIndexOutOfBoundsException on the first pixel read.
+        // Found via Jazzer fuzz on input `BM 20 C1 40 FF FF FF FF FF FF C1 3F F9 …`
+        // where the pixel-data-offset field is 0xF93FC1FF (~4.18 GB).
+        if (bfOffBits < 0) {
+            throw new DecodeException(DecodeException.Kind.CORRUPT_INPUT, Format.BMP,
+                "pixel data offset (bfOffBits) " + Integer.toUnsignedString(bfOffBits)
+                + " exceeds Int.MAX_VALUE (signed-int read of u32 field)");
+        }
+        if (bfOffBits > bytes.length) {
+            throw new DecodeException(DecodeException.Kind.TRUNCATED, Format.BMP,
+                "pixel data offset " + bfOffBits + " > file length " + bytes.length);
+        }
 
         if (bytes.length < 18) {
             throw new DecodeException(DecodeException.Kind.TRUNCATED, Format.BMP, "DIB header size not readable");

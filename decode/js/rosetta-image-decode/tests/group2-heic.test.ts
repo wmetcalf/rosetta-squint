@@ -1,4 +1,4 @@
-import { describe, it } from "vitest";
+import { describe, it, expect } from "vitest";
 import { decode } from "../src/index.js";
 import { listValidFixtures, readFixture, readGolden } from "./testkit.js";
 
@@ -9,6 +9,23 @@ import { listValidFixtures, readFixture, readGolden } from "./testkit.js";
 const HEIC_MAX_DELTA = 2;
 
 describe("Group 2 — HEIC goldens (within ±2 px tolerance)", () => {
+  // Smoke test for alpha detection — this is the only signal we'll get if
+  // a future libheif-js version reshapes the private `$$.ptr` field that
+  // heic.ts pokes for `has_alpha_channel`. Pinned via package.json, but
+  // belt-and-braces.
+  it("detects alpha channel on RGBA HEIC fixtures", async () => {
+    const rgbaFixtures = listValidFixtures("heic").filter((f) =>
+      f.includes("-rgba.")
+    );
+    if (rgbaFixtures.length === 0) {
+      throw new Error("no RGBA HEIC fixtures available for alpha smoke test");
+    }
+    for (const rel of rgbaFixtures) {
+      const got = await decode(readFixture(rel));
+      expect(got.channels, `${rel} should be 4-channel (RGBA)`).toBe(4);
+    }
+  });
+
   it("decodes all HEIC fixtures within tolerance of system libheif", async () => {
     const fixtures = listValidFixtures("heic");
     if (fixtures.length === 0) throw new Error("no HEIC fixtures");

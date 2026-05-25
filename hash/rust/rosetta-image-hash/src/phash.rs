@@ -7,12 +7,22 @@
 //!  1. phash uses 2-D DCT (column-then-row); phash_simple uses 1-D DCT per row only.
 //!  2. phash takes columns 0..N; phash_simple takes columns 1..N+1.
 //!  3. phash thresholds by median; phash_simple thresholds by mean.
+//!
+//! Both algorithms apply the snap-to-threshold tie-break:
+//! `bit = (v > threshold + SNAP_EPS)`. See [`SNAP_EPS`] and `spec/SPEC.md`
+//! §"Threshold tie-break".
 
 use image::DynamicImage;
 
 use crate::average::rgb_to_gray;
 use crate::internal::{dct, img_rgb, lanczos};
 use crate::{Hash, ImageHashError};
+
+/// ε threshold for the snap-to-threshold tie-break used by `phash`,
+/// `phash_simple`, `whash_db4`, and `whash_db4_robust`. Coefficients within
+/// `SNAP_EPS` of the threshold map deterministically to bit 0 across all
+/// ports. See `spec/SPEC.md` §"Threshold tie-break".
+pub const SNAP_EPS: f64 = 1e-10;
 
 pub fn phash(img: &DynamicImage, hash_size: usize) -> Result<Hash, ImageHashError> {
     phash_with_factor(img, hash_size, 4)
@@ -49,7 +59,7 @@ pub fn phash_with_factor(
         }
     }
     let mut sorted = block.clone();
-    sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    sorted.sort_by(|a, b| a.total_cmp(b));
     let n = sorted.len();
     let median = if n % 2 == 1 {
         sorted[n / 2]
@@ -57,11 +67,14 @@ pub fn phash_with_factor(
         (sorted[n / 2 - 1] + sorted[n / 2]) / 2.0
     };
 
+    // Snap-to-threshold tie-break: bit = v > (median + SNAP_EPS). Maps any
+    // coefficient within SNAP_EPS of the median deterministically to 0.
+    let threshold = median + SNAP_EPS;
     let mut bits: Vec<Vec<bool>> = Vec::with_capacity(hash_size);
     for y in 0..hash_size {
         let mut row = Vec::with_capacity(hash_size);
         for x in 0..hash_size {
-            row.push(dct_out[y][x] > median);
+            row.push(dct_out[y][x] > threshold);
         }
         bits.push(row);
     }
@@ -114,11 +127,13 @@ pub fn phash_simple_with_factor(
     let n = block.len() as f64;
     let mean = block.iter().sum::<f64>() / n;
 
+    // Snap-to-threshold tie-break: bit = v > (mean + SNAP_EPS).
+    let threshold = mean + SNAP_EPS;
     let mut bits: Vec<Vec<bool>> = Vec::with_capacity(hash_size);
     for y in 0..hash_size {
         let mut row = Vec::with_capacity(hash_size);
         for x in 1..=hash_size {
-            row.push(dct_rows[y][x] > mean);
+            row.push(dct_rows[y][x] > threshold);
         }
         bits.push(row);
     }

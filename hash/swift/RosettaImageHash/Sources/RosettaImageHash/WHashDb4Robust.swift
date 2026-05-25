@@ -9,6 +9,7 @@ public let WHASH_DB4_ROBUST_EPS: Double = 1e-12
 /// deterministic across all ports (NOT byte-exact-compatible with Python
 /// imagehash on those inputs).
 public func whashDb4Robust(_ image: RGBImage, hashSize: Int) throws -> Hash {
+	try image.validate()
 	guard hashSize >= 2 else { throw ImageHashError.invalidHashSize(hashSize) }
 	guard isPowerOfTwoDb4Robust(hashSize) else { throw ImageHashError.notPowerOfTwo(hashSize) }
 
@@ -57,16 +58,19 @@ public func whashDb4Robust(_ image: RGBImage, hashSize: Int) throws -> Hash {
 		}
 	}
 
-	// Step 8: median threshold
+	// Step 8: median threshold with snap-to-threshold tie-break.
 	var flat: [Double] = []
 	for row in ll { flat.append(contentsOf: row) }
 	let sorted = flat.sorted()
 	let n = sorted.count
 	let median: Double = n % 2 == 1 ? sorted[(n - 1) / 2] : (sorted[n / 2 - 1] + sorted[n / 2]) / 2.0
 
+	// Snap-to-threshold tie-break (on top of snap-to-zero): deterministic
+	// bit 0 on ties. See spec/SPEC.md §"Threshold tie-break".
+	let threshold = median + SNAP_EPS
 	var bits: [[Bool]] = []
 	for row in ll {
-		bits.append(row.map { $0 > median })
+		bits.append(row.map { $0 > threshold })
 	}
 	return try Hash(bits: bits)
 }

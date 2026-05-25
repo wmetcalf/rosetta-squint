@@ -214,6 +214,19 @@ function decodeRgb32(bytes: Uint8Array, hdr: BmpHeader): DecodedImage {
   return { width: hdr.width, height: hdr.height, data: pixels, channels: 3, format: "bmp" };
 }
 
+/**
+ * Clamp biClrUsed to the maximum entries the given bit-depth can index.
+ * If clrUsed <= 0, returns the bit-depth maximum (existing default).
+ * If clrUsed > bitDepthMax, clamps to bitDepthMax (PIL-lenient parsing).
+ * Defends against attacker-controlled values (e.g. 0x40000000) that would
+ * cause excessive palette allocation.
+ */
+function clampEntryCount(clrUsed: number, bitDepth: number): number {
+  const bitDepthMax = 1 << bitDepth;
+  if (clrUsed <= 0) return bitDepthMax;
+  return Math.min(clrUsed, bitDepthMax);
+}
+
 function readColorTable(bytes: Uint8Array, hdr: BmpHeader, entryCount: number): number[][] {
   const colorTableOffset = 14 + hdr.dibHeaderSize;
   const colorTableEnd = colorTableOffset + entryCount * 4;
@@ -233,7 +246,7 @@ function readColorTable(bytes: Uint8Array, hdr: BmpHeader, entryCount: number): 
 }
 
 function decodePal8(bytes: Uint8Array, hdr: BmpHeader): DecodedImage {
-  const entryCount = hdr.clrUsed > 0 ? hdr.clrUsed : 256;
+  const entryCount = clampEntryCount(hdr.clrUsed, 8);
   const colorTableOffset = 14 + hdr.dibHeaderSize;
   const colorTableEnd = colorTableOffset + entryCount * 4;
   if (bytes.length < colorTableEnd) {
@@ -270,7 +283,7 @@ function decodePal8(bytes: Uint8Array, hdr: BmpHeader): DecodedImage {
 }
 
 function decodePal4(bytes: Uint8Array, hdr: BmpHeader): DecodedImage {
-  const entryCount = hdr.clrUsed > 0 ? hdr.clrUsed : 16;
+  const entryCount = clampEntryCount(hdr.clrUsed, 4);
   const palette = readColorTable(bytes, hdr, entryCount);
   const stride = Math.trunc((hdr.width * 4 + 31) / 32) * 4;
   if (bytes.length - hdr.pixelDataOffset < stride * hdr.height) {
@@ -295,7 +308,7 @@ function decodePal4(bytes: Uint8Array, hdr: BmpHeader): DecodedImage {
 }
 
 function decodePal1(bytes: Uint8Array, hdr: BmpHeader): DecodedImage {
-  const entryCount = hdr.clrUsed > 0 ? hdr.clrUsed : 2;
+  const entryCount = clampEntryCount(hdr.clrUsed, 1);
   const palette = readColorTable(bytes, hdr, entryCount);
   const stride = Math.trunc((hdr.width + 31) / 32) * 4;
   if (bytes.length - hdr.pixelDataOffset < stride * hdr.height) {
@@ -385,7 +398,7 @@ function decodeBitfields(bytes: Uint8Array, hdr: BmpHeader, bitsPerPixel: number
 }
 
 function decodeRle(bytes: Uint8Array, hdr: BmpHeader, bitsPerPixel: number): DecodedImage {
-  const entryCount = hdr.clrUsed > 0 ? hdr.clrUsed : bitsPerPixel === 8 ? 256 : 16;
+  const entryCount = clampEntryCount(hdr.clrUsed, bitsPerPixel);
   const palette = readColorTable(bytes, hdr, entryCount);
 
   const xsize = hdr.width;

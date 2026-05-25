@@ -35,3 +35,22 @@ Homepage = "https://github.com/wmetcalf/rosetta-squint"
 [tool.setuptools.packages.find]
 include = ["rosetta_squint*"]
 exclude = ["tests*"]
+
+# ─── Static analysis config (consumed by the CI lint job) ─────────────────
+[tool.ruff]
+line-length = 120
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B"]
+ignore = [
+    "E203",
+    "F403",
+    "F401",
+]
+exclude = ["tests"]
+
+[tool.mypy]
+python_version = "3.9"
+ignore_missing_imports = true
+follow_imports = "silent"

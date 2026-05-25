@@ -144,8 +144,57 @@ cross-port-diff:
 
 .PHONY: cross-squint-diff
 cross-squint-diff:
-	@echo "→ cross-squint-diff (live chain comparison across 6 ports)"
+	@echo "→ cross-squint-diff (full grid, 70 combos × 2 fixtures)"
 	@tools/cross-squint-diff/diff_all_squint.py --regression
+
+.PHONY: cross-squint-diff-fast
+cross-squint-diff-fast:
+	@echo "→ cross-squint-diff (minimal grid, ~22 combos — fast local iter)"
+	@tools/cross-squint-diff/diff_all_squint.py --grid=minimal --regression
+
+.PHONY: cross-squint-diff-boundary
+cross-squint-diff-boundary:
+	@echo "→ cross-squint-diff (boundary sizes 2/32/64 — snap-to-threshold verify)"
+	@tools/cross-squint-diff/diff_all_squint.py --grid=boundary --regression
+
+# ─── Differential fuzz: run all 6 ports against random/mutated inputs ──────
+
+.PHONY: differential-fuzz
+differential-fuzz:
+	@echo "→ differential-fuzz (60s, mixed strategy) — finds cross-port drift"
+	@tools/cross-squint-diff/differential_fuzz.py --duration 60
+
+.PHONY: differential-hash-fuzz
+differential-hash-fuzz:
+	@echo "→ differential-hash-fuzz (60s, mixed strategy) — finds cross-port HASH drift"
+	@tools/cross-squint-diff/differential_hash_fuzz.py --duration 60
+
+# ─── Single-port fuzz (panic-free invariant) ──────────────────────────────
+
+.PHONY: fuzz-rust-decode
+fuzz-rust-decode:
+	@echo "→ fuzz: rust decode (cargo-fuzz, 60s)"
+	@cd decode/rust/rosetta-image-decode && cargo +nightly fuzz run decode_any -- -max_total_time=60
+
+.PHONY: fuzz-rust-hash
+fuzz-rust-hash:
+	@echo "→ fuzz: rust hash (cargo-fuzz, 60s per target)"
+	@cd hash/rust/rosetta-image-hash && cargo +nightly fuzz run hex_to_hash -- -max_total_time=60
+
+.PHONY: fuzz-go-decode
+fuzz-go-decode:
+	@echo "→ fuzz: go decode (native Go 1.18 fuzz, 60s)"
+	@cd decode/go/imagedecode && go test -run='^$$' -fuzz=FuzzDecodeAny -fuzztime=60s
+
+.PHONY: fuzz-java-decode
+fuzz-java-decode:
+	@echo "→ fuzz: java decode (Jazzer, 60s)"
+	@cd decode/java/rosetta-image-decode && JAZZER_FUZZ=1 mvn -B -ntp -Pfuzz -Dtest='DecoderFuzzTest#decodeAny' test -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 -DjazzerArgs="-max_total_time=60"
+
+.PHONY: fuzz-java-hash
+fuzz-java-hash:
+	@echo "→ fuzz: java hash (Jazzer, 60s)"
+	@cd hash/java && JAZZER_FUZZ=1 mvn -B -ntp -Pfuzz -Dtest='HexParserFuzzTest#hexToHash' test -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 -DjazzerArgs="-max_total_time=60"
 
 # ─── Cross-port benchmark ───────────────────────────────────────────────────
 
@@ -195,8 +244,19 @@ help:
 	@echo "  make test-squint       # 6 squint ports only"
 	@echo ""
 	@echo "Cross-port verification (decode):"
-	@echo "  make build-all-clis    # build per-port decode-cli binaries"
-	@echo "  make cross-port-diff   # live diff via tools/cross-port-diff"
+	@echo "  make build-all-clis        # build per-port decode + squint CLI binaries"
+	@echo "  make cross-port-diff       # live diff via tools/cross-port-diff (decode)"
+	@echo "  make cross-squint-diff     # all 6 ports byte-exact on the spec grid"
+	@echo ""
+	@echo "Fuzz (cross-port, finds drift the curated grid can't reach):"
+	@echo "  make differential-fuzz       # 60s: random bytes → all 6 decoders, diff"
+	@echo "  make differential-hash-fuzz  # 60s: random pixels → all 6 hash funcs, diff"
+	@echo ""
+	@echo "Fuzz (single-port, finds panics / hangs):"
+	@echo "  make fuzz-rust-decode  fuzz-rust-hash   # cargo-fuzz / nightly"
+	@echo "  make fuzz-go-decode                     # go 1.18+ native fuzz"
+	@echo "  make fuzz-java-decode  fuzz-java-hash   # jazzer (junit5)"
+	@echo "  (JS fuzz runs as part of npm test via fast-check.)"
 	@echo ""
 	@echo "Per-port (target = test-<lang>-<project>):"
 	@echo "  make test-rust-hash     test-rust-decode     test-rust-squint"

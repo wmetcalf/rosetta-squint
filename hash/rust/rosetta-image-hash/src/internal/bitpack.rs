@@ -35,10 +35,9 @@ pub fn pack(bits: &[Vec<bool>]) -> String {
 pub fn unpack_square(hex: &str) -> Result<Vec<Vec<bool>>, ImageHashError> {
     let bits = hex_to_bits(hex)?;
     let total = bits.len();
-    let mut n: usize = 0;
-    while n * n < total {
-        n += 1;
-    }
+    // usize::isqrt (stable 1.84+) returns floor(sqrt(total)); a non-square `total`
+    // is rejected by the equality check below.
+    let n = total.isqrt();
     if n * n != total {
         return Err(ImageHashError::InvalidHex(format!(
             "hex length {} ({total} bits) is not a square shape",

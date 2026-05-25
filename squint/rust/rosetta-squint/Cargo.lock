@@ -383,6 +383,7 @@ checksum = "69cdb34c158ceb288df11e18b4bd39de994f6657d83847bdffdbd7f346754b0f"
 name = "rosetta-image-decode"
 version = "0.1.0"
 dependencies = [
+ "cc",
  "image",
  "libheif-rs",
  "libwebp-sys2",
@@ -403,6 +404,7 @@ name = "rosetta-squint"
 version = "0.1.0"
 dependencies = [
  "image",
+ "libc",
  "rosetta-image-decode",
  "rosetta-image-hash",
  "thiserror 2.0.18",

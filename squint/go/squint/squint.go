@@ -5,18 +5,30 @@
 package squint
 
 import (
+	"errors"
 	"fmt"
 	"image"
 	"image/color"
-	"os"
+	"io"
 
 	"github.com/wmetcalf/rosetta-image-decode/go/imagedecode"
 	"github.com/wmetcalf/rosetta-image-hash/go/imagehash"
 )
 
+// errSymlinkNotAllowed is returned by DecodeFile when the file at the
+// supplied path is a symlink. It is wrapped in a descriptive message that
+// includes the path; use errors.Is(err, ErrSymlinkNotAllowed) to test.
+var ErrSymlinkNotAllowed = errors.New("symlink not allowed")
+
 // Hash and ImageMultiHash are re-exported from imagehash for ergonomics.
 type Hash = imagehash.Hash
 type ImageMultiHash = imagehash.ImageMultiHash
+
+// MaxFileSize is the cap on path-based decode input size. Refuse anything
+// larger BEFORE reading bytes. Callers that genuinely need to process
+// images larger than this should decode via rosetta-image-decode directly
+// after explicit validation.
+const MaxFileSize int64 = 256 * 1024 * 1024 // 256 MiB
 
 // decodedToImage converts a rosetta-image-decode DecodedImage into a Go
 // image.Image (concrete type *image.NRGBA — both RGB and RGBA inputs are
@@ -44,10 +56,55 @@ func decodedToImage(d imagedecode.DecodedImage) image.Image {
 
 // DecodeFile reads a file and returns a decoded image.Image suitable for
 // passing to the imagehash functions directly.
+//
+// Refuses symlinks (via O_NOFOLLOW on POSIX / Lstat on Windows),
+// non-regular files (FIFOs, /dev/zero, character devices, etc.) and files
+// larger than MaxFileSize BEFORE reading bytes — without these guards
+// os.ReadFile("/dev/zero") would loop until OOM and a 300 MiB sparse file
+// would allocate 300 MiB even though it contains no image. Callers who
+// genuinely want symlink resolution must do it explicitly (for example
+// via filepath.EvalSymlinks) before calling this function.
+//
+// The file is opened once and Stat() is called on the open *os.File (which
+// uses fstat under the hood, not stat on the path), closing the TOCTOU
+// window between size check and read. The read uses io.LimitReader with a
+// MaxFileSize+1 ceiling so a concurrent writer that grows the file after
+// the size check is still rejected.
 func DecodeFile(path string) (image.Image, error) {
-	b, err := os.ReadFile(path)
+	f, err := openNoFollow(path)
+	if err != nil {
+		if errors.Is(err, ErrSymlinkNotAllowed) {
+			return nil, err
+		}
+		return nil, fmt.Errorf("open %s: %w", path, err)
+	}
+	defer f.Close()
+	info, err := f.Stat()
+	if err != nil {
+		return nil, fmt.Errorf("fstat %s: %w", path, err)
+	}
+	if !info.Mode().IsRegular() {
+		return nil, fmt.Errorf("not a regular file: %s", path)
+	}
+	if info.Size() > MaxFileSize {
+		return nil, fmt.Errorf(
+			"input file too large: %d bytes (max %d bytes / 256 MiB). "+
+				"For images above this threshold, decode via "+
+				"rosetta-image-decode directly after explicit validation",
+			info.Size(), MaxFileSize)
+	}
+	// Limit the read to MaxFileSize+1 — if we get a (MaxFileSize+1)th byte
+	// it means the file grew after fstat and we should reject.
+	b, err := io.ReadAll(io.LimitReader(f, MaxFileSize+1))
 	if err != nil {
 		return nil, fmt.Errorf("read %s: %w", path, err)
+	}
+	if int64(len(b)) > MaxFileSize {
+		return nil, fmt.Errorf(
+			"input file too large: %d bytes (max %d bytes / 256 MiB). "+
+				"For images above this threshold, decode via "+
+				"rosetta-image-decode directly after explicit validation",
+			len(b), MaxFileSize)
 	}
 	return DecodeBytes(b)
 }
@@ -229,19 +286,23 @@ func ColorHashBytes(b []byte, binbits int) (Hash, error) {
 
 // CropResistantHash decodes the file at path and computes the crop-resistant
 // multi-hash using default parameters.
-func CropResistantHash(path string) (ImageMultiHash, error) {
+//
+// limitSegments: pass a non-nil *int to keep only the N largest segments
+// (matches Python crop_resistant_hash(limit_segments=N)). Pass nil for the
+// Python default (no limit).
+func CropResistantHash(path string, limitSegments *int) (ImageMultiHash, error) {
 	img, err := DecodeFile(path)
 	if err != nil {
 		return ImageMultiHash{}, err
 	}
-	return imagehash.CropResistantHash(img)
+	return imagehash.CropResistantHash(img, limitSegments)
 }
 
 // CropResistantHashBytes is the bytes-input version of CropResistantHash.
-func CropResistantHashBytes(b []byte) (ImageMultiHash, error) {
+func CropResistantHashBytes(b []byte, limitSegments *int) (ImageMultiHash, error) {
 	img, err := DecodeBytes(b)
 	if err != nil {
 		return ImageMultiHash{}, err
 	}
-	return imagehash.CropResistantHash(img)
+	return imagehash.CropResistantHash(img, limitSegments)
 }

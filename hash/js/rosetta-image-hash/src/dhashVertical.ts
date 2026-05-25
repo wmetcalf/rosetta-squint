@@ -1,6 +1,6 @@
 import { Hash, ImageHashError, type RgbImage } from "./hash.js";
 import { rgbToGray } from "./averageHash.js";
-import { toRgb } from "./internal/imgRgb.js";
+import { toRgb, validateRgbImage } from "./internal/imgRgb.js";
 import { resize } from "./internal/lanczos.js";
 
 /**
@@ -12,6 +12,10 @@ import { resize } from "./internal/lanczos.js";
  * This preserves the pre-3.0 (buggy) dhash direction for backward compatibility.
  */
 export function dhashVertical(img: RgbImage, hashSize: number): Hash {
+  validateRgbImage(img);
+  if (!Number.isInteger(hashSize)) {
+    throw new ImageHashError("InvalidHashSize", `hashSize must be an integer, got ${hashSize}`);
+  }
   if (hashSize < 2) {
     throw new ImageHashError("InvalidHashSize", `hashSize must be >= 2, got ${hashSize}`);
   }

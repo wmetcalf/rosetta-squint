@@ -83,6 +83,16 @@ fn gif_has_transparency(bytes: &[u8]) -> bool {
 }
 
 pub(crate) fn decode_gif(bytes: &[u8]) -> Result<DecodedImage, DecodeError> {
+    // Sniff the canvas dimensions from the Logical Screen Descriptor (LSD)
+    // at offsets 6..10 BEFORE invoking the image crate's decoder, so the
+    // MAX_PIXELS guard fires before the underlying decoder allocates the
+    // raster. Spec §3.1 requires this ordering.
+    if bytes.len() >= 10 {
+        let gif_width = u16::from_le_bytes([bytes[6], bytes[7]]) as usize;
+        let gif_height = u16::from_le_bytes([bytes[8], bytes[9]]) as usize;
+        check_dimensions(gif_width, gif_height, Format::Gif)?;
+    }
+
     let reader = ImageReader::with_format(Cursor::new(bytes), image::ImageFormat::Gif);
     let img = match reader.decode() {
         Ok(i) => i,
@@ -96,6 +106,10 @@ pub(crate) fn decode_gif(bytes: &[u8]) -> Result<DecodedImage, DecodeError> {
     };
 
     let (width, height) = (img.width() as usize, img.height() as usize);
+    // Defense in depth: the image crate composes individual frames onto the
+    // canvas, so its output dimensions match the LSD. We've already checked
+    // those above; re-checking here is cheap and protects against any
+    // future divergence between LSD and decoded dimensions.
     check_dimensions(width, height, Format::Gif)?;
 
     // The image crate always returns RGBA8 for GIF palette images.

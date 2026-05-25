@@ -1,0 +1,83 @@
+name: codeql
+
+# CodeQL static analysis (SAST) for the in-repo ports that GitHub supports.
+# Free for public repos. Covers Go, JavaScript/TypeScript, Python, and Java.
+# Rust + Swift are not yet GA in CodeQL — skipped.
+#
+# Triggered on PRs touching this repo, on pushes to main, and weekly so a
+# newly-added rule against pinned code surfaces without a code change.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    # Monday 09:00 UTC, same cadence as dep-audit so the security signal lands
+    # in one weekly batch.
+    - cron: '0 9 * * 1'
+
+jobs:
+  analyze:
+    name: CodeQL (${{ matrix.language }})
+    runs-on: ubuntu-22.04
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [go, javascript, python, java]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          # `security-and-quality` adds maintainability checks on top of the
+          # default `security` pack; `security-extended` is the middle ground.
+          # Stick with the default security pack to keep noise down — we can
+          # upgrade once the baseline is clean.
+          queries: security-extended
+
+      # Java needs a build step so CodeQL can index bytecode. The other
+      # languages auto-detect via the indexer.
+      - name: Install JDK 17 (Java)
+        if: matrix.language == 'java'
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      - name: Install system libs (Java build needs turbojpeg/webp/heif)
+        if: matrix.language == 'java'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y \
+            libturbojpeg libturbojpeg0-dev libturbojpeg-java \
+            libwebp-dev libsharpyuv-dev libtiff-dev \
+            libheif-dev libheif-plugin-libde265 libde265-dev libde265-0 \
+            pkg-config
+      - name: Autobuild Java (hash + decode + squint)
+        if: matrix.language == 'java'
+        run: |
+          cd hash/java && mvn -B -ntp -DskipTests -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 install
+          cd ../../decode/java/rosetta-image-decode && mvn -B -ntp -DskipTests -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 install
+          cd ../../../squint/java/rosetta-squint && mvn -B -ntp -DskipTests -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 install
+
+      # Go autobuild — make sure the toolchain is present so CodeQL's tracer
+      # can attach to the compile.
+      - name: Install Go (Go)
+        if: matrix.language == 'go'
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      # JavaScript/TypeScript and Python — CodeQL handles directly.
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: /language:${{ matrix.language }}

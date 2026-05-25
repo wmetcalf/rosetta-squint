@@ -1,7 +1,8 @@
 import { DecodeError } from "../errors.js";
 import type { DecodedImage } from "../types.js";
+import { sniffWebpDimensions } from "./dimensionSniff.js";
 import { checkDimensions } from "./limits.js";
-import { loadWasmModule } from "./loadWasm.js";
+import { loadWasmModule, resolvePackageWasmUrl } from "./loadWasm.js";
 
 // @jsquash/webp: community-maintained libwebp WASM fork of squoosh's webp codec.
 import { init, default as webpDecode } from "@jsquash/webp/decode.js";
@@ -12,14 +13,21 @@ async function ensureWasmInit(): Promise<void> {
   if (wasmInitPromise) return wasmInitPromise;
 
   wasmInitPromise = (async () => {
-    // Resolves to file:// in Node, http(s):// or blob: in browser.
-    const wasmUrl = new URL(
+    // Locate the WASM binary tolerantly: in Node, resolve via the package
+    // graph (handles hoisted node_modules layouts); in browsers, fall back
+    // to the bundler-relative URL pattern that esbuild/vite/webpack rewrite
+    // to point at the emitted asset path.
+    const wasmUrl = await resolvePackageWasmUrl(
+      "@jsquash/webp/codec/dec/webp_dec.wasm",
       "../../node_modules/@jsquash/webp/codec/dec/webp_dec.wasm",
       import.meta.url,
     );
     const wasmModule = await loadWasmModule(wasmUrl);
     await init(wasmModule);
   })();
+
+  // Reset on rejection so a transient failure doesn't poison every future call.
+  wasmInitPromise.catch(() => { wasmInitPromise = null; });
 
   return wasmInitPromise;
 }
@@ -46,8 +54,12 @@ function detectWebpAlpha(bytes: Uint8Array): boolean {
   }
   if (chunkType === "VP8L") {
     // Lossless WebP — VP8L signature 0x2F at offset 20,
-    // then 4 bytes where bit 4 of byte[24] = alpha_is_used
+    // then 4 bytes where bit 4 of byte[24] = alpha_is_used.
+    // Validate the 0x2F signature byte first; a hostile non-VP8L file with
+    // a forged "VP8L" fourcc but garbage signature byte must not mislead
+    // the alpha-detection heuristic.
     if (bytes.length < 25) return false;
+    if (bytes[20] !== 0x2F) return false;
     return (bytes[24]! & 0x10) !== 0;
   }
   // VP8 (lossy without alpha container) — never has alpha
@@ -55,6 +67,15 @@ function detectWebpAlpha(bytes: Uint8Array): boolean {
 }
 
 export async function decodeWebp(bytes: Uint8Array): Promise<DecodedImage> {
+  // Sniff VP8X canvas dimensions BEFORE the WASM decoder runs. libwebp's
+  // WebPGetFeatures rejects oversized VP8X canvases with VP8_STATUS_BITSTREAM_ERROR
+  // which would surface as corruptInput; this pre-check produces the canonical
+  // imageTooLarge error required by Spec §3.1.
+  const sniffed = sniffWebpDimensions(bytes);
+  if (sniffed) {
+    checkDimensions(sniffed.width, sniffed.height, "webp");
+  }
+
   await ensureWasmInit();
 
   // @jsquash/webp decode() accepts ArrayBuffer.

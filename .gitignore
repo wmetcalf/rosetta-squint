@@ -1,0 +1,45 @@
+# Top-level gitignore. Per-sub-project `.gitignore` files handle the usual
+# build artifacts (target/, node_modules/, .build/, __pycache__/, etc.).
+# This one covers things spanning the umbrella project.
+
+# Internal audit / triage docs — kept local, not published.
+AUDIT.md
+AUDIT-claude.md
+docs/internal/
+
+# Fuzz corpora — disagreement bins / logs / pixels accumulate per-run; not
+# useful to ship, and the inputs would clutter the repo on every fuzz run.
+tools/cross-squint-diff/fuzz-corpus/
+tools/cross-squint-diff/hash-fuzz-corpus/
+
+# Coverage-guided fuzz crash artifacts. These are proof-of-crash inputs —
+# security-sensitive while the corresponding bug is unfixed. After a fix
+# lands the input is fine to publish (as a regression fixture under
+# spec/fixtures/<format>/invalid/), but the raw `crash-*` files don't need
+# to live in git.
+**/crash-*
+**/crashes-fixed/
+**/.cifuzz-corpus/
+decode/rust/rosetta-image-decode/fuzz/artifacts/
+decode/rust/rosetta-image-decode/fuzz/corpus/
+hash/rust/rosetta-image-hash/fuzz/artifacts/
+hash/rust/rosetta-image-hash/fuzz/corpus/
+
+# Stale wrong-path build target (Makefile bug, since fixed — old location
+# was squint/tools/cross-squint-diff/, correct is tools/cross-squint-diff/).
+squint/tools/
+
+# Built CLI binary (squint/go/squint/squint-cli) — emitted by `go build`
+# for local diff/bench runs. Not a release artifact.
+squint/go/squint/squint-cli
+
+# Python caches (per-subdir .gitignore handles them inside the python/ packages
+# but tools/ has no python project file, so it doesn't pick up the rule).
+**/__pycache__/
+*.py[cod]
+
+# OS / editor cruft
+.DS_Store
+.idea/
+.vscode/
+*.swp

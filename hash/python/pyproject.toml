@@ -48,3 +48,31 @@ Homepage = "https://github.com/wmetcalf/rosetta-image-hash"
 [tool.setuptools.packages.find]
 include = ["rosetta_imagehash*"]
 exclude = ["tests*"]
+
+# ─── Static analysis config (consumed by the CI lint job) ─────────────────
+[tool.ruff]
+line-length = 120
+target-version = "py39"
+
+[tool.ruff.lint]
+# Default rule set is conservative (pyflakes + pycodestyle E). The wrapper
+# is small so we don't need the full pyupgrade/bugbear pack; promote any of
+# these once the baseline is clean.
+select = ["E", "F", "W", "B"]
+ignore = [
+    # E501 line-too-long is enforced by line-length above; keep the rule on
+    # but ignore long URLs in comments via noqa per-line.
+    "E203",
+    # Allow `from X import *` for the re-export module (it's the whole point).
+    "F403",
+    "F401",
+]
+exclude = ["tests"]
+
+[tool.mypy]
+python_version = "3.9"
+ignore_missing_imports = true
+follow_imports = "silent"
+# strict=true is enforced via the CLI flag in CI (continue-on-error there so
+# baseline issues don't block) — keep this file lenient so the dev-side
+# `mypy rosetta_imagehash` invocation works out of the box.

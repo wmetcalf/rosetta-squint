@@ -217,7 +217,7 @@ fn crop_resistant_hash_goldens() {
 
     for c in &cases {
         let img = load_predecoded(&c.fixture);
-        let mh = crop_resistant_hash(&img).expect("compute");
+        let mh = crop_resistant_hash(&img, None).expect("compute");
         let got = mh.to_hex();
         if got != c.hex {
             failures.push(format!(
@@ -229,5 +229,33 @@ fn crop_resistant_hash_goldens() {
 
     if !failures.is_empty() {
         panic!("{} crop_resistant_hash failures:\n  {}", failures.len(), failures.join("\n  "));
+    }
+}
+
+#[test]
+fn crop_resistant_hash_limit_segments_caps_count() {
+    // H-L7: verify limit_segments is respected. Look for any fixture that yields
+    // more than one segment when run with limit=None, then re-run with limit=1
+    // and confirm we get exactly one segment.
+    let cases = fixture_cases("crop_resistant_hash");
+    for c in &cases {
+        let img = load_predecoded(&c.fixture);
+        let unlimited = crop_resistant_hash(&img, None).expect("compute unlimited");
+        if unlimited.segment_hashes.len() <= 1 {
+            continue;
+        }
+        let limited = crop_resistant_hash(&img, Some(1)).expect("compute limit=1");
+        assert_eq!(
+            limited.segment_hashes.len(),
+            1,
+            "fixture={} expected limit=1 to cap to 1 segment, got {}",
+            c.fixture,
+            limited.segment_hashes.len(),
+        );
+        // Asking for more than the available count keeps every segment.
+        let exact = crop_resistant_hash(&img, Some(unlimited.segment_hashes.len() + 5))
+            .expect("compute limit oversize");
+        assert_eq!(exact.segment_hashes.len(), unlimited.segment_hashes.len());
+        return;
     }
 }

@@ -67,31 +67,58 @@ def test_imagehash_version_matches_pin():
     [
         "ImageHash",
         "ImageMultiHash",
-        "average_hash",
-        "colorhash",
-        "crop_resistant_hash",
-        "dhash",
-        "dhash_vertical",
         "hex_to_flathash",
         "hex_to_hash",
         "hex_to_multihash",
         "old_hex_to_hash",
-        "phash",
-        "phash_simple",
-        "whash",
     ],
 )
 def test_reexport_identity(name: str):
     """Each name on rih MUST be the same object as the one on imagehash —
-    not a wrapper or alias."""
+    not a wrapper or alias. This list now only covers non-algorithm
+    re-exports (hash classes, hex helpers). Every algorithm name (phash,
+    phash_simple, whash_db4, whash_db4_robust, average_hash, dhash,
+    dhash_vertical, whash, colorhash, crop_resistant_hash) is a port-local
+    wrapper — see :func:`test_algorithm_override_is_not_upstream`."""
     assert getattr(rih, name) is getattr(imagehash, name), (
         f"{name}: rih.{name} is not imagehash.{name}"
     )
 
 
+@pytest.mark.parametrize(
+    "name",
+    [
+        # Snap-applying overrides (also composite RGBA)
+        "phash",
+        "phash_simple",
+        "whash_db4",
+        "whash_db4_robust",
+        # RGBA-compositing overrides (forward to upstream after composite)
+        "average_hash",
+        "dhash",
+        "dhash_vertical",
+        "whash",
+        "colorhash",
+        "crop_resistant_hash",
+    ],
+)
+def test_algorithm_override_is_not_upstream(name: str):
+    """Every algorithm exposed on rih must be a port-local wrapper, NOT the
+    upstream ``imagehash`` function. The snap-applying overrides apply
+    SNAP_EPS / EPS; the rest apply the RGBA → RGB composite preamble. Both
+    classes are necessary for cross-port byte-exact parity."""
+    if hasattr(imagehash, name):
+        assert getattr(rih, name) is not getattr(imagehash, name), (
+            f"{name}: rih.{name} must be a port-local override, not the upstream function"
+        )
+    assert callable(getattr(rih, name))
+
+
 def test_extension_constant_exposed():
     assert isinstance(rih.WHASH_DB4_ROBUST_EPS, float)
     assert rih.WHASH_DB4_ROBUST_EPS == 1e-12
+    assert isinstance(rih.SNAP_EPS, float)
+    assert rih.SNAP_EPS == 1e-10
 
 
 def test_extension_function_exposed():

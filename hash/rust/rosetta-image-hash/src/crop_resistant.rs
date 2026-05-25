@@ -40,11 +40,18 @@ const DHASH_SIZE: usize = 8;
 ///
 /// Uses default parameters matching Python imagehash.crop_resistant_hash:
 ///   - hash_func = dhash (hash_size=8)
-///   - limit_segments = None
 ///   - segment_threshold = 128
 ///   - min_segment_size = 500
 ///   - segmentation_image_size = 300
-pub fn crop_resistant_hash(img: &DynamicImage) -> Result<ImageMultiHash, ImageHashError> {
+///
+/// `limit_segments`: if `Some(n)`, keep only the n largest segments (sorted by
+/// segment pixel count descending, ties broken by original discovery order to
+/// preserve stable cross-port output). Matches Python's
+/// `sorted(segments, key=lambda s: len(s), reverse=True)[:limit_segments]`.
+pub fn crop_resistant_hash(
+    img: &DynamicImage,
+    limit_segments: Option<usize>,
+) -> Result<ImageMultiHash, ImageHashError> {
     let orig_w = img.width() as usize;
     let orig_h = img.height() as usize;
 
@@ -73,7 +80,18 @@ pub fn crop_resistant_hash(img: &DynamicImage) -> Result<ImageMultiHash, ImageHa
         segments.push(vec![(0, 0), (SEG_SIZE - 1, SEG_SIZE - 1)]);
     }
 
-    // Step 8: Hash each segment
+    // Step 8a: If limit_segments set, keep only the N largest segments.
+    // Matches Python: `sorted(segments, key=lambda s: len(s), reverse=True)[:limit]`.
+    // The output is in size-descending order — Python/Java/JS/Swift all do this.
+    if let Some(limit) = limit_segments {
+        if limit < segments.len() {
+            // Stable sort by length descending (preserves discovery order for ties).
+            segments.sort_by(|a, b| b.len().cmp(&a.len()));
+            segments.truncate(limit);
+        }
+    }
+
+    // Step 8b: Hash each segment
     let scale_w = orig_w as f64 / SEG_SIZE as f64;
     let scale_h = orig_h as f64 / SEG_SIZE as f64;
 

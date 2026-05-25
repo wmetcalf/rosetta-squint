@@ -6,7 +6,7 @@ export { hexToHash, hexToFlathash } from "./hex.js";
 export { averageHash } from "./averageHash.js";
 export { dhash } from "./dhash.js";
 export { dhashVertical } from "./dhashVertical.js";
-export { phash } from "./phash.js";
+export { phash, SNAP_EPS } from "./phash.js";
 export { phashSimple } from "./phashSimple.js";
 export { whashHaar } from "./whashHaar.js";
 export { whashDb4 } from "./whashDb4.js";

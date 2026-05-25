@@ -257,6 +257,111 @@ Port-idiomatic errors:
 Image-type validation (e.g., "image is a PIL.Image") is **out of scope** — the
 port's type system handles that. Group-5 test exercises numerical-input errors.
 
+## Boundary hash sizes
+
+The golden corpus covers `hash_size ∈ {2, 4, 8, 16, 32, 64}` for `average_hash`,
+`dhash`, `dhash_vertical`, `phash`, `phash_simple` (size=4 is omitted for
+wavelet algos because the spec only documents power-of-2 sizes; wavelet covers
+{2, 8, 16, 32, 64}). At all of these sizes every port produces byte-exact
+agreement against the Python reference on every fixture (H-L8 + follow-up,
+AUDIT-claude.md, 2026-05-23).
+
+**`hash_size=2` notes:**
+- For `whash(mode='db4')`, the LL band cannot shrink below the db4 filter
+  length (8 taps with symmetric padding). At `hash_size=2` the LL band is
+  `(8, 8)` regardless of the requested size, and the resulting hash is
+  64 bits (16 hex chars) rather than the `(N, N) = (2, 2)` shape implied
+  by the size parameter. This is upstream `imagehash` behavior — the function
+  does not error, it just produces a larger-than-expected hash. The same
+  effect appears at every `hash_size` for db4: e.g. size=8 produces `(14, 14)`
+  bits, size=16 produces `(22, 22)`, etc. Cross-port parity holds.
+
+**`hash_size=32` and `hash_size=64`:**
+Landed (2026-05-23) via the snap-to-threshold tie-break described in the next
+section. Prior to that, those sizes were deferred because:
+
+| Algorithm | Fixture | Pre-snap disagreement |
+|---|---|---|
+| `phash` | `line-art-icon-256.png` | 2 bits diff (Go matches Python via FFT-style DCT; Rust/JS/Swift/Java direct-N² accumulation lands 2 coefficients on the other side of the median) |
+| `phash_simple` | `checker-256.png` | 2048 bits diff (mean = 0.0 exactly under scipy; 5 ports accumulate ~1e-13 noise so the strict `>` flips at every exact-zero coefficient) |
+| `whash_db4` | `imagehash.png` | 1 bit diff (~68 LL coefficients exactly equal to the median; FMA-order differences flip one of them) |
+| `whash_db4_robust` | `imagehash.png` | 1 bit diff (the original snap is near zero, not near median, so the `_robust` variant did not help in this case) |
+
+The snap-to-threshold approach now stabilizes all of these.
+
+## Threshold tie-break (snap-to-threshold)
+
+Four algorithms — `phash`, `phash_simple`, `whash_db4`, and `whash_db4_robust`
+— apply a snap-to-threshold tie-break before bit assignment. Instead of the
+strict comparison `bit = (v > t)` where `t` is the relevant threshold (median
+for `phash` / `whash_db4*`, mean for `phash_simple`), the comparison is
+
+```
+bit = (v > t + SNAP_EPS)        where SNAP_EPS = 1e-10
+```
+
+so any coefficient within `SNAP_EPS` of the threshold deterministically maps
+to bit 0 across every port. This eliminates the ULP-level FP-noise divergence
+that occurs when many coefficients cluster within ULP of the threshold
+(common in `phash` / `whash_db4` at large `hash_size`, and in `phash_simple`
+on synthetic inputs where the mean is mathematically zero).
+
+### Why a spec change, not a port-specific fix
+
+- The divergent coefficients are mathematically equal: PyWavelets / scipy /
+  the port's manual computation produce the same value to ULP precision, but
+  the SIMD / FMA / sort order causes the last bit to flip differently in each
+  implementation. No "correct" implementation could decide one side over the
+  other.
+- The previous `WHASH_DB4_ROBUST_EPS = 1e-12` snap-to-zero pattern only
+  handled the case where coefficients clustered near zero, not near a
+  non-zero median. The threshold-snap generalizes it.
+- An exemption-list approach (per-port "known-fp-noise" override) would not
+  scale — the divergence is content-dependent and shows up on any input with
+  large flat regions.
+
+### Choice of ε
+
+`SNAP_EPS = 1e-10` is sized to comfortably exceed cross-port FP accumulation
+noise (~1e-12 for DCT on uint8 inputs, ~1e-15 for db4 wavedec2 on uint8/255
+inputs) while staying far below any meaningful signal (next non-tied
+coefficient is typically O(0.1) or larger). Fixed across all 6 ports — do
+not vary per-call without a coordinated spec change.
+
+### Where the change is exposed
+
+| Port | Constant name | Symbol |
+|---|---|---|
+| Python (`rosetta_imagehash`) | `SNAP_EPS` | `rosetta_imagehash.SNAP_EPS` |
+| Rust | `SNAP_EPS` | `rosetta_image_hash::SNAP_EPS` |
+| Go | `SnapEps` | `imagehash.SnapEps` |
+| Java | `SNAP_EPS` | `io.rosetta.imagehash.PHash.SNAP_EPS` |
+| JS/TS | `SNAP_EPS` | `import { SNAP_EPS } from 'rosetta-image-hash'` |
+| Swift | `SNAP_EPS` | top-level `SNAP_EPS: Double` |
+
+### Effect on smaller hash sizes
+
+For `phash` / `phash_simple` at `hash_size ∈ {2, 4, 8, 16}`, the snap is
+a no-op in Python: the strict `>` was already returning bit 0 for every
+near-median coefficient (Python's reference DCT happens to put those
+coefficients on the "not strictly greater" side). For `whash_db4` /
+`whash_db4_robust` at `hash_size ∈ {8, 16}`, the snap *does* shift some
+fixture hashes — specifically, fixtures with large flat regions (e.g.
+`imagehash.png`, `checker-256.png`, `line-art-icon-256.png`) whose db4 LL
+band contains a plateau at the median value. Hashes for those fixture/size
+combinations differ from the pre-2026-05-23 goldens; this is the deliberate
+spec change. Old stored hashes will not round-trip against the new goldens
+for the affected fixtures.
+
+### Re-export caveat in `rosetta_imagehash`
+
+The Python ``rosetta_imagehash`` package re-exports the upstream `imagehash`
+API but overrides `phash`, `phash_simple`, `whash_db4`, and `whash_db4_robust`
+with port-local versions that apply the snap. The unmodified upstream
+versions remain accessible as `imagehash.phash`, etc. Callers wanting
+byte-exact upstream parity should use the `imagehash.*` symbol directly;
+callers wanting cross-port stability should use `rosetta_imagehash.*`.
+
 ## Algorithm definitions
 
 Each algorithm composes the pipeline steps above.
@@ -292,7 +397,7 @@ Same as `dhash` but compares **vertically adjacent** pixels instead of horizonta
 3. 2-D DCT-II: `dct(dct(pixels, axis=0), axis=1)` — column-wise then row-wise.
 4. Take top-left `N×N` block: `dct[0:N, 0:N]`.
 5. `med = median(block)` (step 6).
-6. `bit = block > med` (strict `>`).
+6. `bit = block > med + SNAP_EPS` (snap-to-threshold tie-break — see §"Threshold tie-break"; `SNAP_EPS = 1e-10`).
 7. Pack bits to hex.
 
 ### `phash_simple(img, hash_size=N, highfreq_factor=4)`
@@ -304,7 +409,7 @@ Same as `dhash` but compares **vertically adjacent** pixels instead of horizonta
 3. **1-D DCT-II row-wise only** — `dct = scipy.fftpack.dct(pixels)`. This is `dct(pixels, axis=-1)` — applied to each row independently. **NOT** the column-then-row 2-D DCT used by `phash`. Each row of the input becomes a row of DCT coefficients.
 4. Slice `dctlowfreq = dct[0:N, 1:N+1]` — rows 0..N, columns **1..N+1** (skip the DC column at index 0).
 5. `m = mean(dctlowfreq)` — float64.
-6. `bit = dctlowfreq > m` (strict `>`).
+6. `bit = dctlowfreq > m + SNAP_EPS` (snap-to-threshold tie-break — see §"Threshold tie-break"; `SNAP_EPS = 1e-10`).
 7. Pack bits to hex.
 
 The slicing+mean choice mirrors the original "Looks Like It" blog-post algorithm, which uses the 1-D DCT and discards the DC term to be robust against overall brightness shifts. `phash` (median + 2-D DCT) is a refinement; `phash_simple` is the original. Both algorithms exist in Python `imagehash` and they produce **different** hashes for the same input.
@@ -344,7 +449,7 @@ Haar filter coefficients: lowpass `[1/√2, 1/√2]`, highpass `[1/√2, -1/√2
 3. **Haar (not db4)** wavedec2 at `ll_max_level`; zero the LL band; **Haar** waverec2 back. This is the `remove_max_haar_ll` step — `whash` hardcodes Haar here.
 4. **db4** `pywt.wavedec2(pixels, 'db4', level=dwt_level)` — this is where the mode parameter applies.
 5. `ll = coeffs[0]` — the LL band after `dwt_level` db4 decompositions.
-6. `med = median(ll)`; `bit = ll > med`; pack to hex.
+6. `med = median(ll)`; `bit = ll > med + SNAP_EPS` (snap-to-threshold tie-break — see §"Threshold tie-break"; `SNAP_EPS = 1e-10`); pack to hex.
 
 Daubechies-4 filter coefficients (from pywt's `Wavelet('db4')`):
 - Lowpass `h0..h7` (length 8, not 4 — db4 means "4-vanishing-moments Daubechies", which has an 8-tap filter)
@@ -365,14 +470,14 @@ Boundary handling:
 
 **Not an `imagehash` upstream algorithm.** This is a rosetta-image-hash extension that resolves the `whash_db4` ULP tie-point ambiguity at the cost of byte-exact Python parity on pathological synthetic inputs.
 
-Pipeline identical to `whash_db4` (steps 1–4 of that section) through producing the db4 LL band. Then, **before** computing the median and threshold:
+Pipeline identical to `whash_db4` (steps 1–4 of that section) through producing the db4 LL band. Then, **before** computing the median:
 
 ```
 WHASH_DB4_ROBUST_EPS = 1e-12
 dwt_low = where(abs(dwt_low) < WHASH_DB4_ROBUST_EPS, 0.0, dwt_low)
 ```
 
-I.e. any coefficient whose absolute value is below ε is snapped to exactly zero. Real-world db4 LL coefficients for natural images are O(0.1)–O(10), so for real photos `whash_db4_robust(img, N) == whash_db4(img, N)`. For pathological symmetric inputs (checkerboards, certain line-art patterns), the snap collapses noise to deterministic zero and all ports produce identical hashes — at the cost of those hashes differing from Python `imagehash.whash(mode='db4')`.
+I.e. any coefficient whose absolute value is below ε is snapped to exactly zero. After computing the median, the bit comparison uses the same snap-to-threshold tie-break as `whash_db4`: `bit = dwt_low > med + SNAP_EPS` (see §"Threshold tie-break"). For real-world photographs both snaps are no-ops on non-tie coefficients, so `whash_db4_robust(img, N) == whash_db4(img, N)`. For pathological symmetric inputs (checkerboards, certain line-art patterns), both snaps collapse near-zero / near-median coefficients to a deterministic bit 0 across all ports — at the cost of those hashes differing from Python `imagehash.whash(mode='db4')`.
 
 **Reference implementation:** `spec/regenerate.py::_whash_db4_robust()`. Goldens are produced from this Python helper (not from upstream imagehash).
 

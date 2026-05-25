@@ -234,6 +234,17 @@ internal enum BMPDecoder {
 
     // MARK: - Color table helper
 
+    /// Clamp biClrUsed to the maximum entries the given bit-depth can index.
+    /// If clrUsed <= 0, returns the bit-depth maximum (existing default).
+    /// If clrUsed > bitDepthMax, clamps to bitDepthMax (PIL-lenient parsing).
+    /// Defends against attacker-controlled values that would cause excessive
+    /// palette allocation.
+    internal static func clampEntryCount(_ clrUsed: Int, bitDepth: Int) -> Int {
+        let bitDepthMax = 1 << bitDepth
+        if clrUsed <= 0 { return bitDepthMax }
+        return min(clrUsed, bitDepthMax)
+    }
+
     private static func readColorTable(bytes: [UInt8], hdr: Header, entryCount: Int) throws -> [(UInt8, UInt8, UInt8)] {
         let colorTableOffset = 14 + hdr.dibHeaderSize
         let colorTableEnd = colorTableOffset + entryCount * 4
@@ -254,7 +265,7 @@ internal enum BMPDecoder {
     // MARK: - Decode 8-bit paletted
 
     private static func decodePal8(bytes: [UInt8], hdr: Header) throws -> DecodedImage {
-        let entryCount = hdr.clrUsed > 0 ? hdr.clrUsed : 256
+        let entryCount = clampEntryCount(hdr.clrUsed, bitDepth: 8)
         let colorTableOffset = 14 + hdr.dibHeaderSize
         let colorTableEnd = colorTableOffset + entryCount * 4
         guard bytes.count >= colorTableEnd else {
@@ -289,7 +300,7 @@ internal enum BMPDecoder {
     // MARK: - Decode 4-bit paletted
 
     private static func decodePal4(bytes: [UInt8], hdr: Header) throws -> DecodedImage {
-        let entryCount = hdr.clrUsed > 0 ? hdr.clrUsed : 16
+        let entryCount = clampEntryCount(hdr.clrUsed, bitDepth: 4)
         let palette = try readColorTable(bytes: bytes, hdr: hdr, entryCount: entryCount)
         let stride = ((hdr.width * 4 + 31) / 32) * 4
         guard bytes.count - hdr.pixelDataOffset >= stride * hdr.height else {
@@ -315,7 +326,7 @@ internal enum BMPDecoder {
     // MARK: - Decode 1-bit paletted
 
     private static func decodePal1(bytes: [UInt8], hdr: Header) throws -> DecodedImage {
-        let entryCount = hdr.clrUsed > 0 ? hdr.clrUsed : 2
+        let entryCount = clampEntryCount(hdr.clrUsed, bitDepth: 1)
         let palette = try readColorTable(bytes: bytes, hdr: hdr, entryCount: entryCount)
         let stride = ((hdr.width + 31) / 32) * 4
         guard bytes.count - hdr.pixelDataOffset >= stride * hdr.height else {
@@ -405,7 +416,7 @@ internal enum BMPDecoder {
     // MARK: - Decode RLE (8-bit or 4-bit)
 
     private static func decodeRle(bytes: [UInt8], hdr: Header, bitsPerPixel: Int) throws -> DecodedImage {
-        let entryCount = hdr.clrUsed > 0 ? hdr.clrUsed : (bitsPerPixel == 8 ? 256 : 16)
+        let entryCount = clampEntryCount(hdr.clrUsed, bitDepth: bitsPerPixel)
         let palette = try readColorTable(bytes: bytes, hdr: hdr, entryCount: entryCount)
 
         let xsize = hdr.width

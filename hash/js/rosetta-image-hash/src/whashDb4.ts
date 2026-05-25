@@ -2,8 +2,9 @@ import { Hash, ImageHashError, type RgbImage } from "./hash.js";
 import { rgbToGray } from "./averageHash.js";
 import { wavedec2, waverec2 } from "./internal/haar.js";
 import { db4Wavedec2WithShape, db4Waverec2 } from "./internal/db4Dwt.js";
-import { toRgb } from "./internal/imgRgb.js";
+import { toRgb, validateRgbImage } from "./internal/imgRgb.js";
 import { resize } from "./internal/lanczos.js";
+import { SNAP_EPS } from "./phash.js";
 
 function isPowerOfTwo(n: number): boolean {
   return n > 0 && (n & (n - 1)) === 0;
@@ -27,6 +28,10 @@ function isPowerOfTwo(n: number): boolean {
  * 9. ll = coeffs[0]; median threshold; pack to hex.
  */
 export function whashDb4(img: RgbImage, hashSize: number): Hash {
+  validateRgbImage(img);
+  if (!Number.isInteger(hashSize)) {
+    throw new ImageHashError("InvalidHashSize", `hashSize must be an integer, got ${hashSize}`);
+  }
   if (hashSize < 2) {
     throw new ImageHashError("InvalidHashSize", `hashSize must be >= 2, got ${hashSize}`);
   }
@@ -80,9 +85,12 @@ export function whashDb4(img: RgbImage, hashSize: number): Hash {
   const n = sorted.length;
   const median = n % 2 === 1 ? sorted[(n - 1) / 2] : (sorted[n / 2 - 1] + sorted[n / 2]) / 2;
 
+  // Snap-to-threshold tie-break: deterministic bit 0 on ties.
+  // See spec/SPEC.md §"Threshold tie-break".
+  const threshold = median + SNAP_EPS;
   const bits: boolean[][] = [];
   for (const row of ll) {
-    bits.push(row.map(v => v > median));
+    bits.push(row.map(v => v > threshold));
   }
   return new Hash(bits);
 }

@@ -30,6 +30,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
 import statistics
 import subprocess
@@ -40,21 +41,80 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent.parent
 HASH_FIXTURES = ROOT / "hash" / "spec" / "fixtures"
 
+
+def _probe_turbojpeg() -> tuple[str | None, str | None]:
+    """Return (lib_dir, jar_path) for turbojpeg, or (None, None) if not found.
+
+    Honors TURBOJPEG_LIB_PATH / TURBOJPEG_JAR_PATH env vars if set; otherwise
+    probes common system locations on Debian/Ubuntu/RHEL/macOS-homebrew.
+    """
+    env_lib = os.environ.get("TURBOJPEG_LIB_PATH")
+    lib_candidates = [
+        env_lib,
+        "/usr/lib/x86_64-linux-gnu",
+        "/usr/lib/aarch64-linux-gnu",
+        "/usr/lib64",
+        "/opt/homebrew/lib",
+        "/usr/local/lib",
+    ]
+    lib_dir: str | None = None
+    for cand in lib_candidates:
+        if not cand:
+            continue
+        p = Path(cand)
+        if any((p / name).exists() for name in
+               ("libturbojpeg.so", "libturbojpeg.so.0", "libturbojpeg.dylib")):
+            lib_dir = cand
+            break
+
+    env_jar = os.environ.get("TURBOJPEG_JAR_PATH")
+    jar_candidates = [
+        env_jar,
+        "/usr/share/java/turbojpeg.jar",
+        "/opt/homebrew/share/java/turbojpeg.jar",
+        "/usr/local/share/java/turbojpeg.jar",
+    ]
+    jar_path: str | None = None
+    for cand in jar_candidates:
+        if cand and Path(cand).exists():
+            jar_path = cand
+            break
+
+    return lib_dir, jar_path
+
+
+_TJ_LIB_DIR, _TJ_JAR_PATH = _probe_turbojpeg()
+
+
+def _java_argv() -> list[str] | None:
+    if _TJ_LIB_DIR is None or _TJ_JAR_PATH is None:
+        return None
+    return [
+        "java",
+        f"-Djava.library.path={_TJ_LIB_DIR}",
+        "--enable-native-access=ALL-UNNAMED",
+        "-cp",
+        f"{ROOT}/squint/java/rosetta-squint/target/squint-cli.jar:{_TJ_JAR_PATH}",
+        "io.rosetta.squint.cli.SquintCli",
+    ]
+
+
 PORTS: dict[str, list[str]] = {
     "python": [sys.executable, str(ROOT / "tools" / "cross-squint-diff" / "squint_cli.py")],
     "rust":   [str(ROOT / "squint/rust/rosetta-squint/target/release/examples/squint-cli")],
     "go":     [str(ROOT / "tools/cross-squint-diff/squint-go")],
-    "java":   [
-        "java",
-        "-Djava.library.path=/usr/lib/x86_64-linux-gnu",
-        "--enable-native-access=ALL-UNNAMED",
-        "-cp",
-        f"{ROOT}/squint/java/rosetta-squint/target/squint-cli.jar:/usr/share/java/turbojpeg.jar",
-        "io.rosetta.squint.cli.SquintCli",
-    ],
     "js":     ["node", str(ROOT / "squint/js/rosetta-squint/scripts/squint-cli.mjs")],
     "swift":  [str(ROOT / "squint/swift/RosettaSquint/.build/release/SquintCLI")],
 }
+_java = _java_argv()
+if _java is not None:
+    PORTS["java"] = _java
+else:
+    print(
+        "  skip java: turbojpeg lib/jar not found "
+        "(set TURBOJPEG_LIB_PATH / TURBOJPEG_JAR_PATH to override)",
+        file=sys.stderr,
+    )
 
 
 def available_ports() -> dict[str, list[str]]:
@@ -73,12 +133,28 @@ def time_one(argv: list[str], algo: str, size: int, fixture: Path) -> float:
     """Return wall-time in seconds for one invocation. Raises on non-zero exit."""
     cmd = argv + [algo, str(size), str(fixture)]
     t0 = time.perf_counter()
-    proc = subprocess.run(cmd, capture_output=True, timeout=120)
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    try:
+        try:
+            stdout, stderr = proc.communicate(timeout=120)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.communicate()
+            raise
+    except KeyboardInterrupt:
+        # Ctrl-C: tear down the child so the user gets their shell back promptly,
+        # then re-raise so the caller exits.
+        proc.kill()
+        try:
+            proc.communicate(timeout=2)
+        except Exception:
+            pass
+        raise
     elapsed = time.perf_counter() - t0
     if proc.returncode != 0:
         raise RuntimeError(
             f"port exited {proc.returncode}: "
-            + proc.stderr.decode(errors="replace").strip()
+            + stderr.decode(errors="replace").strip()
         )
     return elapsed
 

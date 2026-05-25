@@ -3,6 +3,7 @@ import Foundation
 /// dhashVertical: grayscale → Lanczos to (W=N, H=N+1) → column-wise adjacent-row diff (strict >).
 /// This preserves the pre-3.0 (buggy) dhash direction for backward compatibility with stored hashes.
 public func dhashVertical(_ image: RGBImage, hashSize: Int) throws -> Hash {
+	try image.validate()
 	guard hashSize >= 2 else { throw ImageHashError.invalidHashSize(hashSize) }
 	let rgb = ImgRGB.toRGB(image)
 	let gray = rgbToGray(rgb.data, width: rgb.width, height: rgb.height)

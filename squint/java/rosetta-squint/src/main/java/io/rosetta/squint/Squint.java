@@ -17,8 +17,11 @@ import io.rosetta.imagehash.WHashDb4Robust;
 import io.rosetta.imagehash.WHashHaar;
 
 import java.awt.image.BufferedImage;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 
 /**
  * Convenience façade that chains rosetta-image-decode + rosetta-image-hash
@@ -33,6 +36,14 @@ import java.nio.file.Path;
  */
 public final class Squint {
     private Squint() {}
+
+    /**
+     * Maximum allowed size for path-based decode inputs. Refuse anything
+     * larger BEFORE reading bytes. Callers that genuinely need to process
+     * images larger than this should decode via rosetta-image-decode
+     * directly after explicit validation.
+     */
+    public static final long MAX_FILE_SIZE = 256L * 1024L * 1024L; // 256 MiB
 
     // ------------------------------------------------------------------ //
     // Decode helpers                                                       //
@@ -69,10 +80,70 @@ public final class Squint {
         return img;
     }
 
-    /** Decode an image file at {@code path} to a {@link BufferedImage}. */
+    /**
+     * Decode an image file at {@code path} to a {@link BufferedImage}.
+     *
+     * <p>Refuses symlinks (via {@link Files#isSymbolicLink}), non-regular
+     * files (FIFOs, {@code /dev/zero}, character devices, etc.) and files
+     * larger than {@link #MAX_FILE_SIZE} BEFORE reading bytes — without
+     * these guards {@code Files.readAllBytes(/dev/zero)} would loop until
+     * OOM and a 300 MiB sparse file would allocate 300 MiB even though it
+     * contains no image. Callers who genuinely want symlink resolution
+     * must do it explicitly (for example via {@link Path#toRealPath}) before
+     * calling this method.
+     *
+     * <p>The symlink check uses {@code isSymbolicLink} (which does not
+     * follow), then the file is opened via {@link FileChannel#open} with
+     * {@link java.nio.file.LinkOption#NOFOLLOW_LINKS} so that a symlink
+     * swapped in between the lstat and the open still causes the open to
+     * fail rather than silently resolving. Subsequent size and read
+     * operations work against the open channel ({@code channel.size()},
+     * {@code channel.read()}) rather than the path, closing the TOCTOU
+     * window between size check and read. The read is bounded by
+     * {@code MAX_FILE_SIZE + 1} so a concurrent writer that grows the
+     * file after the size check is still rejected.
+     */
     public static BufferedImage decodeFile(String path) throws Exception {
-        byte[] bytes = Files.readAllBytes(Path.of(path));
-        return decodeBytes(bytes);
+        Path p = Path.of(path);
+        if (Files.isSymbolicLink(p)) {
+            throw new IllegalArgumentException("symlink not allowed: " + path);
+        }
+        if (!Files.isRegularFile(p, java.nio.file.LinkOption.NOFOLLOW_LINKS)) {
+            throw new RuntimeException("not a regular file: " + path);
+        }
+        try (FileChannel ch = FileChannel.open(
+                p, StandardOpenOption.READ, java.nio.file.LinkOption.NOFOLLOW_LINKS)) {
+            long size = ch.size();
+            if (size > MAX_FILE_SIZE) {
+                throw new RuntimeException(
+                    "input file too large: " + size + " bytes (max "
+                        + MAX_FILE_SIZE + " bytes / 256 MiB). For images above "
+                        + "this threshold, decode via rosetta-image-decode "
+                        + "directly after explicit validation.");
+            }
+            // Allocate to MAX_FILE_SIZE+1 so a concurrent writer that grows
+            // the file post-stat is detected (size > MAX_FILE_SIZE → reject).
+            // Cast is safe because size <= MAX_FILE_SIZE which fits in int.
+            int alloc = (int) Math.min(size + 1, MAX_FILE_SIZE + 1);
+            ByteBuffer buf = ByteBuffer.allocate(alloc);
+            while (buf.hasRemaining()) {
+                int n = ch.read(buf);
+                if (n < 0) {
+                    break;
+                }
+            }
+            if (buf.position() > MAX_FILE_SIZE) {
+                throw new RuntimeException(
+                    "input file too large: " + buf.position() + " bytes (max "
+                        + MAX_FILE_SIZE + " bytes / 256 MiB). For images above "
+                        + "this threshold, decode via rosetta-image-decode "
+                        + "directly after explicit validation.");
+            }
+            byte[] bytes = new byte[buf.position()];
+            buf.flip();
+            buf.get(bytes);
+            return decodeBytes(bytes);
+        }
     }
 
     /** Decode raw image bytes to a {@link BufferedImage}. */

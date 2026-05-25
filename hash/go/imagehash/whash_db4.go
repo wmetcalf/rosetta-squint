@@ -79,7 +79,7 @@ func WHashDb4(img image.Image, hashSize int) (Hash, error) {
 	dec := db4.Wavedec2(modified, dwtLevel)
 	ll := dec.CA
 
-	// Step 12: median threshold.
+	// Step 12: median threshold with snap-to-threshold tie-break.
 	n := len(ll) * len(ll[0])
 	flat := make([]float64, 0, n)
 	for y := range ll {
@@ -95,11 +95,14 @@ func WHashDb4(img image.Image, hashSize int) (Hash, error) {
 		median = (sorted[n/2-1] + sorted[n/2]) / 2.0
 	}
 
+	// Snap-to-threshold tie-break: deterministic bit 0 on ties.
+	// See spec/SPEC.md §"Threshold tie-break".
+	threshold := median + SnapEps
 	bits := make([][]bool, len(ll))
 	for y := range ll {
 		bits[y] = make([]bool, len(ll[y]))
 		for x := range ll[y] {
-			bits[y][x] = ll[y][x] > median
+			bits[y][x] = ll[y][x] > threshold
 		}
 	}
 	return newHashFromBits(bits), nil

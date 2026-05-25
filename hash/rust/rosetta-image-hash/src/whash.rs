@@ -60,7 +60,7 @@ pub fn whash_haar(img: &DynamicImage, hash_size: usize) -> Result<Hash, ImageHas
         flat.extend_from_slice(row);
     }
     let mut sorted = flat.clone();
-    sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    sorted.sort_by(|a, b| a.total_cmp(b));
     let median = if n % 2 == 1 {
         sorted[n / 2]
     } else {
@@ -136,16 +136,20 @@ pub fn whash_db4(img: &DynamicImage, hash_size: usize) -> Result<Hash, ImageHash
         flat.extend_from_slice(row);
     }
     let mut sorted = flat.clone();
-    sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    sorted.sort_by(|a, b| a.total_cmp(b));
     let median = if n % 2 == 1 {
         sorted[n / 2]
     } else {
         (sorted[n / 2 - 1] + sorted[n / 2]) / 2.0
     };
 
+    // Snap-to-threshold tie-break: bit = v > (median + SNAP_EPS). Maps
+    // any coefficient within SNAP_EPS of the median deterministically to 0.
+    // See `spec/SPEC.md` §"Threshold tie-break".
+    let threshold = median + crate::phash::SNAP_EPS;
     let mut bits: Vec<Vec<bool>> = Vec::with_capacity(ll.len());
     for row in ll {
-        let row_bits: Vec<bool> = row.iter().map(|v| *v > median).collect();
+        let row_bits: Vec<bool> = row.iter().map(|v| *v > threshold).collect();
         bits.push(row_bits);
     }
     Ok(Hash::from_bits_unchecked(bits))
@@ -208,7 +212,7 @@ pub fn whash_db4_robust(img: &DynamicImage, hash_size: usize) -> Result<Hash, Im
     let modified = haar::waverec2(&full_dec);
 
     let dec = db4::wavedec2(&modified, dwt_level);
-    // SNAP near-zero LL coefficients to exactly 0 — the only difference vs whash_db4.
+    // Snap near-zero LL coefficients to exactly 0 (the original robust step).
     let ll: Vec<Vec<f64>> = dec.ca.iter().map(|row| {
         row.iter().map(|&v| if v.abs() < WHASH_DB4_ROBUST_EPS { 0.0 } else { v }).collect()
     }).collect();
@@ -219,16 +223,19 @@ pub fn whash_db4_robust(img: &DynamicImage, hash_size: usize) -> Result<Hash, Im
         flat.extend_from_slice(row);
     }
     let mut sorted = flat.clone();
-    sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    sorted.sort_by(|a, b| a.total_cmp(b));
     let median = if n % 2 == 1 {
         sorted[n / 2]
     } else {
         (sorted[n / 2 - 1] + sorted[n / 2]) / 2.0
     };
 
+    // Snap-to-threshold tie-break (on top of snap-to-zero): bit = v > (median
+    // + SNAP_EPS). See `spec/SPEC.md` §"Threshold tie-break".
+    let threshold = median + crate::phash::SNAP_EPS;
     let mut bits: Vec<Vec<bool>> = Vec::with_capacity(ll.len());
     for row in &ll {
-        let row_bits: Vec<bool> = row.iter().map(|v| *v > median).collect();
+        let row_bits: Vec<bool> = row.iter().map(|v| *v > threshold).collect();
         bits.push(row_bits);
     }
     Ok(Hash::from_bits_unchecked(bits))

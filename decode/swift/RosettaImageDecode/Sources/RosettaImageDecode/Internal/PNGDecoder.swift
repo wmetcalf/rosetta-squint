@@ -12,9 +12,109 @@ internal enum PNGDecoder {
         try Limits.checkDimensions(width: w, height: h, format: .png)
     }
 
+    // Workaround for swift-png 4.3.0 (and 4.5.1) bug: deflate streams that cross
+    // IDAT chunk boundaries at certain offsets trigger a false-positive
+    // "extraneousImageData" error. Real-world PNG decoders concatenate all
+    // IDAT bodies before inflating; swift-png does not. PIL emits multi-IDAT
+    // PNGs by default (64 KB split), so we re-chunk the input bytes here:
+    // merge all IDAT chunks into a single IDAT, leave everything else intact.
+    private static func mergePngIdats(_ bytes: [UInt8]) -> [UInt8] {
+        // PNG signature is 8 bytes; chunks follow.
+        guard bytes.count >= 8 else { return bytes }
+        // Quick check: count IDATs and validate basic walkability.
+        var idatCount = 0
+        var totalIdatLen = 0
+        var i = 8
+        while i + 8 <= bytes.count {
+            let len = Int(UInt32(bytes[i]) << 24 | UInt32(bytes[i+1]) << 16
+                        | UInt32(bytes[i+2]) << 8 | UInt32(bytes[i+3]))
+            if len < 0 || i + 8 + len + 4 > bytes.count { break }
+            let type = String(decoding: bytes[(i+4)..<(i+8)], as: UTF8.self)
+            if type == "IDAT" {
+                idatCount += 1
+                totalIdatLen += len
+            }
+            if type == "IEND" { break }
+            i += 8 + len + 4
+        }
+        guard idatCount > 1 else { return bytes }
+        // PNG chunk length is u31 max; bail if merged body would exceed it.
+        guard totalIdatLen <= 0x7FFFFFFF else { return bytes }
+
+        // Re-walk and emit.
+        var out: [UInt8] = Array(bytes.prefix(8))  // signature
+        var idatBody: [UInt8] = []
+        idatBody.reserveCapacity(totalIdatLen)
+        var idatEmitted = false
+        i = 8
+        while i + 8 <= bytes.count {
+            let len = Int(UInt32(bytes[i]) << 24 | UInt32(bytes[i+1]) << 16
+                        | UInt32(bytes[i+2]) << 8 | UInt32(bytes[i+3]))
+            if len < 0 || i + 8 + len + 4 > bytes.count {
+                // Trailing garbage — preserve as-is and bail.
+                out.append(contentsOf: bytes[i...])
+                return out
+            }
+            let type = String(decoding: bytes[(i+4)..<(i+8)], as: UTF8.self)
+            if type == "IDAT" {
+                idatBody.append(contentsOf: bytes[(i+8)..<(i+8+len)])
+                i += 8 + len + 4
+                continue
+            }
+            if type == "IEND" {
+                // Emit merged IDAT just before IEND if we haven't.
+                if !idatEmitted && !idatBody.isEmpty {
+                    emitIdat(into: &out, body: idatBody)
+                    idatEmitted = true
+                }
+                out.append(contentsOf: bytes[i..<(i + 8 + len + 4)])
+                return out
+            }
+            // Non-IDAT chunk: copy whole chunk (header + body + CRC) verbatim.
+            out.append(contentsOf: bytes[i..<(i + 8 + len + 4)])
+            i += 8 + len + 4
+        }
+        // Defensive fallthrough — no IEND found.
+        if !idatEmitted && !idatBody.isEmpty {
+            emitIdat(into: &out, body: idatBody)
+        }
+        return out
+    }
+
+    private static func emitIdat(into out: inout [UInt8], body: [UInt8]) {
+        let len = UInt32(body.count)
+        out.append(UInt8((len >> 24) & 0xFF))
+        out.append(UInt8((len >> 16) & 0xFF))
+        out.append(UInt8((len >> 8) & 0xFF))
+        out.append(UInt8(len & 0xFF))
+        out.append(contentsOf: [0x49, 0x44, 0x41, 0x54])  // "IDAT"
+        out.append(contentsOf: body)
+        // CRC32 over type + body.
+        var crcInput: [UInt8] = [0x49, 0x44, 0x41, 0x54]
+        crcInput.append(contentsOf: body)
+        let crc = pngCrc32(crcInput)
+        out.append(UInt8((crc >> 24) & 0xFF))
+        out.append(UInt8((crc >> 16) & 0xFF))
+        out.append(UInt8((crc >> 8) & 0xFF))
+        out.append(UInt8(crc & 0xFF))
+    }
+
+    // PNG-standard CRC32 (reflected, polynomial 0xEDB88320).
+    private static func pngCrc32(_ data: [UInt8]) -> UInt32 {
+        var crc: UInt32 = 0xFFFFFFFF
+        for b in data {
+            crc ^= UInt32(b)
+            for _ in 0..<8 {
+                crc = (crc >> 1) ^ ((crc & 1) * 0xEDB88320)
+            }
+        }
+        return crc ^ 0xFFFFFFFF
+    }
+
     static func decode(bytes: [UInt8]) throws -> DecodedImage {
         try sniffIHDR(bytes: bytes)
-        var blob = PNGBlob(data: bytes)
+        let mergedBytes = mergePngIdats(bytes)
+        var blob = PNGBlob(data: mergedBytes)
         let image: PNG.Image
         do {
             image = try .decompress(stream: &blob)

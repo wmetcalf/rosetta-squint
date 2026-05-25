@@ -4,6 +4,7 @@ package bitpack
 
 import (
 	"fmt"
+	"math"
 	"math/big"
 	"strings"
 )
@@ -44,10 +45,9 @@ func UnpackSquare(hex string) ([][]bool, error) {
 		return nil, err
 	}
 	totalBits := len(bits)
-	n := 0
-	for n*n < totalBits {
-		n++
-	}
+	// math.Sqrt is exact for perfect squares within int53 range; the equality
+	// check below rejects any non-square `totalBits`.
+	n := int(math.Sqrt(float64(totalBits)))
 	if n*n != totalBits {
 		return nil, fmt.Errorf("hex length %d (%d bits) is not a square shape", len(hex), totalBits)
 	}

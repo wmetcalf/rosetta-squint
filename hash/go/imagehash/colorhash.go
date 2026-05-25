@@ -13,6 +13,11 @@ func ColorHash(img image.Image, binbits int) (Hash, error) {
 	if binbits < 1 {
 		return Hash{}, fmt.Errorf("binbits must be >= 1, got %d", binbits)
 	}
+	// (1 << binbits) overflows for large binbits. Cross-port practical limit
+	// is 30 (JS bitwise int range), so cap there for parity. Real use is binbits 3-8.
+	if binbits > 30 {
+		return Hash{}, fmt.Errorf("binbits must be <= 30, got %d", binbits)
+	}
 	rgb := imgrgb.ToRGB(img)
 	h := len(rgb)
 	w := len(rgb[0])

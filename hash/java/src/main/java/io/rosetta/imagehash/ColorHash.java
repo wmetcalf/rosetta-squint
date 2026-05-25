@@ -22,6 +22,11 @@ public final class ColorHash {
     public static ImageHash compute(BufferedImage img, int binbits) {
         if (binbits < 1)
             throw new IllegalArgumentException("binbits must be >= 1");
+        // (1 << binbits) overflows for large binbits. Cross-port practical
+        // limit is 30 (JS bitwise int range), so cap there for parity.
+        // Real use is binbits 3-8.
+        if (binbits > 30)
+            throw new IllegalArgumentException("binbits must be <= 30");
 
         int[][] rgb = BufferedImageRgb.toIntArray(img);
         int h = rgb.length;

@@ -92,7 +92,12 @@ Both halves are at clean release-candidate states. See:
 
 ## Performance
 
-End-to-end CLI cost per hash (process startup + decode + algorithm + print), measured on a 384×512 RGB photograph (`hash/spec/fixtures/peppers.png`), median of 10 iterations on Linux x86-64. Reproducible via `make bench` (per-algorithm details in [`tools/bench/`](./tools/bench/)).
+End-to-end CLI cost per hash (process startup + decode + algorithm + print), measured on a 384×512 RGB photograph (`hash/spec/fixtures/peppers.png`), Linux x86-64. Two regimes are reproducible directly:
+
+- **Cold-start** (table immediately below): `make bench` (= `tools/bench/bench.py --iter 10 --warm 1`) — median of 10 fresh-subprocess invocations.
+- **Steady-state** (warm table further down): `tools/bench/bench.py --steady-state --iter 30 --warm 5` — first 5 in-process iterations dropped per port, median of next 30.
+
+Per-algorithm details in [`tools/bench/`](./tools/bench/).
 
 | Algorithm | Rust | Swift | Go | Python | JS (Node) | Java |
 |---|---:|---:|---:|---:|---:|---:|
