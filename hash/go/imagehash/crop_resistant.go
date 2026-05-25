@@ -6,12 +6,12 @@ import (
 	"math"
 	"sort"
 
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/findsegments"
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/imgrgb"
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/lanczos"
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/pilgaussianblur"
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/pilgray"
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/pilmedianfilter"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash/internal/findsegments"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash/internal/imgrgb"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash/internal/lanczos"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash/internal/pilgaussianblur"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash/internal/pilgray"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash/internal/pilmedianfilter"
 )
 
 // sortSegsByLengthDesc sorts segments by pixel count descending, with stable

@@ -42,8 +42,8 @@ The Rust, Go, Java, and Swift ports all FFI into native C libraries. The version
 | Port | JPEG | WebP | TIFF | HEIC |
 |---|---|---|---|---|
 | Rust | mozjpeg-sys 2.x (vendored) | libwebp-sys2 0.1.x (vendored) | image crate 0.25 (pure Rust) | system libheif |
-| Go | system libjpeg-turbo | system libwebp | golang.org/x/image/tiff (pure Go) | system libheif |
-| Java | system libturbojpeg | sejda webp-imageio (bundles native libwebp) | TwelveMonkeys (pure Java) | system libheif via JNA |
+| Go | system libjpeg-turbo (in-tree cgo wrapper) | `chai2010/webp` v1.4.0 (**bundles libwebp 1.4.0 source**) | golang.org/x/image/tiff (pure Go) | system libheif |
+| Java | system libturbojpeg | system libwebp via in-tree JNA wrapper | TwelveMonkeys (pure Java) | system libheif via JNA |
 | JS | mozjpeg WASM (@jsquash/jpeg) | libwebp WASM (@jsquash/webp) | utif2 (pure JS) | libheif WASM (libheif-js) |
 | Swift | system libturbojpeg | system libwebp | system libtiff | system libheif |
 
@@ -103,10 +103,11 @@ This library has had one internal security review covering:
 - resource cleanup on error paths (verified correct in JNA HEIC wrapper)
 - ftyp brand whitelist narrowness (documented as intentional in spec)
 
-External / fresh-eyes audits — Raptor, GPT-5.4, Claude (Opus 4.7) — landed 51+
-findings (HIGH / MEDIUM / LOW) resolved or deferred-with-rationale; see
-[`/CHANGELOG.md`](../CHANGELOG.md) for the per-finding fix status. Raw
-audit reports are kept internal.
+External / fresh-eyes audits — Raptor, GPT-5.4, Claude (Opus 4.7) — landed
+many findings (HIGH / MEDIUM / LOW / coverage-gap tiers) resolved or
+deferred-with-rationale; see [`/SECURITY.md`](../SECURITY.md) for the
+per-reviewer breakdown and [`/CHANGELOG.md`](../CHANGELOG.md) for the
+per-finding fix status. Raw audit reports are kept internal.
 
 ## Fuzz coverage
 

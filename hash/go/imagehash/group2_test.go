@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash"
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/testkit"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash/internal/testkit"
 )
 
 func TestAverageHashGoldens(t *testing.T) {

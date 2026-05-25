@@ -82,7 +82,7 @@ Package deps: [tayloraswift/swift-png](https://github.com/tayloraswift/swift-png
 
 ## See also
 
-- [USAGE.md](../../USAGE.md) — examples for all 5 ports
+- [USAGE.md](../../USAGE.md) — examples for all 6 ports
 - [STATUS.md](../../STATUS.md)
 - [`../../spec/SPEC.md`](../../spec/SPEC.md)
 

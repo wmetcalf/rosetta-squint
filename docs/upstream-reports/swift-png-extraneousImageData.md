@@ -48,8 +48,8 @@ do {
 
 ## Bisection
 
-We generated 100 PNGs with identical pixel data but the IDAT split at offsets
-ranging from 1 byte to 70 500 bytes (in 100-byte steps). Results:
+We generated 706 PNGs with identical pixel data but the IDAT split at offsets
+1, 101, 201, … 70 501 (100-byte steps). Results:
 
 | IDAT-split offset | swift-png |
 |---|---|

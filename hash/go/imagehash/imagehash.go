@@ -5,7 +5,7 @@ package imagehash
 import (
 	"fmt"
 
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/bitpack"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash/internal/bitpack"
 )
 
 // Hash is a 2-D boolean hash backed by a row-major bits[H][W] array.

@@ -5,9 +5,9 @@ import (
 	"image"
 	"sort"
 
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/dct"
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/imgrgb"
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/lanczos"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash/internal/dct"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash/internal/imgrgb"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash/internal/lanczos"
 )
 
 // SnapEps is the ε threshold for the snap-to-threshold tie-break used by

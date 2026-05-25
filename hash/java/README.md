@@ -87,7 +87,7 @@ Compile deps: JUnit 5 (test scope), Jackson (test scope only — reads goldens J
 
 ## See also
 
-- [USAGE.md](../USAGE.md) — examples for all 5 ports
+- [USAGE.md](../USAGE.md) — examples for all 6 ports
 - [STATUS.md](../STATUS.md)
 - [`../spec/SPEC.md`](../spec/SPEC.md)
 

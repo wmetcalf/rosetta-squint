@@ -15,7 +15,7 @@ import (
     _ "image/png"
     "os"
 
-    "github.com/wmetcalf/rosetta-image-hash/go/imagehash"
+    "github.com/wmetcalf/rosetta-squint/hash/go/imagehash"
 )
 
 func main() {
@@ -85,7 +85,7 @@ Standard library only. No `go get` needed beyond what's already in `go.mod`.
 
 ## See also
 
-- [USAGE.md](../../USAGE.md) — examples for all 5 ports
+- [USAGE.md](../../USAGE.md) — examples for all 6 ports
 - [STATUS.md](../../STATUS.md)
 - [`../../spec/SPEC.md`](../../spec/SPEC.md)
 

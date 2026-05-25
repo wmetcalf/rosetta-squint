@@ -11,8 +11,8 @@ import (
 	"image/color"
 	"io"
 
-	"github.com/wmetcalf/rosetta-image-decode/go/imagedecode"
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash"
+	"github.com/wmetcalf/rosetta-squint/decode/go/imagedecode"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash"
 )
 
 // errSymlinkNotAllowed is returned by DecodeFile when the file at the

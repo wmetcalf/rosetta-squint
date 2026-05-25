@@ -1,6 +1,6 @@
 # rosetta-image-hash — Usage
 
-API examples for all 5 ports. For install steps and what's implemented, see [STATUS.md](./STATUS.md).
+API examples for all 6 ports (Python, Java, Go, Rust, JS/TS, Swift). For install steps and what's implemented, see [STATUS.md](./STATUS.md).
 
 Every port follows the same shape:
 
@@ -8,7 +8,7 @@ Every port follows the same shape:
 2. Call `average_hash` / `phash` / `dhash` / `whash_haar` / `colorhash` with an integer `hash_size` (or `binbits` for colorhash).
 3. Get back a `Hash` value. Convert it to hex with `.to_hex()` / `.toString()`. Compute Hamming distance with `.subtract(other)`.
 
-The hex output is the **same** across all 5 ports and matches the Python `imagehash` package exactly.
+The hex output is the **same** across all 6 ports and matches the Python `imagehash` package exactly.
 
 ---
 
@@ -72,7 +72,7 @@ import (
     _ "image/png"
     "os"
 
-    "github.com/wmetcalf/rosetta-image-hash/go/imagehash"
+    "github.com/wmetcalf/rosetta-squint/hash/go/imagehash"
 )
 
 func main() {

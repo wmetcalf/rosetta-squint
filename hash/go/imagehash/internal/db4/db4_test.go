@@ -6,8 +6,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/db4"
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/testkit"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash/internal/db4"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash/internal/testkit"
 )
 
 const db4Tol = 1e-10

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"image"
 
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/imgrgb"
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/pilgray"
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/pilhsv"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash/internal/imgrgb"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash/internal/pilgray"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash/internal/pilhsv"
 )
 
 func ColorHash(img image.Image, binbits int) (Hash, error) {

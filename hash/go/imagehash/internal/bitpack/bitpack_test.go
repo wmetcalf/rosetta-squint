@@ -3,7 +3,7 @@ package bitpack_test
 import (
 	"testing"
 
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/bitpack"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash/internal/bitpack"
 )
 
 func TestPack4x4Pattern(t *testing.T) {

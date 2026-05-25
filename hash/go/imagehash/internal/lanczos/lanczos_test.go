@@ -3,8 +3,8 @@ package lanczos_test
 import (
 	"testing"
 
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/lanczos"
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/testkit"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash/internal/lanczos"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash/internal/testkit"
 )
 
 func TestLanczosFixed(t *testing.T) {

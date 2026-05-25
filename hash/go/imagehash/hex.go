@@ -3,7 +3,7 @@ package imagehash
 import (
 	"fmt"
 
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/bitpack"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash/internal/bitpack"
 )
 
 func HexToHash(hex string) (Hash, error) {

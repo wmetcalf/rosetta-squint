@@ -2,7 +2,7 @@
 
 Byte-exact, PIL-compatible image decoders across **Java, Go, Rust, JavaScript/TypeScript, and Swift**.
 
-Sibling project to [rosetta-image-hash](../rosetta-image-hash). That library hashes pre-decoded RGB buffers; this one produces those buffers from arbitrary image bytes, with cross-language pixel-level parity.
+Sibling component to the hash library at [`../hash`](../hash). That library hashes pre-decoded RGB buffers; this one produces those buffers from arbitrary image bytes, with cross-language pixel-level parity.
 
 ---
 
@@ -52,7 +52,7 @@ Two exceptions worth knowing:
 | JS/TS | 44 | `npm test` |
 | Swift | 48 | `swift test` |
 
-Total: 212 tests across 5 ports. **No macOS or Windows runs.** **CI yaml exists but has never executed** (no GitHub remote).
+Total: 212 tests across 5 ports. CI runs on every push/PR via `.github/workflows/decode-ci.yml` against ubuntu-24.04. **No macOS or Windows runs** — Linux-only.
 
 Post-SecRev each port's Group 4 (error semantics) tests also cover the new `imageTooLarge` variant — the two synthetic `spec/fixtures/{bmp,png}/invalid/too-large.{bmp,png}` fixtures declare 65536×65536 in their headers and are rejected before any allocation.
 
@@ -246,7 +246,7 @@ rosetta-image-decode/
 
 ---
 
-## Release tags (local only — no remote yet)
+## Release tags
 
 ```
 spec-decode-v0.1.0

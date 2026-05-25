@@ -302,6 +302,11 @@ def main() -> int:
                    default="mixed", help="input strategy (default: mixed)")
     p.add_argument("--print-every", type=int, default=100,
                    help="print progress every N iterations (default: 100)")
+    p.add_argument("--strict", action="store_true",
+                   help="exit 1 on any disagreement (mixed or hex). Default: exit 1 "
+                        "only on hex-disagreement; 'mixed' findings (decode-layer "
+                        "format-detection / tolerance drift documented in decode/"
+                        "spec/SPEC.md §3.2) are reported but not counted as failures.")
     args = p.parse_args()
 
     ports = _ports()
@@ -373,8 +378,19 @@ def main() -> int:
     print(f"  hex-disagreement:  {counts['hex-disagreement']}", file=sys.stderr)
     if disagreement_paths:
         print(f"  disagreement corpus: {CORPUS_DIR}", file=sys.stderr)
+    # Exit policy: hex-disagreement always fails (real cross-port hash drift).
+    # 'mixed' findings (decode-layer format-detection / tolerance drift) are
+    # documented v1 limitations — only fail on them in --strict mode.
+    failing = counts["hex-disagreement"] + (counts["mixed"] if args.strict else 0)
+    if failing > 0:
         return 1
-    print(f"  no disagreements — all {len(ports)} ports agreed on every input.", file=sys.stderr)
+    if counts["mixed"] > 0:
+        print(f"  note: {counts['mixed']} 'mixed' finding(s) reported but not "
+              f"counted as failures (documented v1 tolerance drift; use --strict "
+              f"to fail on them).", file=sys.stderr)
+    else:
+        print(f"  no disagreements — all {len(ports)} ports agreed on every input.",
+              file=sys.stderr)
     return 0
 
 

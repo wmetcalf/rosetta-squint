@@ -9,7 +9,7 @@ Every port exposes the same minimal API:
 - `supported_formats()` → list of `Format` enum values.
 - `DecodeError` (or equivalent) with a `kind` field: `unsupportedFormat`, `corruptInput`, `truncated`, `unsupportedFeature`.
 
-A successful `decode()` is the cross-language equivalence point. Hash the resulting `data` buffer (or hand it to [rosetta-image-hash](https://github.com/wmetcalf/rosetta-image-hash)) and you get the same hash in every language.
+A successful `decode()` is the cross-language equivalence point. Hash the resulting `data` buffer (or hand it to [`../hash`](../hash)) and you get the same hash in every language.
 
 ---
 
@@ -82,7 +82,7 @@ import (
     "log"
     "os"
 
-    "github.com/wmetcalf/rosetta-image-decode/go/imagedecode"
+    "github.com/wmetcalf/rosetta-squint/decode/go/imagedecode"
 )
 
 func main() {

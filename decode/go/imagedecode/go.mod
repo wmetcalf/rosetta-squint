@@ -1,4 +1,4 @@
-module github.com/wmetcalf/rosetta-image-decode/go/imagedecode
+module github.com/wmetcalf/rosetta-squint/decode/go/imagedecode
 
 go 1.25.0
 

@@ -177,7 +177,8 @@ migration:
   lossless, malformed-input rejection, AVIF rejection).
 - **Cross-squint-diff grid** extended with `hash_size = 2` for all algorithms
   — 8 new (algo × size) combinations × 2 fixtures = 16 new cross-port
-  byte-exact checks. Total: 38 combinations agreed across 6 ports.
+  byte-exact checks. Total: 35 (algo × size) combinations × 2 fixtures = 70
+  byte-exact verifications across 6 ports.
 - **Hash boundary goldens**: `hash_size = 2` added to all algorithms. Sizes
   32 + 64 deferred for `phash`, `phash_simple`, `whash_db4`, `whash_db4_robust`,
   `crop_resistant_hash` per the per-algorithm divergence table in SPEC.md
@@ -187,10 +188,8 @@ migration:
 
 - **Cross-port-diff harnesses** (both decode and squint sides) now count any
   port-level error as a fixture failure (was silent skip).
-- **Bench harness** (`tools/bench/bench.py`): new `--steady-state` mode runs
-  the hash N times in-process per port via `squint-cli --repeat N`. Reports
-  warm-state per-hash latency separately from cold-start subprocess time.
-  `startup_ms` calculation clamped to ≥ 0.
+- **Bench harness** (`tools/bench/bench.py`): `startup_ms` calculation clamped
+  to ≥ 0 to handle measurement noise on very fast cold-start ports.
 - **Java classpath probe**: `tools/cross-squint-diff/diff_all_squint.py` and
   `tools/bench/bench.py` now honor `TURBOJPEG_JAR_PATH` / `TURBOJPEG_LIB_PATH`
   env vars and fall back through Debian/Ubuntu/RHEL/macOS-homebrew default
@@ -219,13 +218,14 @@ migration:
 ### Documentation
 
 - Consolidated security/correctness audit (Raptor + GPT-5.4 + Claude Opus
-  4.7 reviews) — 51+ findings across HIGH/MEDIUM/LOW/coverage-gap tiers,
-  resolved or documented in this changelog. Raw audit reports are kept
-  internal.
+  4.7 reviews + Claude fresh-eyes follow-up) — see [`SECURITY.md`](./SECURITY.md)
+  for the per-reviewer breakdown (12 internal + 6 Raptor + 6 GPT-5.4 + 74+
+  Claude findings across HIGH/MEDIUM/LOW/coverage-gap tiers), resolved or
+  documented in this changelog. Raw audit reports are kept internal.
 - `decode/SECURITY.md` updated: Go WebP via `chai2010/webp` is documented
   as bundling libwebp 1.4.0 source (not system libwebp); the original table
   was wrong about this. Fuzz coverage table added.
 - `hash/spec/SPEC.md`: new "Boundary hash sizes" section documenting the
   size 2 win + size 32/64 deferred per-algorithm divergence pattern.
-- `README.md` performance section: cold-start + steady-state tables with
-  exact reproducible commands.
+- `README.md` performance section: cold-start table with exact reproducible
+  `make bench` command (one-shot CLI cost — startup + decode + hash + print).

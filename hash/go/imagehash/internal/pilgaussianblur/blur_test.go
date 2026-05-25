@@ -5,8 +5,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/pilgaussianblur"
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/testkit"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash/internal/pilgaussianblur"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash/internal/testkit"
 )
 
 type gaussianCase struct {

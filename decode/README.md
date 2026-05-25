@@ -2,13 +2,11 @@
 
 Byte-exact, PIL-compatible image decoders across Java, Go, Rust, JavaScript/TypeScript, and Swift.
 
-Sibling project to [rosetta-image-hash](https://github.com/wmetcalf/rosetta-image-hash). The hash library focuses on perceptual hashing of pre-decoded RGB pixel buffers; this library focuses on producing those buffers from arbitrary image bytes, with byte-exact cross-language parity.
+Sibling component to the hash library at [`../hash`](../hash). The hash library focuses on perceptual hashing of pre-decoded RGB pixel buffers; this library focuses on producing those buffers from arbitrary image bytes, with byte-exact cross-language parity.
 
 ## Status
 
-**v0.1.0 — shared core only.** No format decoders yet. Format sub-projects (BMP, PNG, GIF, JPEG, WebP, TIFF, HEIC, EMF/WMF) are landed one at a time.
-
-See [`spec/formats.json`](./spec/formats.json) for current per-format status.
+**v1 shipped — 7 formats × 5 ports byte-exact.** Supported formats: BMP, PNG, GIF, JPEG, WebP, TIFF, HEIC. See [`STATUS.md`](./STATUS.md) for the full per-port × per-format matrix and [`spec/formats.json`](./spec/formats.json) for the machine-readable version.
 
 ## Project layout
 

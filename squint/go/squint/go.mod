@@ -3,8 +3,8 @@ module github.com/wmetcalf/rosetta-squint/squint/go/squint
 go 1.25.0
 
 require (
-	github.com/wmetcalf/rosetta-image-decode/go/imagedecode v0.0.0
-	github.com/wmetcalf/rosetta-image-hash/go/imagehash v0.0.0
+	github.com/wmetcalf/rosetta-squint/decode/go/imagedecode v0.0.0
+	github.com/wmetcalf/rosetta-squint/hash/go/imagehash v0.0.0
 )
 
 require (
@@ -14,6 +14,6 @@ require (
 )
 
 replace (
-	github.com/wmetcalf/rosetta-image-decode/go/imagedecode => ../../../decode/go/imagedecode
-	github.com/wmetcalf/rosetta-image-hash/go/imagehash => ../../../hash/go/imagehash
+	github.com/wmetcalf/rosetta-squint/decode/go/imagedecode => ../../../decode/go/imagedecode
+	github.com/wmetcalf/rosetta-squint/hash/go/imagehash => ../../../hash/go/imagehash
 )

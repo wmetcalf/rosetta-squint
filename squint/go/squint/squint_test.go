@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash"
 	"github.com/wmetcalf/rosetta-squint/squint/go/squint"
 )
 

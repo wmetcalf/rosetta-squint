@@ -114,7 +114,7 @@ Runtime deps: `pngjs ^7` (pure-JS PNG decoder; works in Node and browser via bun
 
 ## See also
 
-- [USAGE.md](../../USAGE.md) — examples for all 5 ports
+- [USAGE.md](../../USAGE.md) — examples for all 6 ports
 - [STATUS.md](../../STATUS.md)
 - [`../../spec/SPEC.md`](../../spec/SPEC.md)
 

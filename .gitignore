@@ -33,10 +33,14 @@ squint/tools/
 # for local diff/bench runs. Not a release artifact.
 squint/go/squint/squint-cli
 
-# Python caches (per-subdir .gitignore handles them inside the python/ packages
-# but tools/ has no python project file, so it doesn't pick up the rule).
+# Python caches + sdist/wheel build dirs (per-subdir .gitignore handles them
+# inside the python/ packages but tools/ has no python project file, so it
+# doesn't pick up the rule).
 **/__pycache__/
 *.py[cod]
+hash/python/build/
+hash/python/dist/
+hash/python/*.egg-info/
 
 # OS / editor cruft
 .DS_Store

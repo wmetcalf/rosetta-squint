@@ -5,8 +5,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/pilhsv"
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/testkit"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash/internal/pilhsv"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash/internal/testkit"
 )
 
 func TestAllCasesMatchSpec(t *testing.T) {

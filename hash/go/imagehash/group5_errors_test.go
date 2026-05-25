@@ -5,7 +5,7 @@ import (
 	"image/color"
 	"testing"
 
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash"
 )
 
 func tiny() image.Image {

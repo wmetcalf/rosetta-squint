@@ -15,7 +15,7 @@ import (
     "log"
     "os"
 
-    "github.com/wmetcalf/rosetta-image-decode/go/imagedecode"
+    "github.com/wmetcalf/rosetta-squint/decode/go/imagedecode"
 )
 
 func main() {

@@ -1,3 +1,3 @@
-module github.com/wmetcalf/rosetta-image-hash/go/imagehash
+module github.com/wmetcalf/rosetta-squint/hash/go/imagehash
 
 go 1.22

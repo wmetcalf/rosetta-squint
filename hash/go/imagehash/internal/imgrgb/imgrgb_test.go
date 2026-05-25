@@ -6,7 +6,7 @@ import (
 	"image/draw"
 	"testing"
 
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/imgrgb"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash/internal/imgrgb"
 )
 
 func TestRGBAPassthrough(t *testing.T) {

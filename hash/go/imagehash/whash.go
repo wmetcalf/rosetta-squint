@@ -6,9 +6,9 @@ import (
 	"math"
 	"sort"
 
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/haar"
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/imgrgb"
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/lanczos"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash/internal/haar"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash/internal/imgrgb"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash/internal/lanczos"
 )
 
 func WHashHaar(img image.Image, hashSize int) (Hash, error) {

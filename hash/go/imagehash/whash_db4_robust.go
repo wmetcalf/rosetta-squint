@@ -6,10 +6,10 @@ import (
 	"math"
 	"sort"
 
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/db4"
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/haar"
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/imgrgb"
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/lanczos"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash/internal/db4"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash/internal/haar"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash/internal/imgrgb"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash/internal/lanczos"
 )
 
 // WHashDb4RobustEps is the ε threshold for snap-to-zero in WHashDb4Robust.

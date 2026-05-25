@@ -92,12 +92,7 @@ Both halves are at clean release-candidate states. See:
 
 ## Performance
 
-End-to-end CLI cost per hash (process startup + decode + algorithm + print), measured on a 384×512 RGB photograph (`hash/spec/fixtures/peppers.png`), Linux x86-64. Two regimes are reproducible directly:
-
-- **Cold-start** (table immediately below): `make bench` (= `tools/bench/bench.py --iter 10 --warm 1`) — median of 10 fresh-subprocess invocations.
-- **Steady-state** (warm table further down): `tools/bench/bench.py --steady-state --iter 30 --warm 5` — first 5 in-process iterations dropped per port, median of next 30.
-
-Per-algorithm details in [`tools/bench/`](./tools/bench/).
+End-to-end CLI cost per hash (process startup + decode + algorithm + print), measured on a 384×512 RGB photograph (`hash/spec/fixtures/peppers.png`), Linux x86-64. The table below is **cold-start** — `make bench` (= `tools/bench/bench.py --iter 10 --warm 1`) running each algorithm × port combination as fresh-subprocess invocations and taking the median of 10. To regenerate the full per-algorithm matrix shown below, see the loop in [`tools/bench/README.md`](./tools/bench/README.md). For steady-state per-hash latency without process-startup cost, use each language's native bench harness (`cargo bench`, `go test -bench`, JMH, `vitest bench`, XCTest `measure`, `pytest-benchmark`).
 
 | Algorithm | Rust | Swift | Go | Python | JS (Node) | Java |
 |---|---:|---:|---:|---:|---:|---:|
@@ -113,8 +108,6 @@ Per-algorithm details in [`tools/bench/`](./tools/bench/).
 | `crop_resistant_hash` | **23.8 ms** | 74.5 ms | 58.1 ms | 300 ms | 371 ms | 243 ms |
 
 **The numbers are end-to-end CLI invocation costs.** For one-shot use (e.g. a CI script that hashes one screenshot per build), this is what you'd actually pay. For workloads that amortise startup — long-running services, batch processing thousands of images — the JIT/VM ports (Python, JS, Java) end up dramatically faster than the table suggests, because most of their cost is paid once at process launch (Python imports `numpy`/`scipy`/`PIL`/`PyWavelets`; Java boots the JVM; Node initialises the mozjpeg WASM module).
-
-For steady-state per-hash latency, use each language's native bench harness — `cargo bench`, `go test -bench`, JMH, `vitest bench`, XCTest `measure`, `pytest-benchmark`.
 
 **Three takeaways:**
 

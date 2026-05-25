@@ -3,7 +3,7 @@ package imagehash_test
 import (
 	"testing"
 
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash"
 )
 
 func mustHash(t *testing.T, bits [][]bool) imagehash.Hash {

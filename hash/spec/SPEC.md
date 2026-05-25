@@ -263,8 +263,7 @@ The golden corpus covers `hash_size ∈ {2, 4, 8, 16, 32, 64}` for `average_hash
 `dhash`, `dhash_vertical`, `phash`, `phash_simple` (size=4 is omitted for
 wavelet algos because the spec only documents power-of-2 sizes; wavelet covers
 {2, 8, 16, 32, 64}). At all of these sizes every port produces byte-exact
-agreement against the Python reference on every fixture (H-L8 + follow-up,
-AUDIT-claude.md, 2026-05-23).
+agreement against the Python reference on every fixture.
 
 **`hash_size=2` notes:**
 - For `whash(mode='db4')`, the LL band cannot shrink below the db4 filter

@@ -45,11 +45,12 @@ ALGO_HASH_SIZES = {
     "whash_db4":        [2, 8, 16, 32, 64],
     "whash_db4_robust": [2, 8, 16, 32, 64],
 }
-# H-L8 (AUDIT-claude.md): added hash_size=2 across all algorithms (2026-05-23),
-# then added sizes 32 and 64 (2026-05-23, follow-up) using the snap-to-threshold
-# tie-break described in SPEC.md §"Threshold tie-break". For phash, phash_simple,
-# whash_db4, and whash_db4_robust the bit comparison is `v > threshold + SNAP_EPS`
-# instead of `v > threshold`, which deterministically maps near-threshold
+# Boundary-size goldens (see SPEC.md §"Boundary hash sizes"): hash_size=2 was
+# added across all algorithms, then sizes 32 and 64 followed using the
+# snap-to-threshold tie-break described in SPEC.md §"Threshold tie-break".
+# For phash, phash_simple, whash_db4, and whash_db4_robust the bit comparison
+# is `v > threshold + SNAP_EPS` instead of `v > threshold`, which
+# deterministically maps near-threshold
 # coefficients to 0 across every port (eliminating FP-noise tie flips).
 # This is a deliberate spec change: existing size 8/16 goldens for those four
 # algorithms may shift compared to pre-snap upstream `imagehash` output.

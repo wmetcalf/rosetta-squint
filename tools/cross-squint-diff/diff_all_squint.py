@@ -119,7 +119,7 @@ else:
 
 # Algorithm × hash-size grid to test against each fixture.
 DEFAULT_GRID: list[tuple[str, int]] = [
-    # hash_size=2 boundary cases (H-L8, AUDIT-claude.md).
+    # hash_size=2 boundary cases (see SPEC.md §"Boundary hash sizes").
     ("average_hash",     2),
     ("dhash",            2),
     ("dhash_vertical",   2),
@@ -138,8 +138,8 @@ DEFAULT_GRID: list[tuple[str, int]] = [
     ("whash_db4",        8),
     ("whash_db4_robust", 8),
     ("colorhash",        3),
-    # hash_size=32 and hash_size=64 boundary cases (H-L8 follow-up,
-    # AUDIT-claude.md, 2026-05-23). Goldens enabled after adding
+    # hash_size=32 and hash_size=64 boundary cases (see SPEC.md
+    # §"Boundary hash sizes"). Goldens enabled after adding the
     # snap-to-threshold tie-break to phash, phash_simple, whash_db4 and
     # whash_db4_robust. colorhash takes binbits, not hash_size; skip.
     # crop_resistant_hash uses fixed segment-phash size; skip.

@@ -66,7 +66,7 @@ Crate runtime deps: `image` 0.25 (PNG only), `thiserror` 2.
 
 ## See also
 
-- [USAGE.md](../../USAGE.md) — examples for all 5 ports
+- [USAGE.md](../../USAGE.md) — examples for all 6 ports
 - [STATUS.md](../../STATUS.md) — what's implemented, Python parity story
 - [`../../spec/SPEC.md`](../../spec/SPEC.md) — bit-level pipeline specification
 

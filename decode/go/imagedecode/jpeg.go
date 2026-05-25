@@ -1,7 +1,7 @@
 package imagedecode
 
 import (
-	"github.com/wmetcalf/rosetta-image-decode/go/imagedecode/internal/libjpeg"
+	"github.com/wmetcalf/rosetta-squint/decode/go/imagedecode/internal/libjpeg"
 )
 
 func decodeJpeg(b []byte) (DecodedImage, error) {

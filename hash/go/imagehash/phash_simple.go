@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"image"
 
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/dct"
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/imgrgb"
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/lanczos"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash/internal/dct"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash/internal/imgrgb"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash/internal/lanczos"
 )
 
 // PHashSimple with default highfreqFactor=4.

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"image"
 
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/imgrgb"
-	"github.com/wmetcalf/rosetta-image-hash/go/imagehash/internal/lanczos"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash/internal/imgrgb"
+	"github.com/wmetcalf/rosetta-squint/hash/go/imagehash/internal/lanczos"
 )
 
 // DHashVertical computes dhash_vertical: grayscale → Lanczos resize to (W=N, H=N+1) →

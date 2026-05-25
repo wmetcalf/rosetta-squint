@@ -144,7 +144,7 @@ cross-port-diff:
 
 .PHONY: cross-squint-diff
 cross-squint-diff:
-	@echo "→ cross-squint-diff (full grid, 70 combos × 2 fixtures)"
+	@echo "→ cross-squint-diff (full grid, 35 algo×size combos × 2 fixtures = 70 byte-exact checks)"
 	@tools/cross-squint-diff/diff_all_squint.py --regression
 
 .PHONY: cross-squint-diff-fast
