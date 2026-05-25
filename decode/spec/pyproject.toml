@@ -5,7 +5,7 @@ description = "Bit-level reference spec and golden values for rosetta-image-deco
 requires-python = ">=3.11,<3.13"
 
 dependencies = [
-    "Pillow==11.0.0",
+    "Pillow==12.2.0",
     "jsonschema>=4.21,<5.0",
 ]
 

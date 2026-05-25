@@ -170,25 +170,10 @@ jobs:
         run: python -m pip install --upgrade pip pip-audit
       - name: pip-audit (spec deps)
         if: matrix.ecosystem == 'python'
-        # Pillow 10.4.0 (current pin) has 5 advisories all fixed in 12.x;
-        # can't bump until next byte-exact goldens regen (would change BMP
-        # rle8-with-delta output, etc.).
-        run: |
-          pip-audit -r hash/spec/requirements.txt \
-            --ignore-vuln CVE-2026-25990 \
-            --ignore-vuln CVE-2026-40192 \
-            --ignore-vuln CVE-2026-42308 \
-            --ignore-vuln CVE-2026-42310 \
-            --ignore-vuln CVE-2026-42311
+        run: pip-audit -r hash/spec/requirements.txt
       - name: pip-audit (Python wrapper)
         if: matrix.ecosystem == 'python'
-        run: |
-          cd hash/python && pip-audit . \
-            --ignore-vuln CVE-2026-25990 \
-            --ignore-vuln CVE-2026-40192 \
-            --ignore-vuln CVE-2026-42308 \
-            --ignore-vuln CVE-2026-42310 \
-            --ignore-vuln CVE-2026-42311
+        run: cd hash/python && pip-audit .
 
       # Go — govulncheck (Go vulnerability database). Use a recent stable Go
       # toolchain so stdlib CVEs fixed in patch releases don't false-positive.

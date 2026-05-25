@@ -348,14 +348,7 @@ jobs:
           /tmp/squint-audit-venv/bin/pip install ./hash/python
           /tmp/squint-audit-venv/bin/pip install ./squint/python
           /tmp/squint-audit-venv/bin/pip install pip-audit
-          # Pillow 10.4.0 (current pin) has 5 advisories all fixed in 12.x;
-          # can't bump until next byte-exact goldens regen.
-          /tmp/squint-audit-venv/bin/pip-audit --skip-editable \
-            --ignore-vuln CVE-2026-25990 \
-            --ignore-vuln CVE-2026-40192 \
-            --ignore-vuln CVE-2026-42308 \
-            --ignore-vuln CVE-2026-42310 \
-            --ignore-vuln CVE-2026-42311
+          /tmp/squint-audit-venv/bin/pip-audit --skip-editable
 
       # Go — govulncheck against the squint Go module. Use a recent stable
       # toolchain so stdlib CVEs in patch releases don't false-positive.

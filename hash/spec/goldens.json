@@ -1632,9 +1632,9 @@
   },
   "imagehash_version": "4.3.2",
   "numpy_version": "1.26.4",
-  "pillow_version": "10.4.0",
+  "pillow_version": "12.2.0",
   "pywavelets_version": "1.8.0",
-  "regenerated_at": "2026-05-23T21:40:47Z",
+  "regenerated_at": "2026-05-25T13:49:09Z",
   "schema_version": 1,
-  "scipy_version": "1.17.0"
+  "scipy_version": "1.17.1"
 }

@@ -371,11 +371,13 @@ public final class BMPDecoder {
                     // End of bitmap
                     break outer;
                 } else if (dataByte == 2) {
-                    // Delta: Pillow reads 4 bytes (reads 2 into bytes_read, then 2 into right,up).
-                    // The first 2 bytes are discarded; the second 2 are used as dx, dy.
-                    // This is a Pillow bug but we must match it to be byte-exact with the goldens.
-                    if (pos + 3 >= end) break; // not enough bytes
-                    pos += 2; // skip first 2 bytes (discarded in Pillow)
+                    // Delta: per BMP spec (and Pillow 12.x), the 2 bytes
+                    // following the `00 02` escape are (dx, dy).
+                    // (Pillow ≤ 11 had a bug that consumed 4 bytes here; we
+                    // anchored to that buggy behavior in earlier goldens.
+                    // Pillow 12.x fixed it; goldens regenerated against the
+                    // spec-correct 2-byte read.)
+                    if (pos + 1 >= end) break; // not enough bytes
                     int right = bytes[pos++] & 0xFF;
                     int up    = bytes[pos++] & 0xFF;
                     int zeros = right + up * xsize;

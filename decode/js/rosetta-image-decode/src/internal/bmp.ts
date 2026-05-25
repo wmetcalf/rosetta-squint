@@ -439,9 +439,12 @@ function decodeRle(bytes: Uint8Array, hdr: BmpHeader, bitsPerPixel: number): Dec
         // End of bitmap
         break outer;
       } else if (dataByte === 2) {
-        // Delta: Pillow reads 4 bytes (first 2 discarded, second 2 are dx/dy)
-        if (pos + 3 >= end) break;
-        pos += 2; // skip first 2 bytes (Pillow bug we must match)
+        // Delta: per BMP spec (and Pillow 12.x), the 2 bytes following the
+        // `00 02` escape are (dx, dy). (Pillow ≤ 11 had a bug that consumed
+        // 4 bytes here; we anchored to that buggy behavior in earlier goldens.
+        // Pillow 12.x fixed it; goldens regenerated against the spec-correct
+        // 2-byte read.)
+        if (pos + 1 >= end) break;
         const right = bytes[pos++]! & 0xff;
         const up = bytes[pos++]! & 0xff;
         const zeros = right + up * xsize;

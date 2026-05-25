@@ -38,7 +38,7 @@ python consistency.py
 
 Goldens are produced with:
 - `imagehash==4.3.2`
-- `Pillow==10.4.0`
+- `Pillow==12.2.0`
 - `numpy>=1.26,<2.0`
 - `scipy>=1.11,<1.15`
 - `PyWavelets>=1.5,<2.0`

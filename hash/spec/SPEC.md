@@ -1,7 +1,7 @@
 # rosetta-image-hash bit-level specification
 
 Every language port reproduces this pipeline byte-exact. The Python reference is
-`imagehash==4.3.2` with `Pillow==10.4.0`, `numpy>=1.26,<2.0`, `scipy>=1.11,<1.15`,
+`imagehash==4.3.2` with `Pillow==12.2.0`, `numpy>=1.26,<2.0`, `scipy>=1.11,<1.15`,
 `PyWavelets>=1.5,<2.0`. Versions are recorded in `goldens.json`; ports that read
 different versions and fail parity should expect drift.
 

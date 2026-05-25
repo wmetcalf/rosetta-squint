@@ -36,7 +36,7 @@ The remaining gaps (`crop_resistant_hash` and `old_hex_to_hash`) have a written 
 
 Goldens were generated against:
 - `imagehash==4.3.2`
-- `Pillow==10.4.0`
+- `Pillow==12.2.0`
 - `numpy>=1.26,<2.0`
 - `scipy>=1.11,<1.15`
 - `PyWavelets>=1.5,<2.0`

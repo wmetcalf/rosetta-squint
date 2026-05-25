@@ -179,7 +179,7 @@
       "channels": 3,
       "format": "bmp",
       "height": 16,
-      "sha256": "4ed22e8eeae8f0f8a0016bcd41ff841704d1e135b71ef65c226c01c203c110ae",
+      "sha256": "e16fab090def9427db62f9ddad1b4027a89eda37c1cd4899ff833def8d57a218",
       "width": 16
     },
     "bmp/valid/rle8.bmp": {
@@ -967,7 +967,7 @@
       "width": 24
     }
   },
-  "pillow_version": "11.0.0",
-  "regenerated_at": "2026-05-21T17:11:01Z",
+  "pillow_version": "12.2.0",
+  "regenerated_at": "2026-05-25T13:49:00Z",
   "schema_version": 1
 }

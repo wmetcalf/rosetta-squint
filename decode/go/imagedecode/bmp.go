@@ -492,12 +492,14 @@ outer:
 				// End of bitmap
 				break outer
 			} else if dataByte == 2 {
-				// Delta: Pillow reads 4 bytes (first 2 discarded, second 2 are dx/dy).
-				// This is a Pillow bug we must replicate.
-				if pos+3 >= end {
+				// Delta: per BMP spec (and Pillow 12.x), the 2 bytes following
+				// the `00 02` escape are (dx, dy). (Pillow ≤ 11 had a bug that
+				// consumed 4 bytes here; we anchored to that buggy behavior in
+				// earlier goldens. Pillow 12.x fixed it; goldens regenerated
+				// against the spec-correct 2-byte read.)
+				if pos+1 >= end {
 					break
 				}
-				pos += 2 // skip first 2 bytes (discarded in Pillow)
 				right := int(b[pos])
 				pos++
 				up := int(b[pos])

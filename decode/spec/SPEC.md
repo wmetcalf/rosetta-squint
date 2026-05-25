@@ -5,7 +5,7 @@ formats and language ports. Each format section describes its reference
 decoder library, configuration, output conventions, and known divergence
 points.
 
-**Reference Python lib:** Pillow 11.0.0 (pinned in `requirements.txt`).
+**Reference Python lib:** Pillow 12.2.0 (pinned in `requirements.txt`).
 Golden pixel buffers in `decoded/<format>/` are produced by
 `regenerate.py` using `Image.open(...).convert('RGB' or 'RGBA').tobytes()`.
 
@@ -410,7 +410,7 @@ skip the two-pass detection: always output RGBA.
 
 ### §11 PNG
 
-**Reference behavior:** Pillow 11.0.0's built-in PNG plugin (`PIL/PngImagePlugin.py` + libpng via `libImaging/PngImagePlugin.c`).
+**Reference behavior:** Pillow 12.2.0's built-in PNG plugin (`PIL/PngImagePlugin.py` + libpng via `libImaging/PngImagePlugin.c`).
 
 **Decoded pixel output by color type:**
 
@@ -451,7 +451,7 @@ skip the two-pass detection: always output RGBA.
 
 ### §12 GIF
 
-**Reference behavior:** Pillow 11.0.0's built-in GIF plugin returns the first
+**Reference behavior:** Pillow 12.2.0's built-in GIF plugin returns the first
 frame of a GIF89a file as a paletted image. We convert that to RGB or RGBA
 matching PIL's default `.convert('RGB')` or `.convert('RGBA')` semantics.
 
@@ -477,7 +477,7 @@ deferred to v0.2.
 
 ### §13 JPEG
 
-**Reference behavior:** libjpeg-turbo (the C library Pillow 11.0.0 uses internally), configured with:
+**Reference behavior:** libjpeg-turbo (the C library Pillow 12.2.0 uses internally), configured with:
 - `dct_method = JDCT_ISLOW` (deterministic across architectures)
 - `out_color_space = JCS_RGB`
 - Default chroma upsampling (fancy upsampling enabled — libjpeg-turbo's default)
@@ -516,7 +516,7 @@ deferred to v0.2.
 
 ### §14 WebP
 
-**Reference behavior:** libwebp via Pillow 11.0.0's PIL WebP plugin.
+**Reference behavior:** libwebp via Pillow 12.2.0's PIL WebP plugin.
 
 **Output channels:**
 - Lossy/lossless without alpha → RGB (3 channels)
@@ -540,7 +540,7 @@ deferred to v0.2.
 
 ### §15 TIFF
 
-**Reference behavior:** libtiff via Pillow 11.0.0's PIL TIFF plugin.
+**Reference behavior:** libtiff via Pillow 12.2.0's PIL TIFF plugin.
 
 **v1 supported subset:**
 - Baseline TIFF only (uncompressed, LZW, Deflate)

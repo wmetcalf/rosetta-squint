@@ -191,7 +191,7 @@ def gen_lanczos_cases() -> dict:
     manifest_path = LANCZOS_DIR / "MANIFEST.json"
     manifest = {
         "description": "Lanczos resize reference cases. Each .bin contains a (src_w, src_h, dst_w, dst_h) uint32_le header, then the src uint8 buffer (row-major, grayscale), then the dst uint8 buffer.",
-        "pil_version_note": "Produced with Pillow 10.4.0 LANCZOS filter on 'L'-mode images.",
+        "pil_version_note": "Produced with Pillow 12.2.0 LANCZOS filter on 'L'-mode images.",
         "cases": cases,
     }
     manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")

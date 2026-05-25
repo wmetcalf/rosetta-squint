@@ -23,7 +23,7 @@ authors = [
 # Once on PyPI, this dependency will be specified normally.
 dependencies = [
     "rosetta-imagehash>=0.1.0,<0.2",
-    "Pillow==10.4.*",
+    "Pillow==12.2.*",
 ]
 
 [project.optional-dependencies]

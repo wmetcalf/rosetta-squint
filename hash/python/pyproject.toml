@@ -26,7 +26,7 @@ authors = [
 dependencies = [
     "imagehash==4.3.2",
     "numpy>=1.26,<2.0",
-    "Pillow==10.4.*",       # tested against 10.4.0; allow patch-level only
+    "Pillow==12.2.*",       # tested against 12.2.0; allow patch-level only
     "PyWavelets>=1.5,<2.0",
 ]
 
@@ -39,7 +39,7 @@ test = [
 # emptor — cross-port byte-exact parity is no longer guaranteed.
 unpinned = [
     "imagehash>=4.3.2,<5.0",
-    "Pillow>=10.4,<13",
+    "Pillow>=12.2,<14",
 ]
 
 [project.urls]
