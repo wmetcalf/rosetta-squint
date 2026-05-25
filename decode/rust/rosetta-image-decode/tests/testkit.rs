@@ -1,5 +1,11 @@
 // tests/testkit.rs - shared test helpers
 // (this file is NOT a test itself; it's a module included by other test files)
+//
+// Each integration test file that `mod testkit;`s this only uses a SUBSET
+// of these helpers, so any helper a given test file doesn't call shows up
+// as `dead_code` in clippy. Suppress at file level — the helpers ARE used
+// across the test suite as a whole.
+#![allow(dead_code)]
 
 use serde::Deserialize;
 use std::fs;

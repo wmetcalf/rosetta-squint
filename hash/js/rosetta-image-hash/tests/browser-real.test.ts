@@ -88,7 +88,19 @@ describe("rosetta-image-hash/browser — real Chromium execution", () => {
       return;
     }
 
-    const browser = await playwright.chromium.launch();
+    // Try to launch; if the chromium binary isn't installed (common in CI
+     // setups without `npx playwright install chromium`), skip gracefully.
+    let browser: import("playwright").Browser;
+    try {
+      browser = await playwright.chromium.launch();
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (msg.includes("Executable doesn't exist") || msg.includes("chrome-headless-shell")) {
+        console.warn("chromium binary not installed (run `npx playwright install chromium`) — skipping");
+        return;
+      }
+      throw e;
+    }
     try {
       const ctx = await browser.newContext();
       const page = await ctx.newPage();

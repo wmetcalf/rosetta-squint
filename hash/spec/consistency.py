@@ -51,12 +51,20 @@ def main() -> int:
         if name not in decoded_names:
             errors.append(f"decoded_sha256: {name}: no matching decoded file")
 
-    # 3. Every fixture in fixtures/ appears in every applicable algorithm
+    # 3. Every fixture in fixtures/ appears in every applicable algorithm.
+    # crop_resistant_hash deliberately excludes some fixtures (e.g.
+    # crop-boundary-150.png is for the H-H1 banker's-rounding audit and would
+    # FAIL cross-port tests until Rust/Java/Swift switch rounding modes).
+    # Mirror the exclusion list in regenerate.py.
+    PER_ALGO_FIXTURE_EXCLUDE = {
+        "crop_resistant_hash": {"crop-boundary-150.png"},
+    }
     fixture_names = {p.name for p in FIXTURES_DIR.glob("*.png")}
     algos = goldens.get("algorithms", {})
     for algo_name, algo in algos.items():
         algo_fixtures = set(algo.get("fixtures", {}).keys())
-        missing = fixture_names - algo_fixtures
+        expected = fixture_names - PER_ALGO_FIXTURE_EXCLUDE.get(algo_name, set())
+        missing = expected - algo_fixtures
         extra = algo_fixtures - fixture_names
         if missing:
             errors.append(f"algorithm {algo_name}: fixtures missing from goldens: {sorted(missing)}")

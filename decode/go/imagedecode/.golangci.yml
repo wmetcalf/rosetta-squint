@@ -23,15 +23,28 @@ linters:
     gosec:
       # G103 (unsafe block) is unavoidable in cgo wrappers.
       # G104 (unchecked errors) — errcheck already covers this with less noise.
+      # G115 (integer overflow conversion) — pervasive in image decoders
+      # where we cast width*height*channels between u32/u64/usize/uint after
+      # bounds-checking against MAX_PIXELS; gosec can't see the prior check.
       # G304 (file path from variable) — this is a *decoder* library; the path
       # is always caller-controlled by definition.
+      # G703 (path traversal) — same justification as G304.
       excludes:
         - G103
         - G104
+        - G115
         - G304
+        - G703
     errcheck:
       check-type-assertions: false
       check-blank: false
+    staticcheck:
+      # QF1003 (use tagged switch) is a stylistic suggestion that doesn't
+      # always improve readability over plain if-else in decoder marker
+      # walkers. The other staticcheck checks remain enabled.
+      checks:
+        - all
+        - -QF1003
   exclusions:
     rules:
       - path: _test\.go

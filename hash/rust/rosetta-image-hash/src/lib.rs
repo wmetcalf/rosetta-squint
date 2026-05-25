@@ -3,6 +3,16 @@
 //! Public API: `Hash`, `ImageMultiHash`, `ImageHashError`, `hex_to_hash`,
 //! `hex_to_flathash`, `hex_to_multihash`, and the algorithm functions.
 
+// Rust 1.95 clippy tightens some style lints that conflict with the
+// byte-exact-port style of this crate (manual loops + casts mirror the
+// reference Python). Suppress the noisy ones at crate level; the
+// substantive lints remain on.
+#![allow(clippy::needless_range_loop)]
+#![allow(clippy::type_complexity)]
+#![allow(clippy::manual_div_ceil)]
+#![allow(clippy::manual_memcpy)]
+#![allow(clippy::iter_cloned_collect)]
+
 #[doc(hidden)]
 pub mod internal;
 

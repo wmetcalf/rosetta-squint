@@ -17,12 +17,24 @@ linters:
     - unused
   settings:
     gosec:
+      # G104 (unchecked errors): errcheck already covers this and is less noisy.
+      # G115 (integer overflow conversion): pervasive after bounds-checks.
+      # G304 (file paths via variables): unavoidable in a library that takes
+      # caller-supplied paths.
+      # G703 (path traversal): same justification as G304.
       excludes:
         - G104
+        - G115
         - G304
+        - G703
     errcheck:
       check-type-assertions: false
       check-blank: false
+    staticcheck:
+      # QF1003 (use tagged switch) is a stylistic suggestion — keep the rest.
+      checks:
+        - all
+        - -QF1003
   exclusions:
     rules:
       - path: _test\.go

@@ -78,7 +78,7 @@ func DecodeFile(path string) (image.Image, error) {
 		}
 		return nil, fmt.Errorf("open %s: %w", path, err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	info, err := f.Stat()
 	if err != nil {
 		return nil, fmt.Errorf("fstat %s: %w", path, err)

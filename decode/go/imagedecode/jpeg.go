@@ -37,6 +37,10 @@ func decodeJpeg(b []byte) (DecodedImage, error) {
 // jpegDimensions scans JPEG markers to find the first SOF (Start Of Frame) marker
 // and returns the image width and height. Returns (0, 0, false) if not found.
 // SOF layout: FF Cn [length 2 bytes] [precision 1 byte] [height 2 bytes] [width 2 bytes] ...
+//
+// Currently unused; kept for parity with the other ports' JPEG helpers and
+// available for future limit/dimension-sniff use.
+//nolint:unused
 func jpegDimensions(b []byte) (width, height int, ok bool) {
 	for i := 0; i+1 < len(b); i++ {
 		if b[i] != 0xFF {

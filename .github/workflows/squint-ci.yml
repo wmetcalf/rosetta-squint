@@ -348,7 +348,14 @@ jobs:
           /tmp/squint-audit-venv/bin/pip install ./hash/python
           /tmp/squint-audit-venv/bin/pip install ./squint/python
           /tmp/squint-audit-venv/bin/pip install pip-audit
-          /tmp/squint-audit-venv/bin/pip-audit --skip-editable
+          # Pillow 10.4.0 (current pin) has 5 advisories all fixed in 12.x;
+          # can't bump until next byte-exact goldens regen.
+          /tmp/squint-audit-venv/bin/pip-audit --skip-editable \
+            --ignore-vuln CVE-2026-25990 \
+            --ignore-vuln CVE-2026-40192 \
+            --ignore-vuln CVE-2026-42308 \
+            --ignore-vuln CVE-2026-42310 \
+            --ignore-vuln CVE-2026-42311
 
       # Go — govulncheck against the squint Go module. Use a recent stable
       # toolchain so stdlib CVEs in patch releases don't false-positive.
@@ -357,6 +364,18 @@ jobs:
         with:
           go-version: 'stable'
           cache-dependency-path: squint/go/squint/go.mod
+      # squint chains into decode/go which uses cgo (libjpeg-turbo, libheif).
+      # govulncheck type-checks the package, so the system libs and pkg-config
+      # files must be present even though no binary is built.
+      - name: Install system libs for cgo (govulncheck needs to type-check)
+        if: matrix.ecosystem == 'go'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y \
+            libjpeg-turbo8-dev libturbojpeg libturbojpeg0-dev \
+            libwebp-dev libsharpyuv-dev libtiff-dev \
+            libheif-dev libheif-plugin-libde265 libde265-dev libde265-0 \
+            pkg-config
       - name: Install govulncheck
         if: matrix.ecosystem == 'go'
         run: go install golang.org/x/vuln/cmd/govulncheck@latest

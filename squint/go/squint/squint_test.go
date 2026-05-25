@@ -1,7 +1,6 @@
 package squint_test
 
 import (
-	"image"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -468,7 +467,9 @@ func TestDecodeBytes_ReturnsUsableImage(t *testing.T) {
 	if err != nil {
 		t.Fatalf("DecodeBytes: %v", err)
 	}
-	if _, ok := img.(image.Image); !ok {
-		t.Error("DecodeBytes: returned value is not image.Image")
+	// img is already image.Image — a typed-nil check is the load-bearing
+	// assertion, not the type assertion itself. Use the value directly.
+	if img == nil {
+		t.Error("DecodeBytes: returned nil image")
 	}
 }
