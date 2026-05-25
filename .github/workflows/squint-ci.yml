@@ -23,7 +23,7 @@ jobs:
   # ─── Per-port squint test suites ─────────────────────────────────────────
   squint-tests:
     name: squint (${{ matrix.port }})
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -134,7 +134,7 @@ jobs:
   # ─── Cross-squint live diff: build all CLIs, run the full grid ───────────
   cross-squint-diff:
     name: cross-squint-diff (all 6 ports byte-exact)
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     # No `needs:` — let this run in parallel with squint-tests. The diff
     # job rebuilds all CLIs anyway, so it doesn't reuse squint-tests output.
     steps:
@@ -190,7 +190,7 @@ jobs:
   # ─── MAX_FILE_SIZE / non-regular-file smoke test ─────────────────────────
   max-file-size-guards:
     name: MAX_FILE_SIZE + isRegularFile smoke
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     # No `needs:` — let this run independently of cross-squint-diff. The two
     # jobs share no state (each rebuilds the CLIs from scratch), so a flake
     # in cross-squint-diff shouldn't cancel a separate smoke test.
@@ -297,7 +297,7 @@ jobs:
   # ─── dep-audit for the squint manifests ──────────────────────────────────
   dep-audit:
     name: dep-audit squint (${{ matrix.ecosystem }})
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -339,8 +339,16 @@ jobs:
         if: matrix.ecosystem == 'python'
         run: |
           python -m pip install --upgrade pip pip-audit
-          pip-audit /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/squint/python/pyproject.toml || \
-            (cd squint/python && pip-audit .)
+          # squint/python depends on the local rosetta-imagehash sibling
+          # (not on PyPI yet), so pip-audit can't resolve the pyproject.toml
+          # directly. Install the sibling first into an isolated venv, then
+          # audit the installed environment against the advisory DB.
+          python -m venv /tmp/squint-audit-venv
+          /tmp/squint-audit-venv/bin/pip install --upgrade pip
+          /tmp/squint-audit-venv/bin/pip install ./hash/python
+          /tmp/squint-audit-venv/bin/pip install ./squint/python
+          /tmp/squint-audit-venv/bin/pip install pip-audit
+          /tmp/squint-audit-venv/bin/pip-audit --skip-editable
 
       # Go — govulncheck against the squint Go module. Use a recent stable
       # toolchain so stdlib CVEs in patch releases don't false-positive.
@@ -359,7 +367,7 @@ jobs:
   # ─── Static analysis (lint + type-check, per port) ───────────────────────
   lint:
     name: lint (${{ matrix.port }})
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -493,7 +501,7 @@ jobs:
 
       - name: Install system libs (brew, non-rust)
         if: matrix.port != 'rust' && matrix.port != 'js'
-        run: brew install libjpeg-turbo libwebp libheif libde265 pkg-config
+        run: brew install jpeg-turbo webp libheif libde265 pkg-config
 
       # Python
       - name: Set up Python 3.11

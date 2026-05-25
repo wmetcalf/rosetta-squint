@@ -18,7 +18,7 @@ on:
 jobs:
   spec-drift:
     name: spec drift check
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: decode/spec
@@ -36,7 +36,7 @@ jobs:
 
   spec-only:
     name: spec consistency
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: decode/spec
@@ -54,7 +54,7 @@ jobs:
 
   port-tests:
     name: Port tests (${{ matrix.port }})
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: [spec-drift, spec-only]
     strategy:
       fail-fast: false
@@ -147,7 +147,7 @@ jobs:
     # changes. Independent of port-tests: advisories fail this job but do
     # not block functional CI.
     name: dep-audit (${{ matrix.ecosystem }})
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -189,7 +189,7 @@ jobs:
         run: python -m pip install --upgrade pip pip-audit
       - name: pip-audit (spec deps)
         if: matrix.ecosystem == 'python'
-        run: pip-audit -r spec/requirements.txt
+        run: pip-audit -r decode/spec/requirements.txt
 
       # Go — govulncheck (Go vulnerability database; covers stdlib + module deps).
       # Use a recent stable Go toolchain so stdlib CVEs fixed in patch releases
@@ -200,6 +200,18 @@ jobs:
         with:
           go-version: 'stable'
           cache-dependency-path: decode/go/imagedecode/go.mod
+      # decode/go/imagedecode uses cgo (libjpeg-turbo, libheif). govulncheck
+      # has to type-check the package, so the system libs and pkg-config files
+      # must be present even though we're not building binaries.
+      - name: Install system libs for cgo (govulncheck needs to type-check)
+        if: matrix.ecosystem == 'go'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y \
+            libjpeg-turbo8-dev libturbojpeg libturbojpeg0-dev \
+            libwebp-dev libsharpyuv-dev libtiff-dev \
+            libheif-dev libde265-dev libde265-0 \
+            pkg-config
       - name: Install govulncheck
         if: matrix.ecosystem == 'go'
         run: go install golang.org/x/vuln/cmd/govulncheck@latest
@@ -211,7 +223,7 @@ jobs:
     # Per-ecosystem static analysis. Catches lint/type-check regressions
     # without running the test matrix.
     name: lint (${{ matrix.port }})
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -319,7 +331,7 @@ jobs:
 
       - name: Install system libs (brew)
         if: matrix.port != 'rust' && matrix.port != 'js'
-        run: brew install libjpeg-turbo libwebp libheif libde265 pkg-config
+        run: brew install jpeg-turbo webp libheif libde265 pkg-config
 
       # Rust
       - name: Set up Rust stable

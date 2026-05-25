@@ -18,7 +18,7 @@ on:
 jobs:
   spec-drift:
     name: spec drift check
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: hash/spec
@@ -38,7 +38,7 @@ jobs:
 
   spec-only:
     name: spec consistency
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: hash/spec
@@ -56,7 +56,7 @@ jobs:
 
   port-tests:
     name: Port tests (${{ matrix.port }})
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -131,7 +131,7 @@ jobs:
     # Independent of port-tests: advisories fail this job but do not
     # block functional CI.
     name: dep-audit (${{ matrix.ecosystem }})
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -194,7 +194,7 @@ jobs:
     # Per-ecosystem static analysis. Catches lint/type-check regressions
     # without running the test matrix.
     name: lint (${{ matrix.port }})
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -316,7 +316,7 @@ jobs:
 
       - name: Install system libs (brew)
         if: matrix.port != 'rust' && matrix.port != 'js'
-        run: brew install libjpeg-turbo libwebp libheif libde265 pkg-config
+        run: brew install jpeg-turbo webp libheif libde265 pkg-config
 
       # Rust — should just work; libheif still needed for the decode-related
       # tests that the hash crate may chain into (matches Ubuntu CI).

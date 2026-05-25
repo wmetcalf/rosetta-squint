@@ -235,6 +235,19 @@ def main() -> int:
         if not any(v.get("format") == args.format for v in new_goldens["fixtures"].values()):
             new_goldens["pillow_version"] = existing.get("pillow_version", new_goldens["pillow_version"])
 
+    # HEIC is intentionally skipped by regenerate() (see SPEC.md §16 — goldens
+    # come from spec/regen_heic_via_system.py which uses ctypes against system
+    # libheif 1.17.6 to match the cross-port FFI reference). On a global
+    # regenerate / --check, preserve any committed HEIC entries instead of
+    # treating them as "removed" — they're managed by a sibling script, not
+    # this one.
+    if not args.format and GOLDENS_PATH.exists():
+        existing = json.loads(GOLDENS_PATH.read_text())
+        existing_fix = existing.get("fixtures", {})
+        for k, v in existing_fix.items():
+            if v.get("format") == "heic" and k not in new_goldens["fixtures"]:
+                new_goldens["fixtures"][k] = v
+
     if args.check:
         committed = json.loads(GOLDENS_PATH.read_text())
         diffs = diff_goldens(committed, new_goldens)
