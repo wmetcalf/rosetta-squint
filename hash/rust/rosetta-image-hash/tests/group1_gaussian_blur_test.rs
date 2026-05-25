@@ -1,3 +1,8 @@
+// Test-only suppressions: the for-loop indices are 1:1 mirrors of the
+// reference Python loops; clippy's iterator suggestion would obscure the
+// port-equivalence and is not load-bearing for test code.
+#![allow(clippy::needless_range_loop)]
+
 mod testkit;
 
 use rosetta_image_hash::internal::pil_gaussian_blur;

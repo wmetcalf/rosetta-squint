@@ -1,5 +1,9 @@
 //! Loads `goldens.json` once and provides typed iteration over algorithm cases.
 
+// `if let` nesting here mirrors the goldens.json shape closely and refactoring
+// would obscure the structure; suppress the collapsible-match suggestion.
+#![allow(clippy::collapsible_match)]
+
 use std::collections::BTreeMap;
 use std::fs;
 use std::sync::OnceLock;
