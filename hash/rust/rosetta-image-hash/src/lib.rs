@@ -12,6 +12,10 @@
 #![allow(clippy::manual_div_ceil)]
 #![allow(clippy::manual_memcpy)]
 #![allow(clippy::iter_cloned_collect)]
+#![allow(clippy::ptr_arg)]
+#![allow(clippy::redundant_closure)]
+#![allow(clippy::unnecessary_sort_by)]
+#![allow(clippy::useless_vec)]
 
 #[doc(hidden)]
 pub mod internal;

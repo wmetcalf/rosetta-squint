@@ -264,8 +264,7 @@ jobs:
           pip install -e hash/python
       - name: ruff check (Python wrapper)
         if: matrix.port == 'python'
-        run: ruff check hash/python/rosetta_imagehash --line-length=120 || \
-             python -m flake8 hash/python/rosetta_imagehash --max-line-length=120
+        run: ruff check hash/python/rosetta_imagehash --line-length=120
       - name: mypy (Python wrapper)
         if: matrix.port == 'python'
         continue-on-error: true

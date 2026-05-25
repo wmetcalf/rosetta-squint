@@ -31,10 +31,16 @@ linters:
       check-type-assertions: false
       check-blank: false
     staticcheck:
-      # QF1003 (use tagged switch) is a stylistic suggestion — keep the rest.
+      # Disable stylistic-only checks (naming conventions / comment format /
+      # De Morgan suggestion / tagged switch) that don't affect correctness.
       checks:
         - all
+        - -QF1001
         - -QF1003
+        - -ST1000
+        - -ST1003
+        - -ST1020
+        - -ST1022
   exclusions:
     rules:
       - path: _test\.go

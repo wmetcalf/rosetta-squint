@@ -455,8 +455,7 @@ jobs:
           pip install -e squint/python
       - name: ruff check (squint Python wrapper)
         if: matrix.port == 'python'
-        run: ruff check squint/python/rosetta_squint --line-length=120 || \
-             python -m flake8 squint/python/rosetta_squint --max-line-length=120
+        run: ruff check squint/python/rosetta_squint --line-length=120
       - name: mypy (squint Python wrapper)
         if: matrix.port == 'python'
         continue-on-error: true

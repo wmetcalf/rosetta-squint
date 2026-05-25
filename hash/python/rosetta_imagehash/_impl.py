@@ -76,8 +76,8 @@ def _composite_over_black_truncated(image: Image.Image) -> Image.Image:
         # ever see RGB inputs).
         arr = np.asarray(image, dtype=np.uint16)
         alpha = arr[..., 1:2]
-        l = (arr[..., 0:1] * alpha) // 255
-        rgb = np.repeat(l, 3, axis=-1)
+        luma = (arr[..., 0:1] * alpha) // 255
+        rgb = np.repeat(luma, 3, axis=-1)
         return Image.fromarray(rgb.astype(np.uint8), "RGB")
     if mode == "RGB":
         return image

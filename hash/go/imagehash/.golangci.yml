@@ -38,10 +38,22 @@ linters:
       check-type-assertions: false
       check-blank: false
     staticcheck:
-      # QF1003 (use tagged switch) is a stylistic suggestion — keep the rest.
+      # Disable stylistic-only checks (naming conventions / comment format /
+      # De Morgan suggestion / tagged switch) that don't affect correctness.
+      # QF1001: De Morgan's law suggestion
+      # QF1003: use tagged switch instead of if-else
+      # ST1000: package comment requirement
+      # ST1003: identifier naming (Db4 vs DB4)
+      # ST1020: exported-function comment format
+      # ST1022: exported-var comment format
       checks:
         - all
+        - -QF1001
         - -QF1003
+        - -ST1000
+        - -ST1003
+        - -ST1020
+        - -ST1022
   # Don't fail on test files for gosec.
   exclusions:
     rules:
