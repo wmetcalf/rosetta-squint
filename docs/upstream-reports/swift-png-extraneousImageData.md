@@ -11,13 +11,16 @@ Pre-filled bug report below — copy/paste into a new GitHub issue.
 `extraneousImageData` false-positive when IDAT chunks split at certain
 deflate-stream offsets (PIL's default 64 KB boundary triggers it)
 
-## Versions tested
+## Version tested
 
-- swift-png 4.3.0 (project pin)
-- swift-png 4.5.1 (latest at time of report)
+- swift-png **4.3.0** (the version we pin and reproduce on).
 
-Both have the bug. Diff between the two: only `format the code` + docs updates,
-no changes to the relevant inflator code path.
+We did not run the bisection against 4.5.1, but inspecting the diff between
+4.3.0 and 4.5.1 shows no changes to the LZ77 inflator's `push()`/`pull()`
+codepath — only `format the code` and doc updates — so we expect the bug
+still reproduces. If a maintainer reviewing this confirms the inflator was
+changed in any subsequent release, please disregard the "still present"
+implication.
 
 ## Reproduction
 

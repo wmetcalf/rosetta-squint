@@ -271,7 +271,14 @@ def _read_path_safely(path: Union[str, Path]) -> bytes:
             if e.errno == _errno.ELOOP:
                 raise ValueError(f"symlink not allowed: {path}") from e
             raise
-    f = os.fdopen(fd, "rb")
+    # Wrap the bare fd in a Python file object so close-on-GC is automatic.
+    # If `os.fdopen` itself raises (e.g., MemoryError on a stressed system),
+    # the fd would leak — close it explicitly to be safe.
+    try:
+        f = os.fdopen(fd, "rb")
+    except BaseException:
+        os.close(fd)
+        raise
     try:
         st = os.fstat(f.fileno())
         if not stat.S_ISREG(st.st_mode):

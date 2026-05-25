@@ -81,12 +81,12 @@ This repo was merged from two previously-split sibling projects on 2026-05-22:
 - `rosetta-image-hash` → `hash/` (153 commits, 9 tags renamed with `hash-` prefix)
 - `rosetta-image-decode` → `decode/` (117 commits, 10 tags renamed with `decode-` prefix)
 
-Full git history preserved via `git-filter-repo` + `git merge --allow-unrelated-histories`. No `git push` has happened yet — the repo is local.
+Full git history preserved via `git-filter-repo` + `git merge --allow-unrelated-histories`.
 
 ## Status
 
 Both halves are at clean release-candidate states. See:
-- [`hash/STATUS.md`](./hash/STATUS.md) — 6 ports, ~1500 tests, byte-exact across 8 algorithms
+- [`hash/STATUS.md`](./hash/STATUS.md) — 6 ports, ~1500 tests, byte-exact across all 10 algorithms
 - [`decode/STATUS.md`](./decode/STATUS.md) — 5 ports, ~212 tests, byte-exact across 7 formats
 - [`hash/SECURITY.md`](./hash/SECURITY.md) + [`decode/SECURITY.md`](./decode/SECURITY.md)
 

@@ -74,10 +74,11 @@ This repository has been reviewed by:
   resource cleanup, ftyp brand whitelist).
 - **Gemini review** — §3.2 Go HEIC cgo GC documented; §4.1 Python ctypes
   cross-platform `_load_libheif_xplat` added.
-- **Raptor audit** — 6 findings (`AUDIT.md`); resolved or documented.
-- **GPT-5.4 audit** — 6 findings (`AUDIT.md`); resolved or documented.
-- **Claude Opus 4.7 audit + fresh-eyes follow-up** — 74 findings total
-  across 4 tiers (`AUDIT-claude.md`); see `CHANGELOG.md` for the
-  per-finding fix status.
+- **Raptor audit** — 6 findings; resolved or documented.
+- **GPT-5.4 audit** — 6 findings; resolved or documented.
+- **Claude Opus 4.7 audit + fresh-eyes follow-up** — 74+ findings total
+  across 4 tiers (HIGH / MEDIUM / LOW / coverage gaps); see
+  [`CHANGELOG.md`](./CHANGELOG.md) for the per-finding fix status. Raw
+  audit reports are kept internal.
 
 No external paid audit has been performed.

@@ -103,9 +103,10 @@ This library has had one internal security review covering:
 - resource cleanup on error paths (verified correct in JNA HEIC wrapper)
 - ftyp brand whitelist narrowness (documented as intentional in spec)
 
-External / fresh-eyes audits — Raptor, GPT-5.4, Claude (Opus 4.7) — landed 51 findings
-(6 HIGH, 19 MED, 26 LOW) resolved or deferred; see `AUDIT-claude.md` at the
-repository root for the consolidated report and per-finding status.
+External / fresh-eyes audits — Raptor, GPT-5.4, Claude (Opus 4.7) — landed 51+
+findings (HIGH / MEDIUM / LOW) resolved or deferred-with-rationale; see
+[`/CHANGELOG.md`](../CHANGELOG.md) for the per-finding fix status. Raw
+audit reports are kept internal.
 
 ## Fuzz coverage
 

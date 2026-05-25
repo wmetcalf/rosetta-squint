@@ -28,7 +28,7 @@ Every port produces the same hex output as the Python `imagehash` package for th
 
 ² `whash_db4_robust` is our cross-port-stable bolt-on (NOT in upstream Python imagehash). Identical pipeline to `whash_db4` up to the LL band, then snaps `|coef| < 1e-12 → 0` before median + threshold. **All 42 goldens pass byte-exact across all 5 ports — no exemptions needed.** Real-world photos produce the same hash as `whash_db4`. Pathological symmetric inputs (checkerboards, etc.) produce a deterministic hash across every port — at the cost of those hashes differing from Python `imagehash.whash(mode='db4')` on the same inputs. Use `whash_db4` for upstream-Python parity; use `whash_db4_robust` for cross-port stability on untrusted inputs. See `spec/SPEC.md` §whash_db4_robust.
 
-The remaining gaps (`crop_resistant_hash` and `old_hex_to_hash`) have a written design at [`docs/superpowers/specs/2026-05-21-rosetta-image-hash-crop-resistant-design.md`](../imagehash/docs/superpowers/specs/2026-05-21-rosetta-image-hash-crop-resistant-design.md) but are deferred — `crop_resistant_hash` requires byte-exact ports of PIL `GaussianBlur(radius=2)` and `MedianFilter(size=3)` plus a new `ImageMultiHash` type, scoped as ~3× the effort of any prior algorithm.
+`crop_resistant_hash` and `ImageMultiHash` are now implemented across all 6 ports (✓ in the table above) — the original "deferred ~3× effort" note no longer applies. `old_hex_to_hash` (pre-4.0 hex format migration helper) is intentionally Python-only via the upstream `imagehash` re-export — no port reimplements it.
 
 ---
 
@@ -158,7 +158,7 @@ Then re-run every port's tests against the new goldens.
 
 ## Security
 
-See [SECURITY.md](./SECURITY.md). Short version: the library operates on already-decoded RGB buffers, so the attack surface is small. All PNG decoder helpers are pure-language (no C FFI). Hash-size validation is in place but the library does NOT impose an upper bound on `hash_size` — the caller is responsible for sane values (recommended `<= 64`). For hashing **untrusted** images, decode them with [rosetta-image-decode](../rosetta-image-decode) first, which enforces `MAX_PIXELS`.
+See [SECURITY.md](./SECURITY.md). Short version: the library operates on already-decoded RGB buffers, so the attack surface is small. All PNG decoder helpers are pure-language (no C FFI). Hash-size validation is in place but the library does NOT impose an upper bound on `hash_size` — the caller is responsible for sane values (recommended `<= 64`). For hashing **untrusted** images, decode them with [rosetta-image-decode](../decode) first, which enforces `MAX_PIXELS`.
 
 ---
 

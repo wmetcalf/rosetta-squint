@@ -6,7 +6,8 @@ All notable changes to rosetta-squint go here. Format: [Keep a Changelog](https:
 
 This release rolls up the work from three external/fresh-eyes security audits
 (Raptor, GPT-5.4, Claude Opus 4.7) on the merged `hash/` + `decode/` + `squint/`
-codebase. See `AUDIT-claude.md` for the consolidated finding-by-finding report.
+codebase. The raw audit reports are kept internal; this changelog lists the
+per-finding fix status.
 
 ### Breaking changes
 
@@ -217,8 +218,10 @@ migration:
 
 ### Documentation
 
-- New `AUDIT-claude.md` at the repository root: consolidated 51-finding
-  audit report (6 HIGH, 19 MED, 26 LOW) with per-finding fix status.
+- Consolidated security/correctness audit (Raptor + GPT-5.4 + Claude Opus
+  4.7 reviews) — 51+ findings across HIGH/MEDIUM/LOW/coverage-gap tiers,
+  resolved or documented in this changelog. Raw audit reports are kept
+  internal.
 - `decode/SECURITY.md` updated: Go WebP via `chai2010/webp` is documented
   as bundling libwebp 1.4.0 source (not system libwebp); the original table
   was wrong about this. Fuzz coverage table added.
