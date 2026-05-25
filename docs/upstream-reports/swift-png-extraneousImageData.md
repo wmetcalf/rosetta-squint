@@ -1,8 +1,8 @@
 # swift-png upstream issue: false-positive `extraneousImageData` on multi-IDAT PNGs
 
-**For filing at:** https://github.com/tayloraswift/swift-png/issues
+**Filed at:** https://github.com/tayloraswift/swift-png/issues/95 (2026-05-25)
 
-Pre-filled bug report below — copy/paste into a new GitHub issue.
+Pre-filled bug report below (kept in-tree as the canonical copy of the upstream filing).
 
 ---
 
