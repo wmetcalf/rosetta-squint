@@ -1,15 +1,17 @@
-# golangci-lint config for rosetta-image-decode (Go port).
+# golangci-lint v2 config for rosetta-image-decode (Go port).
 #
 # Security/correctness focus per the CI lint job. We deliberately omit the
 # noisy stylistic linters because the codebase is heavily cgo and the
 # project has its own line-length / formatting conventions.
+
+version: "2"
 
 run:
   timeout: 5m
   build-tags: []
 
 linters:
-  disable-all: true
+  default: none
   enable:
     - govet
     - staticcheck
@@ -17,31 +19,31 @@ linters:
     - gosec
     - ineffassign
     - unused
-
-linters-settings:
-  gosec:
-    # G103 (unsafe block) is unavoidable in cgo wrappers.
-    # G104 (unchecked errors) — errcheck already covers this with less noise.
-    # G304 (file path from variable) — this is a *decoder* library; the path
-    # is always caller-controlled by definition.
-    excludes:
-      - G103
-      - G104
-      - G304
-  errcheck:
-    check-type-assertions: false
-    check-blank: false
+  settings:
+    gosec:
+      # G103 (unsafe block) is unavoidable in cgo wrappers.
+      # G104 (unchecked errors) — errcheck already covers this with less noise.
+      # G304 (file path from variable) — this is a *decoder* library; the path
+      # is always caller-controlled by definition.
+      excludes:
+        - G103
+        - G104
+        - G304
+    errcheck:
+      check-type-assertions: false
+      check-blank: false
+  exclusions:
+    rules:
+      - path: _test\.go
+        linters:
+          - gosec
+          - errcheck
+      # The internal/libheif and internal/libwebp packages call JNA-like
+      # C entrypoints; pointer arithmetic flagged by gosec is intentional.
+      - path: internal/lib(heif|webp|tiff|jpeg|de265)
+        linters:
+          - gosec
 
 issues:
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - gosec
-        - errcheck
-    # The internal/libheif and internal/libwebp packages call JNA-like
-    # C entrypoints; pointer arithmetic flagged by gosec is intentional.
-    - path: internal/lib(heif|webp|tiff|jpeg|de265)
-      linters:
-        - gosec
   max-issues-per-linter: 0
   max-same-issues: 0

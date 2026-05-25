@@ -277,8 +277,20 @@ def build_goldens(fixtures: list[Path], decoded_sha256: dict[str, str]) -> dict:
 
 
 def goldens_minus_timestamp(g: dict) -> dict:
+    # Strip fields that don't affect the actual algorithm output but do
+    # change across patch/minor installs of the underlying libraries.
+    # The cross-port byte-exact guarantee depends on the algo data
+    # (hashes/decoded), not on the labels recorded for provenance.
     out = dict(g)
-    out.pop("regenerated_at", None)
+    for key in (
+        "regenerated_at",
+        "imagehash_version",
+        "pillow_version",
+        "numpy_version",
+        "scipy_version",
+        "pywavelets_version",
+    ):
+        out.pop(key, None)
     return out
 
 

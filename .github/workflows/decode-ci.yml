@@ -68,13 +68,13 @@ jobs:
         if: matrix.port == 'java'
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
           cache: maven
       # libjpeg-turbo for Java/Go/Swift JPEG decoders
       - name: Install libjpeg-turbo for Java
         if: matrix.port == 'java'
-        run: sudo apt-get update -qq && sudo apt-get install -y libturbojpeg libturbojpeg0-dev libturbojpeg-java libwebp-dev libsharpyuv-dev libtiff-dev libheif-dev libde265-dev libde265-0 pkg-config
+        run: sudo apt-get update -qq && sudo apt-get install -y libturbojpeg libturbojpeg0-dev libturbojpeg-java libwebp-dev libsharpyuv-dev libtiff-dev libheif-dev libheif-plugin-libde265 libde265-dev libde265-0 pkg-config
 
       - name: Java — mvn test
         if: matrix.port == 'java'
@@ -89,7 +89,7 @@ jobs:
           cache-dependency-path: decode/go/imagedecode/go.mod
       - name: Install libjpeg-turbo for Go
         if: matrix.port == 'go'
-        run: sudo apt-get update -qq && sudo apt-get install -y libjpeg-turbo8-dev libturbojpeg libturbojpeg0-dev libwebp-dev libsharpyuv-dev libtiff-dev libheif-dev libde265-dev libde265-0 pkg-config
+        run: sudo apt-get update -qq && sudo apt-get install -y libjpeg-turbo8-dev libturbojpeg libturbojpeg0-dev libwebp-dev libsharpyuv-dev libtiff-dev libheif-dev libheif-plugin-libde265 libde265-dev libde265-0 pkg-config
 
       - name: Go — go test
         if: matrix.port == 'go'
@@ -101,7 +101,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
       - name: Install libheif for Rust
         if: matrix.port == 'rust'
-        run: sudo apt-get update -qq && sudo apt-get install -y libheif-dev libde265-dev libde265-0 pkg-config
+        run: sudo apt-get update -qq && sudo apt-get install -y libheif-dev libheif-plugin-libde265 libde265-dev libde265-0 pkg-config
       - name: Cache cargo
         if: matrix.port == 'rust'
         uses: actions/cache@v4
@@ -132,10 +132,10 @@ jobs:
         if: matrix.port == 'swift'
         uses: swift-actions/setup-swift@v2
         with:
-          swift-version: '5.9'
+          swift-version: '5.10.1'
       - name: Install libjpeg-turbo for Swift
         if: matrix.port == 'swift'
-        run: sudo apt-get update -qq && sudo apt-get install -y libturbojpeg libturbojpeg0-dev libwebp-dev libsharpyuv-dev libtiff-dev libheif-dev libde265-dev libde265-0 pkg-config
+        run: sudo apt-get update -qq && sudo apt-get install -y libturbojpeg libturbojpeg0-dev libwebp-dev libsharpyuv-dev libtiff-dev libheif-dev libheif-plugin-libde265 libde265-dev libde265-0 pkg-config
 
       - name: Swift — swift test
         if: matrix.port == 'swift'
@@ -210,7 +210,7 @@ jobs:
           sudo apt-get install -y \
             libjpeg-turbo8-dev libturbojpeg libturbojpeg0-dev \
             libwebp-dev libsharpyuv-dev libtiff-dev \
-            libheif-dev libde265-dev libde265-0 \
+            libheif-dev libheif-plugin-libde265 libde265-dev libde265-0 \
             pkg-config
       - name: Install govulncheck
         if: matrix.ecosystem == 'go'
@@ -239,7 +239,7 @@ jobs:
           components: clippy
       - name: Install libheif (for clippy-via-build)
         if: matrix.port == 'rust'
-        run: sudo apt-get update -qq && sudo apt-get install -y libheif-dev libde265-dev libde265-0 pkg-config
+        run: sudo apt-get update -qq && sudo apt-get install -y libheif-dev libheif-plugin-libde265 libde265-dev libde265-0 pkg-config
       - name: Cache cargo (lint)
         if: matrix.port == 'rust'
         uses: actions/cache@v4
@@ -262,10 +262,10 @@ jobs:
           cache-dependency-path: decode/go/imagedecode/go.mod
       - name: Install libs (golangci needs to compile cgo packages)
         if: matrix.port == 'go'
-        run: sudo apt-get update -qq && sudo apt-get install -y libjpeg-turbo8-dev libturbojpeg libturbojpeg0-dev libwebp-dev libsharpyuv-dev libtiff-dev libheif-dev libde265-dev libde265-0 pkg-config
+        run: sudo apt-get update -qq && sudo apt-get install -y libjpeg-turbo8-dev libturbojpeg libturbojpeg0-dev libwebp-dev libsharpyuv-dev libtiff-dev libheif-dev libheif-plugin-libde265 libde265-dev libde265-0 pkg-config
       - name: golangci-lint
         if: matrix.port == 'go'
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v8
         with:
           version: latest
           working-directory: decode/go/imagedecode
@@ -294,10 +294,10 @@ jobs:
         if: matrix.port == 'swift'
         uses: swift-actions/setup-swift@v2
         with:
-          swift-version: '5.9'
+          swift-version: '5.10.1'
       - name: Install libjpeg-turbo for Swift
         if: matrix.port == 'swift'
-        run: sudo apt-get update -qq && sudo apt-get install -y libturbojpeg libturbojpeg0-dev libwebp-dev libsharpyuv-dev libtiff-dev libheif-dev libde265-dev libde265-0 pkg-config
+        run: sudo apt-get update -qq && sudo apt-get install -y libturbojpeg libturbojpeg0-dev libwebp-dev libsharpyuv-dev libtiff-dev libheif-dev libheif-plugin-libde265 libde265-dev libde265-0 pkg-config
       - name: swift build (type-check)
         if: matrix.port == 'swift'
         run: cd decode/swift/RosettaImageDecode && swift build
@@ -314,9 +314,13 @@ jobs:
   macos-tests:
     # macOS-arm64 (macos-14) dry-run for cross-platform-claim verification.
     # Runs only on main pushes + weekly cron to keep CI minutes bounded.
+    # continue-on-error at job level: brew/system-lib drift on macOS is
+    # surfaced as a warning, not a blocker, until the macOS environment
+    # is fully stabilized (matches the policy in the per-job notes below).
     name: macos-arm64 (${{ matrix.port }})
     runs-on: macos-14
     if: github.event_name == 'push' || github.event_name == 'schedule'
+    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
@@ -361,7 +365,7 @@ jobs:
         if: matrix.port == 'java'
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
           cache: maven
       - name: Java — mvn test
@@ -396,7 +400,7 @@ jobs:
         if: matrix.port == 'swift'
         uses: swift-actions/setup-swift@v2
         with:
-          swift-version: '5.9'
+          swift-version: '5.10.1'
       - name: Swift — swift test
         if: matrix.port == 'swift'
         run: cd decode/swift/RosettaImageDecode && swift test

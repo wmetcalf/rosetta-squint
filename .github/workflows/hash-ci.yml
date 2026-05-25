@@ -69,7 +69,7 @@ jobs:
         if: matrix.port == 'java'
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
           cache: maven
       - name: Java — mvn test
@@ -112,16 +112,16 @@ jobs:
           node-version: '20'
           cache: npm
           cache-dependency-path: hash/js/rosetta-image-hash/package-lock.json
-      - name: JS — npm ci + test
+      - name: JS — npm ci + build + test
         if: matrix.port == 'js'
-        run: cd hash/js/rosetta-image-hash && npm ci && npm test
+        run: cd hash/js/rosetta-image-hash && npm ci && npm run build && npm test
 
       # Swift
       - name: Set up Swift 5.9
         if: matrix.port == 'swift'
         uses: swift-actions/setup-swift@v2
         with:
-          swift-version: '5.9'
+          swift-version: '5.10.1'
       - name: Swift — swift test
         if: matrix.port == 'swift'
         run: cd hash/swift/RosettaImageHash && swift test
@@ -170,7 +170,7 @@ jobs:
         run: python -m pip install --upgrade pip pip-audit
       - name: pip-audit (spec deps)
         if: matrix.ecosystem == 'python'
-        run: pip-audit -r spec/requirements.txt
+        run: pip-audit -r hash/spec/requirements.txt
       - name: pip-audit (Python wrapper)
         if: matrix.ecosystem == 'python'
         run: cd hash/python && pip-audit .
@@ -230,7 +230,7 @@ jobs:
           cache-dependency-path: hash/go/imagehash/go.sum
       - name: golangci-lint
         if: matrix.port == 'go'
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v8
         with:
           version: latest
           working-directory: hash/go/imagehash
@@ -281,7 +281,7 @@ jobs:
         if: matrix.port == 'swift'
         uses: swift-actions/setup-swift@v2
         with:
-          swift-version: '5.9'
+          swift-version: '5.10.1'
       - name: swift build (type-check)
         if: matrix.port == 'swift'
         run: cd hash/swift/RosettaImageHash && swift build
@@ -298,9 +298,13 @@ jobs:
   macos-tests:
     # macOS-arm64 (macos-14) dry-run for cross-platform-claim verification.
     # Runs only on main pushes + weekly cron to keep first-time CI cost bounded.
+    # continue-on-error at job level: brew/system-lib drift on macOS is
+    # surfaced as a warning, not a blocker, until the macOS environment
+    # is fully stabilized.
     name: macos-arm64 (${{ matrix.port }})
     runs-on: macos-14
     if: github.event_name == 'push' || github.event_name == 'schedule'
+    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
@@ -361,7 +365,7 @@ jobs:
         if: matrix.port == 'java'
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
           cache: maven
       - name: Java — mvn test
@@ -382,16 +386,16 @@ jobs:
           node-version: '20'
           cache: npm
           cache-dependency-path: hash/js/rosetta-image-hash/package-lock.json
-      - name: JS — npm ci + test
+      - name: JS — npm ci + build + test
         if: matrix.port == 'js'
-        run: cd hash/js/rosetta-image-hash && npm ci && npm test
+        run: cd hash/js/rosetta-image-hash && npm ci && npm run build && npm test
 
       # Swift — native; should just work.
       - name: Set up Swift 5.9
         if: matrix.port == 'swift'
         uses: swift-actions/setup-swift@v2
         with:
-          swift-version: '5.9'
+          swift-version: '5.10.1'
       - name: Swift — swift test
         if: matrix.port == 'swift'
         run: cd hash/swift/RosettaImageHash && swift test

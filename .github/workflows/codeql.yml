@@ -48,7 +48,7 @@ jobs:
         if: matrix.language == 'java'
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
           cache: maven
       - name: Install system libs (Java build needs turbojpeg/webp/heif)
@@ -58,14 +58,14 @@ jobs:
           sudo apt-get install -y \
             libturbojpeg libturbojpeg0-dev libturbojpeg-java \
             libwebp-dev libsharpyuv-dev libtiff-dev \
-            libheif-dev libde265-dev libde265-0 \
+            libheif-dev libheif-plugin-libde265 libde265-dev libde265-0 \
             pkg-config
       - name: Autobuild Java (hash + decode + squint)
         if: matrix.language == 'java'
         run: |
-          cd hash/java && mvn -B -ntp -DskipTests -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 install
-          cd ../../decode/java/rosetta-image-decode && mvn -B -ntp -DskipTests -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 install
-          cd ../../../squint/java/rosetta-squint && mvn -B -ntp -DskipTests -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 install
+          cd hash/java && mvn -B -ntp -DskipTests -Dmaven.compiler.source=21 -Dmaven.compiler.target=21 install
+          cd ../../decode/java/rosetta-image-decode && mvn -B -ntp -DskipTests -Dmaven.compiler.source=21 -Dmaven.compiler.target=21 install
+          cd ../../../squint/java/rosetta-squint && mvn -B -ntp -DskipTests -Dmaven.compiler.source=21 -Dmaven.compiler.target=21 install
 
       # Go autobuild — make sure the toolchain is present so CodeQL's tracer
       # can attach to the compile.

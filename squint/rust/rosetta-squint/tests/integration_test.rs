@@ -9,7 +9,6 @@
 use std::fs;
 use std::path::Path;
 
-use rosetta_image_hash;
 use rosetta_squint::{decode_to_image, *};
 
 // Fixture paths relative to workspace root
