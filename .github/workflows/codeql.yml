@@ -63,6 +63,15 @@ jobs:
       - name: Autobuild Java (hash + decode + squint)
         if: matrix.language == 'java'
         run: |
+          # decode/java has an optional compile-scope dep on
+          # org.libjpeg-turbo:turbojpeg (not on Maven Central). Install the
+          # Ubuntu-provided JAR into the local Maven repo so the compile resolves.
+          mvn install:install-file \
+            -Dfile=/usr/share/java/turbojpeg.jar \
+            -DgroupId=org.libjpeg-turbo \
+            -DartifactId=turbojpeg \
+            -Dversion=2.1.5 \
+            -Dpackaging=jar
           cd hash/java && mvn -B -ntp -DskipTests -Dmaven.compiler.source=21 -Dmaven.compiler.target=21 install
           cd ../../decode/java/rosetta-squint-decode && mvn -B -ntp -DskipTests -Dmaven.compiler.source=21 -Dmaven.compiler.target=21 install
           cd ../../../squint/java/rosetta-squint && mvn -B -ntp -DskipTests -Dmaven.compiler.source=21 -Dmaven.compiler.target=21 install
