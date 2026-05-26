@@ -157,11 +157,17 @@
                             </execution>
                         </executions>
                     </plugin>
-                    <!-- Javadoc jar -->
+                    <!-- Javadoc jar. doclint=none disables Java 8+ strict
+                         javadoc warnings (otherwise missing @param/@return etc.
+                         on public methods become build-breaking errors). -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
                         <version>3.6.3</version>
+                        <configuration>
+                            <doclint>none</doclint>
+                            <failOnWarnings>false</failOnWarnings>
+                        </configuration>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
