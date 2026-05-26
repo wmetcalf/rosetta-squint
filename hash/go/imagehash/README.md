@@ -1,4 +1,4 @@
-# rosetta-image-hash — Go port
+# rosetta-squint-hash — Go port
 
 Byte-exact port of Python `imagehash==4.3.2` algorithms to Go 1.22+.
 

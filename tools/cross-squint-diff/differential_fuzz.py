@@ -142,7 +142,7 @@ def _ports() -> dict[str, list[str]]:
             "--enable-native-access=ALL-UNNAMED",
             "-cp",
             f"{ROOT}/squint/java/rosetta-squint/target/squint-cli.jar:{jar_path}",
-            "io.rosetta.squint.cli.SquintCli",
+            "io.github.wmetcalf.rosettasquint.cli.SquintCli",
         ]
     return out
 

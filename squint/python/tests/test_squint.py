@@ -3,7 +3,7 @@
 Each algorithm is tested in three ways:
 1. Path input returns a non-empty ImageHash
 2. Path input == bytes input (both produce same hex)
-3. Squint output == calling rosetta_imagehash directly on the decoded
+3. Squint output == calling rosetta_squint_hash directly on the decoded
    PIL.Image (chain consistency — no surprise transformations)
 
 We do NOT compare against `hash/spec/goldens.json` directly because those

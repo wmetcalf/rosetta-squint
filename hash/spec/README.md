@@ -1,4 +1,4 @@
-# `/spec` — the rosetta-image-hash shared core
+# `/spec` — the rosetta-squint-hash shared core
 
 This directory is the **single source of truth** every language port validates against.
 

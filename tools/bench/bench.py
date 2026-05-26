@@ -95,7 +95,7 @@ def _java_argv() -> list[str] | None:
         "--enable-native-access=ALL-UNNAMED",
         "-cp",
         f"{ROOT}/squint/java/rosetta-squint/target/squint-cli.jar:{_TJ_JAR_PATH}",
-        "io.rosetta.squint.cli.SquintCli",
+        "io.github.wmetcalf.rosettasquint.cli.SquintCli",
     ]
 
 

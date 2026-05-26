@@ -31,11 +31,11 @@ a `/dev/zero` or a 4 GB sparse file get a clean error rather than an OOM.
 
 ## Fuzz coverage
 
-- **Rust decode**: cargo-fuzz targets at `decode/rust/rosetta-image-decode/fuzz/`
+- **Rust decode**: cargo-fuzz targets at `decode/rust/rosetta-squint-decode/fuzz/`
   — `decode_any`, `decode_with_prefix`, `detect_format`. Produced the
   `[0xFF, 0xD8]` truncated-SOI finding that motivated the in-tree libjpeg
   C shim.
-- **Rust hash**: cargo-fuzz targets at `hash/rust/rosetta-image-hash/fuzz/`
+- **Rust hash**: cargo-fuzz targets at `hash/rust/rosetta-squint-hash/fuzz/`
   — `hex_to_hash`, `hex_to_flathash`, `hex_to_multihash`.
 - **Go decode**: native Go 1.18+ fuzz at `decode/go/imagedecode/fuzz_decode_test.go`
   — `FuzzDecodeAny`, `FuzzDecodeWithPrefix`. Same property contract as the

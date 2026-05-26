@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 import RosettaSquint
-import RosettaImageHash
+import RosettaSquintHash
 
 /// Path to the shared hash/spec/fixtures directory, relative to the package root.
 private let FIXTURES_DIR = "../../../hash/spec/fixtures"
@@ -45,12 +45,12 @@ final class PhashConvenienceTests: XCTestCase {
         XCTAssertEqual(hashFromPath, hashFromBytes)
     }
 
-    // 3. phash(at:) == RosettaImageHash.phash on RosettaSquint.decodeFile(at:) directly.
+    // 3. phash(at:) == RosettaSquintHash.phash on RosettaSquint.decodeFile(at:) directly.
     func testPhashAtPathMatchesDirectPipeline() throws {
         let path = "\(FIXTURES_DIR)/peppers.png"
         let squintHash = try RosettaSquint.phash(at: path, hashSize: 8)
         let img = try RosettaSquint.decodeFile(at: path)
-        let directHash = try RosettaImageHash.phash(img, hashSize: 8)
+        let directHash = try RosettaSquintHash.phash(img, hashSize: 8)
         XCTAssertEqual(squintHash, directHash)
     }
 }
@@ -120,7 +120,7 @@ final class AdaptTests: XCTestCase {
         let path = "\(FIXTURES_DIR)/art-saturated-512.png"
         let img = try RosettaSquint.decodeFile(at: path)
         let squintHash = try RosettaSquint.phash(at: path, hashSize: 8)
-        let pipelineHash = try RosettaImageHash.phash(img, hashSize: 8)
+        let pipelineHash = try RosettaSquintHash.phash(img, hashSize: 8)
         XCTAssertEqual(squintHash, pipelineHash)
     }
 

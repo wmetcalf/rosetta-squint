@@ -1,4 +1,4 @@
-# rosetta-image-decode — Status & Setup
+# rosetta-squint-decode — Status & Setup
 
 Byte-exact, PIL-compatible image decoders across **Java, Go, Rust, JavaScript/TypeScript, and Swift**.
 
@@ -26,7 +26,7 @@ Shared core: `spec-decode-v0.1.0`.
 
 ## Why HEIC has a tolerance and nothing else does
 
-libheif's WASM build (`libheif-js`, bundled with the JS port) diverges from the system Linux build by **±1–2 per pixel** on lossy fixtures, due to different YCbCr→RGB rounding paths. Goldens are anchored to system libheif 1.17.6 (so Rust/Go/Java/Swift remain byte-exact); the JS port runs a max-delta tolerance for HEIC only. Documented in `js/rosetta-image-decode/DECODER_NOTES.md`. Every other format on every other port is strict byte-exact.
+libheif's WASM build (`libheif-js`, bundled with the JS port) diverges from the system Linux build by **±1–2 per pixel** on lossy fixtures, due to different YCbCr→RGB rounding paths. Goldens are anchored to system libheif 1.17.6 (so Rust/Go/Java/Swift remain byte-exact); the JS port runs a max-delta tolerance for HEIC only. Documented in `js/rosetta-squint-decode/DECODER_NOTES.md`. Every other format on every other port is strict byte-exact.
 
 ---
 
@@ -88,7 +88,7 @@ The Java port additionally expects the system TurboJPEG JAR at `/usr/share/java/
 ### Rust
 
 ```bash
-cd rust/rosetta-image-decode
+cd rust/rosetta-squint-decode
 cargo build
 cargo test
 ```
@@ -120,14 +120,14 @@ Needs `libjpeg-turbo8-dev`, `libturbojpeg0-dev`, `libwebp-dev`, `libheif-dev`, `
 ### Java (Maven)
 
 ```bash
-cd java/rosetta-image-decode
+cd java/rosetta-squint-decode
 mvn -B -ntp test
 ```
 
 Requires JDK 17+. Maven coordinates:
 - `org.libjpeg-turbo:turbojpeg:2.1.5` — system-scope dependency at `/usr/share/java/turbojpeg.jar` (Ubuntu pkg `libturbojpeg-java`)
 - `com.twelvemonkeys.imageio:imageio-tiff:3.10.1` — TIFF plugin (actively maintained)
-- `net.java.dev.jna:jna:5.18.1` — used by our hand-written libheif + libwebp JNA wrappers in `io.rosetta.imagedecode.internal.{libheif,libwebp}`
+- `net.java.dev.jna:jna:5.18.1` — used by our hand-written libheif + libwebp JNA wrappers in `io.github.wmetcalf.rosettasquint.decode.internal.{libheif,libwebp}`
 
 PNG and GIF use `javax.imageio` (stdlib). The HEIC and WebP JNA wrappers dynamically load `libheif.so.1` and `libwebp.so.7` (Linux) or `.dylib` (macOS); `libheif-dev` and `libwebp-dev` must be installed.
 
@@ -136,7 +136,7 @@ The previously-depended-on `org.sejda.imageio:webp-imageio:0.1.6` (unmaintained,
 ### JavaScript / TypeScript
 
 ```bash
-cd js/rosetta-image-decode
+cd js/rosetta-squint-decode
 npm install
 npm test
 ```
@@ -156,7 +156,7 @@ BMP and GIF are implemented inline (no library). The GIF decoder at `src/interna
 ### Swift
 
 ```bash
-cd swift/RosettaImageDecode
+cd swift/RosettaSquintDecode
 swift build
 swift test
 ```
@@ -172,7 +172,7 @@ Package.swift declares 4 `systemLibrary` targets pulling C libraries via `pkg-co
 | `Ctiff` | `libtiff-4` | `libtiff-dev` | `libtiff` |
 | `Cheif` | `libheif` | `libheif-dev` | `libheif` |
 
-Plus one SwiftPM dep: [`tayloraswift/swift-png`](https://github.com/tayloraswift/swift-png) for PNG. GIF has a hand-written pure-Swift decoder in `Sources/RosettaImageDecode/Internal/GIFDecoder.swift` (LZW + 4-pass interlacing; ~518 LOC).
+Plus one SwiftPM dep: [`tayloraswift/swift-png`](https://github.com/tayloraswift/swift-png) for PNG. GIF has a hand-written pure-Swift decoder in `Sources/RosettaSquintDecode/Internal/GIFDecoder.swift` (LZW + 4-pass interlacing; ~518 LOC).
 
 **macOS:** *should* work — `.brew([...])` providers are declared on every systemLibrary, the C APIs are identical to Linux, Swift 5.9 ships with Xcode 15. But none of the per-port `swift test` runs have been executed on macOS. Most likely first failure on Mac would be library link names if Homebrew puts a keg-only formula in a non-default `pkg-config` search path; resolve with `PKG_CONFIG_PATH=$(brew --prefix libheif)/lib/pkgconfig swift test` etc.
 
@@ -225,7 +225,7 @@ See [SECURITY.md](./SECURITY.md) for details.
 ## Repository layout
 
 ```
-rosetta-image-decode/
+rosetta-squint-decode/
 ├── spec/                                   # shared bit-level specification + golden generator
 │   ├── SPEC.md                             # §1-9 shared core, §10-16 per format
 │   ├── formats.json                        # status, reference libs, ports done per format
@@ -237,11 +237,11 @@ rosetta-image-decode/
 │   ├── synth_{bmp,jpeg,webp,tiff,heic}.py  # synth fixture generators
 │   ├── fixtures/{bmp,png,gif,jpeg,webp,tiff,heic}/{valid,invalid}/
 │   └── decoded/{bmp,png,gif,jpeg,webp,tiff,heic}/valid/*.bin
-├── rust/rosetta-image-decode/
+├── rust/rosetta-squint-decode/
 ├── go/imagedecode/
-├── java/rosetta-image-decode/
-├── js/rosetta-image-decode/
-└── swift/RosettaImageDecode/
+├── java/rosetta-squint-decode/
+├── js/rosetta-squint-decode/
+└── swift/RosettaSquintDecode/
 ```
 
 ---

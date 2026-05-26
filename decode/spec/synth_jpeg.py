@@ -44,7 +44,7 @@ def main():
 
 	# Larger photo
 	try:
-		photo = Image.open(Path.home() / "rosetta-image-hash/spec/fixtures/peppers.png").convert("RGB")
+		photo = Image.open(Path.home() / "rosetta-squint-hash/spec/fixtures/peppers.png").convert("RGB")
 		photo.thumbnail((128, 128))
 		photo.save(OUT / "larger-photo-128.jpg", quality=85)
 	except Exception:

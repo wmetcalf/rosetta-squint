@@ -1,4 +1,4 @@
-"""rosetta-image-hash spec regenerator.
+"""rosetta-squint-hash spec regenerator.
 
 Reads every fixture in fixtures/ and produces:
   - decoded/<name>.rgb.bin   canonical RGB pixel buffer from PIL convert('RGB')

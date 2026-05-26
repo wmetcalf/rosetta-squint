@@ -16,11 +16,11 @@ Per-port CLIs live inside each port's project tree (so they can use the port's p
 
 | Port | Source | Build |
 |---|---|---|
-| Rust | `rust/rosetta-image-decode/examples/decode-cli.rs` | `cargo build --release --example decode-cli` |
+| Rust | `rust/rosetta-squint-decode/examples/decode-cli.rs` | `cargo build --release --example decode-cli` |
 | Go | `go/imagedecode/cmd/decode-cli/main.go` | `go build -o tools/cross-port-diff/decode-go ./cmd/decode-cli` |
-| Java | `java/rosetta-image-decode/src/main/java/io/rosetta/imagedecode/cli/DecodeCli.java` | `mvn -DskipTests package` (produces `target/decode-cli.jar`) |
-| JS | `js/rosetta-image-decode/scripts/decode-cli.mjs` | `npm run build` (requires `dist/` from `tsc`) |
-| Swift | `swift/RosettaImageDecode/Sources/DecodeCLI/main.swift` | `swift build --product DecodeCLI -c release` |
+| Java | `java/rosetta-squint-decode/src/main/java/io/rosetta/imagedecode/cli/DecodeCli.java` | `mvn -DskipTests package` (produces `target/decode-cli.jar`) |
+| JS | `js/rosetta-squint-decode/scripts/decode-cli.mjs` | `npm run build` (requires `dist/` from `tsc`) |
+| Swift | `swift/RosettaSquintDecode/Sources/DecodeCLI/main.swift` | `swift build --product DecodeCLI -c release` |
 
 ## Wire format
 
@@ -40,12 +40,12 @@ This matches `spec/decoded/<format>/valid/<fixture>.bin` byte-for-byte, so `diff
 
 ```bash
 # Build all CLIs first (one-time setup)
-cd ~/rosetta-image-decode
-( cd rust/rosetta-image-decode && cargo build --release --example decode-cli )
+cd ~/rosetta-squint-decode
+( cd rust/rosetta-squint-decode && cargo build --release --example decode-cli )
 ( cd go/imagedecode && go build -o ../../tools/cross-port-diff/decode-go ./cmd/decode-cli )
-( cd java/rosetta-image-decode && mvn -B -ntp -DskipTests -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 package )
-( cd js/rosetta-image-decode && npm run build )
-( cd swift/RosettaImageDecode && swift build --product DecodeCLI -c release )
+( cd java/rosetta-squint-decode && mvn -B -ntp -DskipTests -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 package )
+( cd js/rosetta-squint-decode && npm run build )
+( cd swift/RosettaSquintDecode && swift build --product DecodeCLI -c release )
 
 # Run on all fixtures
 tools/cross-port-diff/diff_all.py
@@ -78,7 +78,7 @@ Running `--vs-goldens` against the current fixture corpus surfaces a few persist
 | `bmp/valid/rle8-with-delta.bmp` | PIL | The 5 ports interpret BMP RLE8 delta-code semantics differently from PIL; the goldens follow the ports' interpretation (the BMP impl was test-driven, PIL's choice surfaced as wrong). |
 | `gif/valid/*transparent.gif` | PIL | PIL zeroes the RGB of the transparent palette index; the 5 ports preserve the original palette RGB. Goldens follow the ports. |
 | `pngsuite-tbbn3p08.png` | PIL | PIL trns-chunk handling diverges; ports agree on the spec-correct interpretation. |
-| Many PNGs | JS | `pngjs` (the JS port's PNG library) makes different rounding choices than `libpng` + PIL + swift-png + the Rust `image` crate. Documented in `js/rosetta-image-decode/DECODER_NOTES.md`; tests skip these in Group 3. |
+| Many PNGs | JS | `pngjs` (the JS port's PNG library) makes different rounding choices than `libpng` + PIL + swift-png + the Rust `image` crate. Documented in `js/rosetta-squint-decode/DECODER_NOTES.md`; tests skip these in Group 3. |
 | Lossy HEICs | JS | Bundled WASM libheif build diverges from system libheif by ±1–2 px — handled by tolerance. |
 
 These all show up as `DIFF` rows in `--vs-goldens` mode. A **new** DIFF row appearing in this list (not in the above table) is a real regression to investigate.
@@ -90,11 +90,11 @@ The harness is scriptable for CI:
 ```yaml
 - name: Build all 5 port CLIs + PIL
   run: |
-    cd rust/rosetta-image-decode && cargo build --release --example decode-cli
+    cd rust/rosetta-squint-decode && cargo build --release --example decode-cli
     cd ../../go/imagedecode && go build -o ../../tools/cross-port-diff/decode-go ./cmd/decode-cli
-    cd ../../java/rosetta-image-decode && mvn -B -ntp -DskipTests -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 package
-    cd ../../js/rosetta-image-decode && npm install && npm run build
-    cd ../../swift/RosettaImageDecode && swift build --product DecodeCLI -c release
+    cd ../../java/rosetta-squint-decode && mvn -B -ntp -DskipTests -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 package
+    cd ../../js/rosetta-squint-decode && npm install && npm run build
+    cd ../../swift/RosettaSquintDecode && swift build --product DecodeCLI -c release
 
 - name: Cross-port regression
   run: tools/cross-port-diff/diff_all.py --vs-goldens --regression

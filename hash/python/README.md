@@ -1,6 +1,6 @@
-# rosetta_imagehash — Python port (extensions over `imagehash`)
+# rosetta_squint_hash — Python port (extensions over `imagehash`)
 
-A thin wrapper around the Python [`imagehash`](https://pypi.org/project/ImageHash/) package (4.3.2+) that adds the cross-port-stable extensions implemented across the 5 ports of `rosetta-image-hash` (Rust, Go, Java, JS/TS, Swift).
+A thin wrapper around the Python [`imagehash`](https://pypi.org/project/ImageHash/) package (4.3.2+) that adds the cross-port-stable extensions implemented across the 5 ports of `rosetta-squint-hash` (Rust, Go, Java, JS/TS, Swift).
 
 The v1 surface that's actually different from upstream `imagehash` is **one function**: `whash_db4_robust`. Everything else (`phash`, `dhash`, `whash(mode='haar')`, `whash(mode='db4')`, `phash_simple`, `dhash_vertical`, `colorhash`, `crop_resistant_hash`, hex round-trip) is re-exported from upstream unchanged.
 
@@ -28,7 +28,7 @@ The wrapper pins upstream dependencies to the exact versions our goldens were va
 
 | Dep | Pinned to | Why |
 |---|---|---|
-| `imagehash` | `==4.3.2` | Algorithm output is what generates `spec/goldens.json`. New upstream release → potential drift → release of `rosetta-imagehash` after re-validation. |
+| `imagehash` | `==4.3.2` | Algorithm output is what generates `spec/goldens.json`. New upstream release → potential drift → release of `rosetta-squint-hash` after re-validation. |
 | `Pillow` | `==10.4.*` | PIL's Lanczos resize, `Image.crop` rounding, `ImageFilter.GaussianBlur` box-radius formula, and grayscale conversion are all involved in our hash pipeline. A Pillow major-version bump can change any of these and silently break parity with the 5 other ports. |
 | `PyWavelets` | `>=1.5,<2.0` | db4 filter coefficients are mathematical constants; less drift risk, but bound the major version. |
 | `numpy` | `>=1.26,<2.0` | NumPy 2.0 changed some default dtypes and behaviors; pin to 1.x. |
@@ -38,7 +38,7 @@ This is intentional. The upstream-tracker workflow (`.github/workflows/upstream-
 If you need to share a Python environment with packages requiring different Pillow / imagehash versions, install with the unpinned extra:
 
 ```bash
-pip install rosetta-imagehash[unpinned]
+pip install rosetta-squint-hash[unpinned]
 ```
 
 **Caveat:** with `[unpinned]` the cross-port byte-exact guarantee is no longer enforced by the wrapper — verify your own output matches `spec/goldens.json` before relying on it. The 5 non-Python ports are unaffected (they don't link to Pillow at all).
@@ -46,7 +46,7 @@ pip install rosetta-imagehash[unpinned]
 ## Usage
 
 ```python
-import rosetta_imagehash as rih
+import rosetta_squint_hash as rih
 from PIL import Image
 
 img = Image.open("photo.jpg")
@@ -88,13 +88,13 @@ def whash_db4_robust(
 ) -> imagehash.ImageHash:
     """Cross-port-stable variant of imagehash.whash(mode='db4').
 
-    See docstring in rosetta_imagehash/_impl.py for the full algorithm.
+    See docstring in rosetta_squint_hash/_impl.py for the full algorithm.
     """
 
 WHASH_DB4_ROBUST_EPS: float = 1e-12  # the ε threshold; fixed across ports
 ```
 
-All other names re-exported from `imagehash` are accessible as `rosetta_imagehash.<name>`.
+All other names re-exported from `imagehash` are accessible as `rosetta_squint_hash.<name>`.
 
 ## Testing
 

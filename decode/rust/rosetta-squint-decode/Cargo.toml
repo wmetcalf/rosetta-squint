@@ -1,0 +1,28 @@
+[package]
+name = "rosetta-squint-decode"
+version = "1.0.0"
+edition = "2021"
+rust-version = "1.70"
+description = "Byte-exact PIL-compatible image decoder library (Rust). Part of rosetta-squint."
+license = "BSD-2-Clause"
+repository = "https://github.com/wmetcalf/rosetta-squint"
+homepage = "https://github.com/wmetcalf/rosetta-squint"
+documentation = "https://docs.rs/rosetta-squint-decode"
+readme = "README.md"
+categories = ["multimedia::images", "multimedia::encoding"]
+keywords = ["image", "decoder", "pillow", "byte-exact", "libheif"]
+links = "rid_jpeg_shim"
+
+[dependencies]
+thiserror = "1"
+image = { version = "0.25", default-features = false, features = ["png", "gif", "tiff"] }
+mozjpeg-sys = "2"
+libwebp-sys2 = { version = "0.1.11", features = ["0_5"] }
+libheif-rs = { version = "2.7", default-features = false, features = ["v1_17"] }
+
+[build-dependencies]
+cc = "1"
+
+[dev-dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

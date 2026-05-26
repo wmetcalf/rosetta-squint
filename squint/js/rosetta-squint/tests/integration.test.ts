@@ -16,7 +16,7 @@ import {
     hexToHash, hexToFlathash, hexToMultiHash,
     ImageMultiHash,
 } from "../src/index.js";
-import * as rih from "rosetta-image-hash";
+import * as rih from "rosetta-squint-hash";
 
 const FIXTURES_PNG = join(
     new URL(".", import.meta.url).pathname,

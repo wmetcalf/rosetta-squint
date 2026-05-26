@@ -1,4 +1,4 @@
-# rosetta-image-decode
+# rosetta-squint-decode
 
 Byte-exact, PIL-compatible image decoders across Java, Go, Rust, JavaScript/TypeScript, and Swift.
 
@@ -11,7 +11,7 @@ Sibling component to the hash library at [`../hash`](../hash). The hash library 
 ## Project layout
 
 ```
-rosetta-image-decode/
+rosetta-squint-decode/
 ├── spec/                                # shared bit-level specification + golden generator
 │   ├── SPEC.md                          # spec doc (foundational sections + per-format)
 │   ├── formats.json                     # format registry (status, reference libs, ports done)
@@ -49,7 +49,7 @@ python3 -m venv .venv
 In planned implementation order (easy-first):
 
 1. **BMP** — pure-language reimplementation (deterministic)
-2. **PNG** — re-uses proven decoders from rosetta-image-hash
+2. **PNG** — re-uses proven decoders from rosetta-squint-hash
 3. **GIF** — palette + LZW (deterministic, pure-language)
 4. **JPEG** — first format requiring native FFI (libjpeg-turbo across 5 languages)
 5. **WebP** — libwebp FFI

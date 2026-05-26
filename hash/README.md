@@ -1,4 +1,4 @@
-# rosetta-image-hash
+# rosetta-squint-hash
 
 Byte-exact ports of the Python `imagehash` library (v4.3.2) to five other languages.
 
@@ -13,7 +13,7 @@ Python, Go, Rust, JS, or Swift port — no library involved.
 
 | Port | Status |
 |---|---|
-| Python (reference) | `imagehash==4.3.2` upstream (re-exported via `rosetta_image_hash`) |
+| Python (reference) | `imagehash==4.3.2` upstream (re-exported via `rosetta_squint_hash`) |
 | Java | ✅ shipped (Maven, Java 17) |
 | Go | ✅ shipped (Go 1.21, pure stdlib) |
 | Rust | ✅ shipped (Cargo, edition 2021) |

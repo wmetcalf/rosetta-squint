@@ -1,4 +1,4 @@
-# rosetta-image-hash bit-level specification
+# rosetta-squint-hash bit-level specification
 
 Every language port reproduces this pipeline byte-exact. The Python reference is
 `imagehash==4.3.2` with `Pillow==12.2.0`, `numpy>=1.26,<2.0`, `scipy>=1.11,<1.15`,
@@ -331,11 +331,11 @@ not vary per-call without a coordinated spec change.
 
 | Port | Constant name | Symbol |
 |---|---|---|
-| Python (`rosetta_imagehash`) | `SNAP_EPS` | `rosetta_imagehash.SNAP_EPS` |
-| Rust | `SNAP_EPS` | `rosetta_image_hash::SNAP_EPS` |
+| Python (`rosetta_squint_hash`) | `SNAP_EPS` | `rosetta_squint_hash.SNAP_EPS` |
+| Rust | `SNAP_EPS` | `rosetta_squint_hash::SNAP_EPS` |
 | Go | `SnapEps` | `imagehash.SnapEps` |
-| Java | `SNAP_EPS` | `io.rosetta.imagehash.PHash.SNAP_EPS` |
-| JS/TS | `SNAP_EPS` | `import { SNAP_EPS } from 'rosetta-image-hash'` |
+| Java | `SNAP_EPS` | `io.github.wmetcalf.rosettasquint.hash.PHash.SNAP_EPS` |
+| JS/TS | `SNAP_EPS` | `import { SNAP_EPS } from 'rosetta-squint-hash'` |
 | Swift | `SNAP_EPS` | top-level `SNAP_EPS: Double` |
 
 ### Effect on smaller hash sizes
@@ -352,14 +352,14 @@ combinations differ from the pre-2026-05-23 goldens; this is the deliberate
 spec change. Old stored hashes will not round-trip against the new goldens
 for the affected fixtures.
 
-### Re-export caveat in `rosetta_imagehash`
+### Re-export caveat in `rosetta_squint_hash`
 
-The Python ``rosetta_imagehash`` package re-exports the upstream `imagehash`
+The Python ``rosetta_squint_hash`` package re-exports the upstream `imagehash`
 API but overrides `phash`, `phash_simple`, `whash_db4`, and `whash_db4_robust`
 with port-local versions that apply the snap. The unmodified upstream
 versions remain accessible as `imagehash.phash`, etc. Callers wanting
 byte-exact upstream parity should use the `imagehash.*` symbol directly;
-callers wanting cross-port stability should use `rosetta_imagehash.*`.
+callers wanting cross-port stability should use `rosetta_squint_hash.*`.
 
 ## Algorithm definitions
 
@@ -467,7 +467,7 @@ Boundary handling:
 
 ### `whash_db4_robust(img, hash_size=N)` — cross-port-stable bolt-on
 
-**Not an `imagehash` upstream algorithm.** This is a rosetta-image-hash extension that resolves the `whash_db4` ULP tie-point ambiguity at the cost of byte-exact Python parity on pathological synthetic inputs.
+**Not an `imagehash` upstream algorithm.** This is a rosetta-squint-hash extension that resolves the `whash_db4` ULP tie-point ambiguity at the cost of byte-exact Python parity on pathological synthetic inputs.
 
 Pipeline identical to `whash_db4` (steps 1–4 of that section) through producing the db4 LL band. Then, **before** computing the median:
 

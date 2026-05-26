@@ -1,4 +1,4 @@
-# golangci-lint v2 config for rosetta-image-hash (Go port).
+# golangci-lint v2 config for rosetta-squint-hash (Go port).
 #
 # Security/correctness focus per the CI lint job. We deliberately omit the
 # noisy stylistic linters (gofmt-as-a-lint, nlreturn, lll, varnamelen, etc.)

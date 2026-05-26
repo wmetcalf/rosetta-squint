@@ -19,14 +19,14 @@ from pathlib import Path
 from typing import Union
 
 import imagehash
-import rosetta_imagehash as rih
+import rosetta_squint_hash as rih
 from PIL import Image
 
 
 # Reject path-based decode of files that are too large or are non-regular
 # (e.g., /dev/zero, named pipes, character devices) BEFORE reading bytes.
 # Callers that genuinely need to process images larger than this threshold
-# should decode via rosetta-image-decode directly after explicit validation.
+# should decode via rosetta-squint-decode directly after explicit validation.
 MAX_FILE_SIZE = 256 * 1024 * 1024  # 256 MiB
 
 
@@ -287,7 +287,7 @@ def _read_path_safely(path: Union[str, Path]) -> bytes:
             raise RuntimeError(
                 f"input file too large: {st.st_size} bytes "
                 f"(max {MAX_FILE_SIZE} bytes / 256 MiB). For images above this "
-                f"threshold, decode via rosetta-image-decode directly after "
+                f"threshold, decode via rosetta-squint-decode directly after "
                 f"explicit validation."
             )
         # Read up to MAX_FILE_SIZE+1 so we detect "file grew between fstat
@@ -298,7 +298,7 @@ def _read_path_safely(path: Union[str, Path]) -> bytes:
             raise RuntimeError(
                 f"input file too large: {len(data)} bytes "
                 f"(max {MAX_FILE_SIZE} bytes / 256 MiB). For images above this "
-                f"threshold, decode via rosetta-image-decode directly after "
+                f"threshold, decode via rosetta-squint-decode directly after "
                 f"explicit validation."
             )
         return data

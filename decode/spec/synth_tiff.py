@@ -29,7 +29,7 @@ def main():
     gradient_rgb(24, 16).save(OUT / "rect-24x16-deflate.tif", compression="tiff_deflate")
     # Larger
     try:
-        photo = Image.open(Path.home() / "rosetta-image-hash/spec/fixtures/peppers.png").convert("RGB")
+        photo = Image.open(Path.home() / "rosetta-squint-hash/spec/fixtures/peppers.png").convert("RGB")
         photo.thumbnail((128, 128))
         photo.save(OUT / "larger-photo-128.tif", compression="tiff_lzw")
     except Exception:

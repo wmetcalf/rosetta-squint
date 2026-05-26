@@ -3,9 +3,9 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>io.rosetta</groupId>
+  <groupId>io.github.wmetcalf</groupId>
   <artifactId>rosetta-squint</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
+  <version>1.0.0</version>
   <packaging>jar</packaging>
 
   <properties>
@@ -16,14 +16,14 @@
 
   <dependencies>
     <dependency>
-      <groupId>io.rosetta</groupId>
-      <artifactId>rosetta-image-hash</artifactId>
-      <version>0.1.0-SNAPSHOT</version>
+      <groupId>io.github.wmetcalf</groupId>
+      <artifactId>rosetta-squint-hash</artifactId>
+      <version>1.0.0</version>
     </dependency>
     <dependency>
-      <groupId>io.rosetta</groupId>
-      <artifactId>rosetta-image-decode</artifactId>
-      <version>0.1.0</version>
+      <groupId>io.github.wmetcalf</groupId>
+      <artifactId>rosetta-squint-decode</artifactId>
+      <version>1.0.0</version>
     </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
@@ -57,7 +57,7 @@
               <finalName>squint-cli</finalName>
               <transformers>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                  <mainClass>io.rosetta.squint.cli.SquintCli</mainClass>
+                  <mainClass>io.github.wmetcalf.rosettasquint.cli.SquintCli</mainClass>
                 </transformer>
               </transformers>
               <filters>

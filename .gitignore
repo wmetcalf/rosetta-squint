@@ -20,10 +20,10 @@ tools/cross-squint-diff/hash-fuzz-corpus/
 **/crash-*
 **/crashes-fixed/
 **/.cifuzz-corpus/
-decode/rust/rosetta-image-decode/fuzz/artifacts/
-decode/rust/rosetta-image-decode/fuzz/corpus/
-hash/rust/rosetta-image-hash/fuzz/artifacts/
-hash/rust/rosetta-image-hash/fuzz/corpus/
+decode/rust/rosetta-squint-decode/fuzz/artifacts/
+decode/rust/rosetta-squint-decode/fuzz/corpus/
+hash/rust/rosetta-squint-hash/fuzz/artifacts/
+hash/rust/rosetta-squint-hash/fuzz/corpus/
 
 # Stale wrong-path build target (Makefile bug, since fixed — old location
 # was squint/tools/cross-squint-diff/, correct is tools/cross-squint-diff/).

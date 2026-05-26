@@ -1,6 +1,6 @@
 # Security
 
-Image decoders are a notorious CVE hotspot. This document covers the security posture of `rosetta-image-decode`, known exposures, and what to do about them.
+Image decoders are a notorious CVE hotspot. This document covers the security posture of `rosetta-squint-decode`, known exposures, and what to do about them.
 
 ## Threat model
 
@@ -63,11 +63,11 @@ The Rust, Go, Java, and Swift ports all FFI into native C libraries. The version
 
 `@jsquash/jpeg`, `@jsquash/webp`, and `libheif-js` bundle their own WASM-compiled C libraries. The version pinned in `package.json` determines which library version is used. Audit `package.json` against the table above and run `npm audit` regularly.
 
-Bundled libheif version in `libheif-js@1.17.1` diverges from system libheif 1.17.6 by ±1–2 px per pixel on lossy fixtures — this is a known parity issue, not a security one. See `js/rosetta-image-decode/DECODER_NOTES.md`.
+Bundled libheif version in `libheif-js@1.17.1` diverges from system libheif 1.17.6 by ±1–2 px per pixel on lossy fixtures — this is a known parity issue, not a security one. See `js/rosetta-squint-decode/DECODER_NOTES.md`.
 
 ### Java WebP — was sejda, now libwebp JNA wrapper
 
-**Resolved** (commit 8daa21d). The Java WebP decoder previously depended on `org.sejda.imageio:webp-imageio:0.1.6` (2019), which bundled its own outdated native libwebp inside the JAR — bypassing system security patches including the CVE-2023-4863 fix. Replaced with a hand-rolled JNA wrapper in `io.rosetta.imagedecode.internal.libwebp` that calls system libwebp directly (mirrors the libheif JNA wrapper pattern).
+**Resolved** (commit 8daa21d). The Java WebP decoder previously depended on `org.sejda.imageio:webp-imageio:0.1.6` (2019), which bundled its own outdated native libwebp inside the JAR — bypassing system security patches including the CVE-2023-4863 fix. Replaced with a hand-rolled JNA wrapper in `io.github.wmetcalf.rosettasquint.decode.internal.libwebp` that calls system libwebp directly (mirrors the libheif JNA wrapper pattern).
 
 ### Go JPEG — was pixiv/go-libjpeg, now in-tree cgo wrapper
 
@@ -75,7 +75,7 @@ Bundled libheif version in `libheif-js@1.17.1` diverges from system libheif 1.17
 
 ### JS GIF — was omggif, now in-tree pure-TS decoder
 
-**Resolved** (commit d2ebd53). The JS GIF decoder previously depended on `omggif` (last commit July 2019, 6 years stale). Replaced with a hand-rolled pure-TS decoder at `js/rosetta-image-decode/src/internal/gif-decoder.ts` (~612 LOC, ported from the Swift port's validated GIF89a decoder). Includes LZW decompression, 4-pass interlacing, and the transparent-palette-RGB-preservation semantics required for PIL parity.
+**Resolved** (commit d2ebd53). The JS GIF decoder previously depended on `omggif` (last commit July 2019, 6 years stale). Replaced with a hand-rolled pure-TS decoder at `js/rosetta-squint-decode/src/internal/gif-decoder.ts` (~612 LOC, ported from the Swift port's validated GIF89a decoder). Includes LZW decompression, 4-pass interlacing, and the transparent-palette-RGB-preservation semantics required for PIL parity.
 
 ### Go HEIC cgo — GC latency on sustained throughput
 
@@ -115,7 +115,7 @@ Two native fuzz harnesses run the full decoder pipeline against adversarial inpu
 
 | Port | Harness | Run |
 |---|---|---|
-| Rust | `rust/rosetta-image-decode/fuzz/` via [cargo-fuzz](https://rust-fuzz.github.io/book/cargo-fuzz.html) | `cd rust/rosetta-image-decode && cargo +nightly fuzz run decode_any` |
+| Rust | `rust/rosetta-squint-decode/fuzz/` via [cargo-fuzz](https://rust-fuzz.github.io/book/cargo-fuzz.html) | `cd rust/rosetta-squint-decode && cargo +nightly fuzz run decode_any` |
 | Go | `go/imagedecode/fuzz_decode_test.go` via native Go 1.18 fuzz | `cd go/imagedecode && go test -run='^$' -fuzz=FuzzDecodeAny -fuzztime=60s` |
 
 The Rust harness produced the original `[0xFF, 0xD8]` truncated-SOI panic finding

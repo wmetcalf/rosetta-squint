@@ -1,21 +1,21 @@
 import { open, lstat } from "node:fs/promises";
-import { decode, type DecodedImage } from "rosetta-image-decode";
-import * as rih from "rosetta-image-hash";
+import { decode, type DecodedImage } from "rosetta-squint-decode";
+import * as rih from "rosetta-squint-hash";
 
 // Re-export key types and utilities from the underlying packages for ergonomics.
-export type { Hash } from "rosetta-image-hash";
-export type { Format } from "rosetta-image-decode";
-export { ImageMultiHash, hexToHash, hexToFlathash, hexToMultiHash } from "rosetta-image-hash";
+export type { Hash } from "rosetta-squint-hash";
+export type { Format } from "rosetta-squint-decode";
+export { ImageMultiHash, hexToHash, hexToFlathash, hexToMultiHash } from "rosetta-squint-hash";
 
 /**
  * Maximum allowed size for path-based decode inputs. Refuse anything larger
  * BEFORE reading bytes. Callers that genuinely need to process images larger
- * than this should decode via rosetta-image-decode directly after explicit
+ * than this should decode via rosetta-squint-decode directly after explicit
  * validation.
  */
 export const MAX_FILE_SIZE = 256 * 1024 * 1024; // 256 MiB
 
-/** Adapt a rosetta-image-decode DecodedImage into the rosetta-image-hash RgbImage shape. */
+/** Adapt a rosetta-squint-decode DecodedImage into the rosetta-squint-hash RgbImage shape. */
 function decodedToRgbImage(d: DecodedImage): rih.RgbImage {
     return {
         width: d.width,
@@ -72,7 +72,7 @@ export async function decodeFile(path: string): Promise<rih.RgbImage> {
             throw new Error(
                 `input file too large: ${st.size} bytes (max ${MAX_FILE_SIZE} `
                 + `bytes / 256 MiB). For images above this threshold, decode `
-                + `via rosetta-image-decode directly after explicit validation.`,
+                + `via rosetta-squint-decode directly after explicit validation.`,
             );
         }
         // Read up to MAX_FILE_SIZE+1 bytes so a concurrent writer that
@@ -92,7 +92,7 @@ export async function decodeFile(path: string): Promise<rih.RgbImage> {
             throw new Error(
                 `input file too large: ${total} bytes (max ${MAX_FILE_SIZE} `
                 + `bytes / 256 MiB). For images above this threshold, decode `
-                + `via rosetta-image-decode directly after explicit validation.`,
+                + `via rosetta-squint-decode directly after explicit validation.`,
             );
         }
         const bytes = buf.subarray(0, total);

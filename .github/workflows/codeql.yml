@@ -64,7 +64,7 @@ jobs:
         if: matrix.language == 'java'
         run: |
           cd hash/java && mvn -B -ntp -DskipTests -Dmaven.compiler.source=21 -Dmaven.compiler.target=21 install
-          cd ../../decode/java/rosetta-image-decode && mvn -B -ntp -DskipTests -Dmaven.compiler.source=21 -Dmaven.compiler.target=21 install
+          cd ../../decode/java/rosetta-squint-decode && mvn -B -ntp -DskipTests -Dmaven.compiler.source=21 -Dmaven.compiler.target=21 install
           cd ../../../squint/java/rosetta-squint && mvn -B -ntp -DskipTests -Dmaven.compiler.source=21 -Dmaven.compiler.target=21 install
 
       # Go autobuild — make sure the toolchain is present so CodeQL's tracer

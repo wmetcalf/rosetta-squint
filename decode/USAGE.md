@@ -1,4 +1,4 @@
-# rosetta-image-decode — Usage
+# rosetta-squint-decode — Usage
 
 API examples for all 5 ports. For install steps and supported formats, see [STATUS.md](./STATUS.md).
 
@@ -31,7 +31,7 @@ print(f"{width}x{height} {img.mode} {len(pixels)} bytes")
 
 ```rust
 use std::fs;
-use rosetta_image_decode::{decode, detect_format, Channels, DecodeErrorKind, Format};
+use rosetta_squint_decode::{decode, detect_format, Channels, DecodeErrorKind, Format};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let bytes = fs::read("photo.jpg")?;
@@ -65,7 +65,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 `Cargo.toml`:
 ```toml
 [dependencies]
-rosetta-image-decode = { path = "../rosetta-image-decode/rust/rosetta-image-decode" }   # not on crates.io yet
+rosetta-squint-decode = { path = "../rosetta-squint-decode/rust/rosetta-squint-decode" }   # not on crates.io yet
 ```
 
 Types: `DecodedImage { width: usize, height: usize, data: Vec<u8>, channels: Channels, format: Format }`. `Channels::Rgb` or `Channels::Rgba`. `Format` covers `Bmp, Png, Gif, Jpeg, Webp, Tiff, Heic`. `DecodeError` has `kind: DecodeErrorKind`, `format: Option<Format>`, `detail: String`.
@@ -115,10 +115,10 @@ Public entry points: `Decode(b []byte) (DecodedImage, error)`, `DetectFormat(b [
 ## Java
 
 ```java
-import io.rosetta.imagedecode.Decoder;
-import io.rosetta.imagedecode.DecodedImage;
-import io.rosetta.imagedecode.DecodeException;
-import io.rosetta.imagedecode.Format;
+import io.github.wmetcalf.rosettasquint.decode.Decoder;
+import io.github.wmetcalf.rosettasquint.decode.DecodedImage;
+import io.github.wmetcalf.rosettasquint.decode.DecodeException;
+import io.github.wmetcalf.rosettasquint.decode.Format;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -149,7 +149,7 @@ Maven (until published):
 ```xml
 <dependency>
   <groupId>io.rosetta</groupId>
-  <artifactId>rosetta-image-decode</artifactId>
+  <artifactId>rosetta-squint-decode</artifactId>
   <version>0.1.0</version>
 </dependency>
 ```
@@ -163,7 +163,7 @@ Maven (until published):
 import { readFileSync } from "node:fs";
 import {
     decode, detectFormat, supportedFormats, DecodeError,
-} from "rosetta-image-decode";
+} from "rosetta-squint-decode";
 
 const bytes = new Uint8Array(readFileSync("photo.jpg"));
 
@@ -187,7 +187,7 @@ try {
 
 Exported symbols: `decode(bytes: Uint8Array): Promise<DecodedImage>`, `detectFormat(bytes): Format | null`, `supportedFormats(): Format[]`, `DecodeError` (class with `.kind`, `.format`, `.detail`). Types: `DecodedImage { width, height, data: Uint8Array, channels: 3 | 4, format }`, `Format = "bmp" | "png" | "gif" | "jpeg" | "webp" | "tiff" | "heic"`, `DecodeErrorKind = "unsupportedFormat" | "corruptInput" | "truncated" | "unsupportedFeature"`.
 
-**HEIC caveat:** the JS port's HEIC output may diverge from other ports by ±1–2 per pixel due to the bundled libheif WASM build differing slightly from system libheif. Plenty good for perceptual hashing; not bit-identical to Rust/Go/Java/Swift HEIC. See `js/rosetta-image-decode/DECODER_NOTES.md`.
+**HEIC caveat:** the JS port's HEIC output may diverge from other ports by ±1–2 per pixel due to the bundled libheif WASM build differing slightly from system libheif. Plenty good for perceptual hashing; not bit-identical to Rust/Go/Java/Swift HEIC. See `js/rosetta-squint-decode/DECODER_NOTES.md`.
 
 ---
 
@@ -195,7 +195,7 @@ Exported symbols: `decode(bytes: Uint8Array): Promise<DecodedImage>`, `detectFor
 
 ```swift
 import Foundation
-import RosettaImageDecode
+import RosettaSquintDecode
 
 let bytes = Array(try Data(contentsOf: URL(fileURLWithPath: "photo.jpg")))
 
@@ -216,16 +216,16 @@ Public surface: `enum Decoder` with static methods `decode(_ bytes: [UInt8]) thr
 
 `Package.swift` dependency (until published):
 ```swift
-.package(path: "../rosetta-image-decode/swift/RosettaImageDecode"),
+.package(path: "../rosetta-squint-decode/swift/RosettaSquintDecode"),
 ```
 
-The 4 system-library targets (`Cjpeg`, `Cwebp`, `Ctiff`, `Cheif`) are internal — consumers only see the `RosettaImageDecode` module. Build system handles linking via `pkg-config`. On macOS you may need `PKG_CONFIG_PATH=$(brew --prefix libheif)/lib/pkgconfig:$(brew --prefix libtiff)/lib/pkgconfig swift build` if Homebrew put the libraries in keg-only paths.
+The 4 system-library targets (`Cjpeg`, `Cwebp`, `Ctiff`, `Cheif`) are internal — consumers only see the `RosettaSquintDecode` module. Build system handles linking via `pkg-config`. On macOS you may need `PKG_CONFIG_PATH=$(brew --prefix libheif)/lib/pkgconfig:$(brew --prefix libtiff)/lib/pkgconfig swift build` if Homebrew put the libraries in keg-only paths.
 
 ---
 
 ## End-to-end example — same hash in 5 languages
 
-The whole point of this project pair (`rosetta-image-decode` + `rosetta-image-hash`) is byte-exact equivalence. Here's the same image hashed identically in every port:
+The whole point of this project pair (`rosetta-squint-decode` + `rosetta-squint-hash`) is byte-exact equivalence. Here's the same image hashed identically in every port:
 
 **Python (the reference):**
 ```python
@@ -238,11 +238,11 @@ print(imagehash.phash(img, hash_size=8))                  # "c3f8a1b27d0e4f96"
 **Rust:**
 ```rust
 let bytes = std::fs::read("photo.jpg")?;
-let decoded = rosetta_image_decode::decode(&bytes)?;
+let decoded = rosetta_squint_decode::decode(&bytes)?;
 let img = image::RgbImage::from_raw(
     decoded.width as u32, decoded.height as u32, decoded.data
 ).unwrap();
-let h = rosetta_image_hash::phash(&image::DynamicImage::ImageRgb8(img), 8)?;
+let h = rosetta_squint_hash::phash(&image::DynamicImage::ImageRgb8(img), 8)?;
 println!("{}", h.to_hex());                                // "c3f8a1b27d0e4f96"
 ```
 

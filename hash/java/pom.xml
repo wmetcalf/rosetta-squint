@@ -4,17 +4,19 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.rosetta</groupId>
-    <artifactId>rosetta-image-hash</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <groupId>io.github.wmetcalf</groupId>
+    <artifactId>rosetta-squint-hash</artifactId>
+    <version>1.0.0</version>
     <packaging>jar</packaging>
 
-    <name>rosetta-image-hash</name>
+    <name>rosetta-squint-hash</name>
     <description>Byte-exact port of Python imagehash 4.3.2 to Java</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>21</maven.compiler.release>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
         <junit.version>5.10.0</junit.version>
         <jackson.version>2.17.0</jackson.version>
     </properties>

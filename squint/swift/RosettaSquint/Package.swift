@@ -8,15 +8,15 @@ let package = Package(
         .executable(name: "SquintCLI", targets: ["SquintCLI"]),
     ],
     dependencies: [
-        .package(path: "../../../hash/swift/RosettaImageHash"),
-        .package(path: "../../../decode/swift/RosettaImageDecode"),
+        .package(path: "../../../hash/swift/RosettaSquintHash"),
+        .package(path: "../../../decode/swift/RosettaSquintDecode"),
     ],
     targets: [
         .target(
             name: "RosettaSquint",
             dependencies: [
-                .product(name: "RosettaImageHash", package: "RosettaImageHash"),
-                .product(name: "RosettaImageDecode", package: "RosettaImageDecode"),
+                .product(name: "RosettaSquintHash", package: "RosettaSquintHash"),
+                .product(name: "RosettaSquintDecode", package: "RosettaSquintDecode"),
             ]
         ),
         .executableTarget(

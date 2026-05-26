@@ -19,17 +19,17 @@
  * @rollup/plugin-commonjs all do).
  */
 
-import { decode, type DecodedImage } from "rosetta-image-decode";
-import * as rih from "rosetta-image-hash/browser";
+import { decode, type DecodedImage } from "rosetta-squint-decode";
+import * as rih from "rosetta-squint-hash/browser";
 
-export type { Hash, RgbImage } from "rosetta-image-hash/browser";
-export type { Format } from "rosetta-image-decode";
+export type { Hash, RgbImage } from "rosetta-squint-hash/browser";
+export type { Format } from "rosetta-squint-decode";
 export {
   ImageMultiHash,
   hexToHash,
   hexToFlathash,
   hexToMultiHash,
-} from "rosetta-image-hash/browser";
+} from "rosetta-squint-hash/browser";
 
 function decodedToRgbImage(d: DecodedImage): rih.RgbImage {
   return {

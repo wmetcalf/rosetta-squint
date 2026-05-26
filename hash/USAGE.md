@@ -1,4 +1,4 @@
-# rosetta-image-hash — Usage
+# rosetta-squint-hash — Usage
 
 API examples for all 6 ports (Python, Java, Go, Rust, JS/TS, Swift). For install steps and what's implemented, see [STATUS.md](./STATUS.md).
 
@@ -30,7 +30,7 @@ print(h - imagehash.phash(other_img))   # Hamming distance (int)
 
 ```rust
 use image::ImageReader;
-use rosetta_image_hash::{phash, average_hash, dhash, whash_haar, colorhash, hex_to_hash};
+use rosetta_squint_hash::{phash, average_hash, dhash, whash_haar, colorhash, hex_to_hash};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let img = ImageReader::open("photo.png")?.decode()?;
@@ -53,7 +53,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 `Cargo.toml`:
 ```toml
 [dependencies]
-rosetta-image-hash = { path = "../rosetta-image-hash/rust/rosetta-image-hash" }   # path; not on crates.io yet
+rosetta-squint-hash = { path = "../rosetta-squint-hash/rust/rosetta-squint-hash" }   # path; not on crates.io yet
 image = { version = "0.25", default-features = false, features = ["png"] }
 ```
 
@@ -105,13 +105,13 @@ Input type is `image.Image` from the stdlib `image` package — register decoder
 ## Java
 
 ```java
-import io.rosetta.imagehash.AverageHash;
-import io.rosetta.imagehash.PHash;
-import io.rosetta.imagehash.DHash;
-import io.rosetta.imagehash.WHashHaar;
-import io.rosetta.imagehash.ColorHash;
-import io.rosetta.imagehash.Hex;
-import io.rosetta.imagehash.ImageHash;
+import io.github.wmetcalf.rosettasquint.hash.AverageHash;
+import io.github.wmetcalf.rosettasquint.hash.PHash;
+import io.github.wmetcalf.rosettasquint.hash.DHash;
+import io.github.wmetcalf.rosettasquint.hash.WHashHaar;
+import io.github.wmetcalf.rosettasquint.hash.ColorHash;
+import io.github.wmetcalf.rosettasquint.hash.Hex;
+import io.github.wmetcalf.rosettasquint.hash.ImageHash;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -136,7 +136,7 @@ public class Demo {
 
 Public static methods: `AverageHash.compute(img)`, `AverageHash.compute(img, hashSize)`, `PHash.compute(img, hashSize)`, `PHash.compute(img, hashSize, highfreqFactor)`, `DHash.compute(img, hashSize)`, `WHashHaar.compute(img, hashSize)`, `ColorHash.compute(img)`, `ColorHash.compute(img, binbits)`, `ColorHash.binEncode(v, binbits)`, `Hex.hexToHash(hex)`, `Hex.hexToFlathash(hex, hashSize)`. Input is `java.awt.image.BufferedImage`. `ImageHash` has `toString()` (hex), `equals()`, `hashCode()`, `subtract(other) → int`.
 
-The Java port is not on Maven Central yet — depend on the local `java/` module from a sibling Maven project, or `mvn install` it once and reference `io.rosetta:rosetta-image-hash:0.1.0-SNAPSHOT`.
+The Java port is not on Maven Central yet — depend on the local `java/` module from a sibling Maven project, or `mvn install` it once and reference `io.rosetta:rosetta-squint-hash:0.1.0-SNAPSHOT`.
 
 ---
 
@@ -147,7 +147,7 @@ import { readFileSync } from "node:fs";
 import {
     averageHash, phash, dhash, whashHaar, colorhash,
     decodePng, hexToHash,
-} from "rosetta-image-hash";
+} from "rosetta-squint-hash";
 
 const bytes = new Uint8Array(readFileSync("photo.png"));
 const img = decodePng(bytes);                            // RgbImage = { width, height, data }
@@ -172,7 +172,7 @@ All hash functions are synchronous; the only async-ish thing in the library is `
 
 ```swift
 import Foundation
-import RosettaImageHash
+import RosettaSquintHash
 
 let bytes = Array(try Data(contentsOf: URL(fileURLWithPath: "photo.png")))
 let img = try decodePNG(bytes)                           // RGBImage
@@ -192,7 +192,7 @@ Public symbols: `averageHash(_:hashSize:)`, `dhash(_:hashSize:)`, `phash(_:hashS
 
 `Package.swift` dependency (path-based until the package is on Swift Package Index):
 ```swift
-.package(path: "../rosetta-image-hash/swift/RosettaImageHash"),
+.package(path: "../rosetta-squint-hash/swift/RosettaSquintHash"),
 ```
 
 ---

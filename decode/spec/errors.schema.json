@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://rosetta-image-decode.example/errors.schema.json",
-  "title": "rosetta-image-decode invalid-fixture registry",
+  "$id": "https://rosetta-squint-decode.example/errors.schema.json",
+  "title": "rosetta-squint-decode invalid-fixture registry",
   "type": "object",
   "required": ["schema_version", "fixtures"],
   "additionalProperties": false,

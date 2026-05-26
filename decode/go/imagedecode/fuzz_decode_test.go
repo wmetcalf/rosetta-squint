@@ -5,7 +5,7 @@ import (
 )
 
 // Native Go fuzz harness (Go 1.18+). Mirrors the Rust cargo-fuzz target at
-// rosetta-image-decode/fuzz/fuzz_targets/decode_any.rs.
+// rosetta-squint-decode/fuzz/fuzz_targets/decode_any.rs.
 //
 // Run:
 //

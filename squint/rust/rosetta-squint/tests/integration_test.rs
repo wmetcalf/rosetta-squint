@@ -3,7 +3,7 @@
 //! For each algorithm:
 //!   1. `<algo>(path)` returns a non-empty Hash.
 //!   2. `<algo>(path)` and `<algo>_bytes(read(path))` produce identical hex.
-//!   3. Both are equivalent to calling rosetta_image_hash directly on the decoded image
+//!   3. Both are equivalent to calling rosetta_squint_hash directly on the decoded image
 //!      (proves the decode → hash chain is self-consistent).
 
 use std::fs;
@@ -60,7 +60,7 @@ fn phash_jpeg_chain_consistent() {
     let from_path = phash(&path, 8).expect("phash path failed");
     let from_bytes = phash_bytes(&bytes, 8).expect("phash bytes failed");
     let img = img_from_bytes(&bytes);
-    let direct = rosetta_image_hash::phash(&img, 8).expect("direct phash failed");
+    let direct = rosetta_squint_hash::phash(&img, 8).expect("direct phash failed");
 
     assert_eq!(from_path.to_hex(), direct.to_hex());
     assert_eq!(from_bytes.to_hex(), direct.to_hex());
@@ -74,7 +74,7 @@ fn phash_webp_chain_consistent() {
     let from_path = phash(&path, 8).expect("phash path failed");
     let from_bytes = phash_bytes(&bytes, 8).expect("phash bytes failed");
     let img = img_from_bytes(&bytes);
-    let direct = rosetta_image_hash::phash(&img, 8).expect("direct phash failed");
+    let direct = rosetta_squint_hash::phash(&img, 8).expect("direct phash failed");
 
     assert_eq!(from_path.to_hex(), direct.to_hex());
     assert_eq!(from_bytes.to_hex(), direct.to_hex());
@@ -90,7 +90,7 @@ fn phash_simple_png_chain_consistent() {
     let from_path = phash_simple(&path, 8).expect("phash_simple path failed");
     let from_bytes = phash_simple_bytes(&bytes, 8).expect("phash_simple bytes failed");
     let img = img_from_bytes(&bytes);
-    let direct = rosetta_image_hash::phash_simple(&img, 8).expect("direct phash_simple failed");
+    let direct = rosetta_squint_hash::phash_simple(&img, 8).expect("direct phash_simple failed");
 
     assert!(!from_path.to_hex().is_empty());
     assert_eq!(from_path.to_hex(), direct.to_hex());
@@ -105,7 +105,7 @@ fn phash_simple_jpeg_chain_consistent() {
     let from_path = phash_simple(&path, 8).expect("phash_simple path failed");
     let from_bytes = phash_simple_bytes(&bytes, 8).expect("phash_simple bytes failed");
     let img = img_from_bytes(&bytes);
-    let direct = rosetta_image_hash::phash_simple(&img, 8).expect("direct phash_simple failed");
+    let direct = rosetta_squint_hash::phash_simple(&img, 8).expect("direct phash_simple failed");
 
     assert_eq!(from_path.to_hex(), direct.to_hex());
     assert_eq!(from_bytes.to_hex(), direct.to_hex());
@@ -121,7 +121,7 @@ fn dhash_png_chain_consistent() {
     let from_path = dhash(&path, 8).expect("dhash path failed");
     let from_bytes = dhash_bytes(&bytes, 8).expect("dhash bytes failed");
     let img = img_from_bytes(&bytes);
-    let direct = rosetta_image_hash::dhash(&img, 8).expect("direct dhash failed");
+    let direct = rosetta_squint_hash::dhash(&img, 8).expect("direct dhash failed");
 
     assert!(!from_path.to_hex().is_empty());
     assert_eq!(from_path.to_hex(), direct.to_hex());
@@ -136,7 +136,7 @@ fn dhash_jpeg_chain_consistent() {
     let from_path = dhash(&path, 8).expect("dhash path failed");
     let from_bytes = dhash_bytes(&bytes, 8).expect("dhash bytes failed");
     let img = img_from_bytes(&bytes);
-    let direct = rosetta_image_hash::dhash(&img, 8).expect("direct dhash failed");
+    let direct = rosetta_squint_hash::dhash(&img, 8).expect("direct dhash failed");
 
     assert_eq!(from_path.to_hex(), direct.to_hex());
     assert_eq!(from_bytes.to_hex(), direct.to_hex());
@@ -150,7 +150,7 @@ fn dhash_webp_chain_consistent() {
     let from_path = dhash(&path, 8).expect("dhash path failed");
     let from_bytes = dhash_bytes(&bytes, 8).expect("dhash bytes failed");
     let img = img_from_bytes(&bytes);
-    let direct = rosetta_image_hash::dhash(&img, 8).expect("direct dhash failed");
+    let direct = rosetta_squint_hash::dhash(&img, 8).expect("direct dhash failed");
 
     assert_eq!(from_path.to_hex(), direct.to_hex());
     assert_eq!(from_bytes.to_hex(), direct.to_hex());
@@ -167,7 +167,7 @@ fn dhash_vertical_png_chain_consistent() {
     let from_bytes = dhash_vertical_bytes(&bytes, 8).expect("dhash_vertical bytes failed");
     let img = img_from_bytes(&bytes);
     let direct =
-        rosetta_image_hash::dhash_vertical(&img, 8).expect("direct dhash_vertical failed");
+        rosetta_squint_hash::dhash_vertical(&img, 8).expect("direct dhash_vertical failed");
 
     assert!(!from_path.to_hex().is_empty());
     assert_eq!(from_path.to_hex(), direct.to_hex());
@@ -184,7 +184,7 @@ fn average_hash_png_chain_consistent() {
     let from_path = average_hash(&path, 8).expect("average_hash path failed");
     let from_bytes = average_hash_bytes(&bytes, 8).expect("average_hash bytes failed");
     let img = img_from_bytes(&bytes);
-    let direct = rosetta_image_hash::average_hash(&img, 8).expect("direct average_hash failed");
+    let direct = rosetta_squint_hash::average_hash(&img, 8).expect("direct average_hash failed");
 
     assert!(!from_path.to_hex().is_empty());
     assert_eq!(from_path.to_hex(), direct.to_hex());
@@ -199,7 +199,7 @@ fn average_hash_jpeg_chain_consistent() {
     let from_path = average_hash(&path, 8).expect("average_hash path failed");
     let from_bytes = average_hash_bytes(&bytes, 8).expect("average_hash bytes failed");
     let img = img_from_bytes(&bytes);
-    let direct = rosetta_image_hash::average_hash(&img, 8).expect("direct average_hash failed");
+    let direct = rosetta_squint_hash::average_hash(&img, 8).expect("direct average_hash failed");
 
     assert_eq!(from_path.to_hex(), direct.to_hex());
     assert_eq!(from_bytes.to_hex(), direct.to_hex());
@@ -215,7 +215,7 @@ fn whash_haar_png_chain_consistent() {
     let from_path = whash_haar(&path, 8).expect("whash_haar path failed");
     let from_bytes = whash_haar_bytes(&bytes, 8).expect("whash_haar bytes failed");
     let img = img_from_bytes(&bytes);
-    let direct = rosetta_image_hash::whash_haar(&img, 8).expect("direct whash_haar failed");
+    let direct = rosetta_squint_hash::whash_haar(&img, 8).expect("direct whash_haar failed");
 
     assert!(!from_path.to_hex().is_empty());
     assert_eq!(from_path.to_hex(), direct.to_hex());
@@ -230,7 +230,7 @@ fn whash_haar_jpeg_chain_consistent() {
     let from_path = whash_haar(&path, 8).expect("whash_haar path failed");
     let from_bytes = whash_haar_bytes(&bytes, 8).expect("whash_haar bytes failed");
     let img = img_from_bytes(&bytes);
-    let direct = rosetta_image_hash::whash_haar(&img, 8).expect("direct whash_haar failed");
+    let direct = rosetta_squint_hash::whash_haar(&img, 8).expect("direct whash_haar failed");
 
     assert_eq!(from_path.to_hex(), direct.to_hex());
     assert_eq!(from_bytes.to_hex(), direct.to_hex());
@@ -246,7 +246,7 @@ fn whash_db4_png_chain_consistent() {
     let from_path = whash_db4(&path, 8).expect("whash_db4 path failed");
     let from_bytes = whash_db4_bytes(&bytes, 8).expect("whash_db4 bytes failed");
     let img = img_from_bytes(&bytes);
-    let direct = rosetta_image_hash::whash_db4(&img, 8).expect("direct whash_db4 failed");
+    let direct = rosetta_squint_hash::whash_db4(&img, 8).expect("direct whash_db4 failed");
 
     assert!(!from_path.to_hex().is_empty());
     assert_eq!(from_path.to_hex(), direct.to_hex());
@@ -261,7 +261,7 @@ fn whash_db4_webp_chain_consistent() {
     let from_path = whash_db4(&path, 8).expect("whash_db4 path failed");
     let from_bytes = whash_db4_bytes(&bytes, 8).expect("whash_db4 bytes failed");
     let img = img_from_bytes(&bytes);
-    let direct = rosetta_image_hash::whash_db4(&img, 8).expect("direct whash_db4 failed");
+    let direct = rosetta_squint_hash::whash_db4(&img, 8).expect("direct whash_db4 failed");
 
     assert_eq!(from_path.to_hex(), direct.to_hex());
     assert_eq!(from_bytes.to_hex(), direct.to_hex());
@@ -278,7 +278,7 @@ fn whash_db4_robust_png_chain_consistent() {
     let from_bytes = whash_db4_robust_bytes(&bytes, 8).expect("whash_db4_robust bytes failed");
     let img = img_from_bytes(&bytes);
     let direct =
-        rosetta_image_hash::whash_db4_robust(&img, 8).expect("direct whash_db4_robust failed");
+        rosetta_squint_hash::whash_db4_robust(&img, 8).expect("direct whash_db4_robust failed");
 
     assert!(!from_path.to_hex().is_empty());
     assert_eq!(from_path.to_hex(), direct.to_hex());
@@ -295,7 +295,7 @@ fn colorhash_png_chain_consistent() {
     let from_path = colorhash(&path, 3).expect("colorhash path failed");
     let from_bytes = colorhash_bytes(&bytes, 3).expect("colorhash bytes failed");
     let img = img_from_bytes(&bytes);
-    let direct = rosetta_image_hash::colorhash(&img, 3).expect("direct colorhash failed");
+    let direct = rosetta_squint_hash::colorhash(&img, 3).expect("direct colorhash failed");
 
     assert!(!from_path.to_hex().is_empty());
     assert_eq!(from_path.to_hex(), direct.to_hex());
@@ -310,7 +310,7 @@ fn colorhash_jpeg_chain_consistent() {
     let from_path = colorhash(&path, 3).expect("colorhash path failed");
     let from_bytes = colorhash_bytes(&bytes, 3).expect("colorhash bytes failed");
     let img = img_from_bytes(&bytes);
-    let direct = rosetta_image_hash::colorhash(&img, 3).expect("direct colorhash failed");
+    let direct = rosetta_squint_hash::colorhash(&img, 3).expect("direct colorhash failed");
 
     assert_eq!(from_path.to_hex(), direct.to_hex());
     assert_eq!(from_bytes.to_hex(), direct.to_hex());
@@ -338,7 +338,7 @@ fn crop_resistant_hash_png_chain_consistent() {
 
     let from_path = crop_resistant_hash(&path, None).expect("crop_resistant_hash path failed");
     let img = img_from_bytes(&bytes);
-    let direct = rosetta_image_hash::crop_resistant_hash(&img, None)
+    let direct = rosetta_squint_hash::crop_resistant_hash(&img, None)
         .expect("direct crop_resistant_hash failed");
 
     assert_eq!(from_path.to_hex(), direct.to_hex());

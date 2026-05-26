@@ -1,30 +1,30 @@
 import Foundation
-import RosettaImageDecode
-import RosettaImageHash
+import RosettaSquintDecode
+import RosettaSquintHash
 
 // Re-export the hash types so callers only need to import RosettaSquint.
-public typealias Hash = RosettaImageHash.Hash
-public typealias ImageMultiHash = RosettaImageHash.ImageMultiHash
-public typealias ImageHashError = RosettaImageHash.ImageHashError
+public typealias Hash = RosettaSquintHash.Hash
+public typealias ImageMultiHash = RosettaSquintHash.ImageMultiHash
+public typealias ImageHashError = RosettaSquintHash.ImageHashError
 
 // Re-export hex round-trip helpers.
-public let hexToHash: (String) throws -> Hash = RosettaImageHash.hexToHash
+public let hexToHash: (String) throws -> Hash = RosettaSquintHash.hexToHash
 public let hexToFlathash: (String, Int) throws -> Hash = { hex, sz in
-    try RosettaImageHash.hexToFlathash(hex, hashSize: sz)
+    try RosettaSquintHash.hexToFlathash(hex, hashSize: sz)
 }
-public let hexToMultiHash: (String) throws -> ImageMultiHash = RosettaImageHash.hexToMultiHash
+public let hexToMultiHash: (String) throws -> ImageMultiHash = RosettaSquintHash.hexToMultiHash
 
 public enum RosettaSquint {
     /// Maximum allowed size for path-based decode inputs. Refuse anything
     /// larger BEFORE reading bytes. Callers that genuinely need to process
-    /// images larger than this should decode via rosetta-image-decode
+    /// images larger than this should decode via rosetta-squint-decode
     /// directly after explicit validation.
     public static let maxFileSize: Int = 256 * 1024 * 1024 // 256 MiB
 
     public enum RSError: Error, CustomStringConvertible {
         case io(String)
-        case decode(RosettaImageDecode.DecodeError)
-        case hash(RosettaImageHash.ImageHashError)
+        case decode(RosettaSquintDecode.DecodeError)
+        case hash(RosettaSquintHash.ImageHashError)
         case notRegularFile(String)
         case symlinkNotAllowed(String)
         case fileTooLarge(size: Int, max: Int)
@@ -39,18 +39,18 @@ public enum RosettaSquint {
             case .fileTooLarge(let size, let max):
                 return "input file too large: \(size) bytes (max \(max) bytes / 256 MiB). "
                     + "For images above this threshold, decode via "
-                    + "rosetta-image-decode directly after explicit validation."
+                    + "rosetta-squint-decode directly after explicit validation."
             }
         }
     }
 
-    /// Bridge a `RosettaImageDecode.DecodedImage` into the `RGBImage` shape
-    /// expected by `RosettaImageHash`. Both packages define a `Channels` enum
+    /// Bridge a `RosettaSquintDecode.DecodedImage` into the `RGBImage` shape
+    /// expected by `RosettaSquintHash`. Both packages define a `Channels` enum
     /// with `.rgb` and `.rgba` cases — we map by name to avoid the clash.
-    public static func adapt(_ d: RosettaImageDecode.DecodedImage) -> RosettaImageHash.RGBImage {
-        let hashChannels: RosettaImageHash.RGBImage.Channels =
-            d.channels == RosettaImageDecode.Channels.rgba ? .rgba : .rgb
-        return RosettaImageHash.RGBImage(
+    public static func adapt(_ d: RosettaSquintDecode.DecodedImage) -> RosettaSquintHash.RGBImage {
+        let hashChannels: RosettaSquintHash.RGBImage.Channels =
+            d.channels == RosettaSquintDecode.Channels.rgba ? .rgba : .rgb
+        return RosettaSquintHash.RGBImage(
             width: d.width,
             height: d.height,
             data: d.data,
@@ -59,11 +59,11 @@ public enum RosettaSquint {
     }
 
     /// Decode raw image bytes (any supported format) into an `RGBImage`.
-    public static func decodeBytes(_ bytes: [UInt8]) throws -> RosettaImageHash.RGBImage {
+    public static func decodeBytes(_ bytes: [UInt8]) throws -> RosettaSquintHash.RGBImage {
         do {
-            let decoded = try RosettaImageDecode.Decoder.decode(bytes)
+            let decoded = try RosettaSquintDecode.Decoder.decode(bytes)
             return adapt(decoded)
-        } catch let e as RosettaImageDecode.DecodeError {
+        } catch let e as RosettaSquintDecode.DecodeError {
             throw RSError.decode(e)
         }
     }
@@ -89,7 +89,7 @@ public enum RosettaSquint {
     /// the TOCTOU window between the size check and the read. The read
     /// is bounded by `maxFileSize + 1` so a concurrent writer that grows
     /// the file post-stat is still rejected.
-    public static func decodeFile(at path: String) throws -> RosettaImageHash.RGBImage {
+    public static func decodeFile(at path: String) throws -> RosettaSquintHash.RGBImage {
         // POSIX `open(2)` with O_NOFOLLOW: fails with ELOOP if the final
         // path component is a symlink.
         let fd = path.withCString { cpath -> Int32 in
@@ -157,108 +157,108 @@ public enum RosettaSquint {
 
     public static func phash(at path: String, hashSize: Int = 8) throws -> Hash {
         let img = try decodeFile(at: path)
-        return try RosettaImageHash.phash(img, hashSize: hashSize)
+        return try RosettaSquintHash.phash(img, hashSize: hashSize)
     }
 
     public static func phash(bytes: [UInt8], hashSize: Int = 8) throws -> Hash {
         let img = try decodeBytes(bytes)
-        return try RosettaImageHash.phash(img, hashSize: hashSize)
+        return try RosettaSquintHash.phash(img, hashSize: hashSize)
     }
 
     // MARK: - phashSimple
 
     public static func phashSimple(at path: String, hashSize: Int = 8) throws -> Hash {
         let img = try decodeFile(at: path)
-        return try RosettaImageHash.phashSimple(img, hashSize: hashSize)
+        return try RosettaSquintHash.phashSimple(img, hashSize: hashSize)
     }
 
     public static func phashSimple(bytes: [UInt8], hashSize: Int = 8) throws -> Hash {
         let img = try decodeBytes(bytes)
-        return try RosettaImageHash.phashSimple(img, hashSize: hashSize)
+        return try RosettaSquintHash.phashSimple(img, hashSize: hashSize)
     }
 
     // MARK: - averageHash
 
     public static func averageHash(at path: String, hashSize: Int = 8) throws -> Hash {
         let img = try decodeFile(at: path)
-        return try RosettaImageHash.averageHash(img, hashSize: hashSize)
+        return try RosettaSquintHash.averageHash(img, hashSize: hashSize)
     }
 
     public static func averageHash(bytes: [UInt8], hashSize: Int = 8) throws -> Hash {
         let img = try decodeBytes(bytes)
-        return try RosettaImageHash.averageHash(img, hashSize: hashSize)
+        return try RosettaSquintHash.averageHash(img, hashSize: hashSize)
     }
 
     // MARK: - dhash
 
     public static func dhash(at path: String, hashSize: Int = 8) throws -> Hash {
         let img = try decodeFile(at: path)
-        return try RosettaImageHash.dhash(img, hashSize: hashSize)
+        return try RosettaSquintHash.dhash(img, hashSize: hashSize)
     }
 
     public static func dhash(bytes: [UInt8], hashSize: Int = 8) throws -> Hash {
         let img = try decodeBytes(bytes)
-        return try RosettaImageHash.dhash(img, hashSize: hashSize)
+        return try RosettaSquintHash.dhash(img, hashSize: hashSize)
     }
 
     // MARK: - dhashVertical
 
     public static func dhashVertical(at path: String, hashSize: Int = 8) throws -> Hash {
         let img = try decodeFile(at: path)
-        return try RosettaImageHash.dhashVertical(img, hashSize: hashSize)
+        return try RosettaSquintHash.dhashVertical(img, hashSize: hashSize)
     }
 
     public static func dhashVertical(bytes: [UInt8], hashSize: Int = 8) throws -> Hash {
         let img = try decodeBytes(bytes)
-        return try RosettaImageHash.dhashVertical(img, hashSize: hashSize)
+        return try RosettaSquintHash.dhashVertical(img, hashSize: hashSize)
     }
 
     // MARK: - whashHaar
 
     public static func whashHaar(at path: String, hashSize: Int = 8) throws -> Hash {
         let img = try decodeFile(at: path)
-        return try RosettaImageHash.whashHaar(img, hashSize: hashSize)
+        return try RosettaSquintHash.whashHaar(img, hashSize: hashSize)
     }
 
     public static func whashHaar(bytes: [UInt8], hashSize: Int = 8) throws -> Hash {
         let img = try decodeBytes(bytes)
-        return try RosettaImageHash.whashHaar(img, hashSize: hashSize)
+        return try RosettaSquintHash.whashHaar(img, hashSize: hashSize)
     }
 
     // MARK: - whashDb4
 
     public static func whashDb4(at path: String, hashSize: Int = 8) throws -> Hash {
         let img = try decodeFile(at: path)
-        return try RosettaImageHash.whashDb4(img, hashSize: hashSize)
+        return try RosettaSquintHash.whashDb4(img, hashSize: hashSize)
     }
 
     public static func whashDb4(bytes: [UInt8], hashSize: Int = 8) throws -> Hash {
         let img = try decodeBytes(bytes)
-        return try RosettaImageHash.whashDb4(img, hashSize: hashSize)
+        return try RosettaSquintHash.whashDb4(img, hashSize: hashSize)
     }
 
     // MARK: - whashDb4Robust
 
     public static func whashDb4Robust(at path: String, hashSize: Int = 8) throws -> Hash {
         let img = try decodeFile(at: path)
-        return try RosettaImageHash.whashDb4Robust(img, hashSize: hashSize)
+        return try RosettaSquintHash.whashDb4Robust(img, hashSize: hashSize)
     }
 
     public static func whashDb4Robust(bytes: [UInt8], hashSize: Int = 8) throws -> Hash {
         let img = try decodeBytes(bytes)
-        return try RosettaImageHash.whashDb4Robust(img, hashSize: hashSize)
+        return try RosettaSquintHash.whashDb4Robust(img, hashSize: hashSize)
     }
 
     // MARK: - colorhash
 
     public static func colorhash(at path: String, binbits: Int = 3) throws -> Hash {
         let img = try decodeFile(at: path)
-        return try RosettaImageHash.colorhash(img, binbits: binbits)
+        return try RosettaSquintHash.colorhash(img, binbits: binbits)
     }
 
     public static func colorhash(bytes: [UInt8], binbits: Int = 3) throws -> Hash {
         let img = try decodeBytes(bytes)
-        return try RosettaImageHash.colorhash(img, binbits: binbits)
+        return try RosettaSquintHash.colorhash(img, binbits: binbits)
     }
 
     // MARK: - cropResistantHash
@@ -271,7 +271,7 @@ public enum RosettaSquint {
         segmentationImageSize: Int = 300
     ) throws -> ImageMultiHash {
         let img = try decodeFile(at: path)
-        return try RosettaImageHash.cropResistantHash(
+        return try RosettaSquintHash.cropResistantHash(
             img,
             limitSegments: limitSegments,
             segmentThreshold: segmentThreshold,
@@ -288,7 +288,7 @@ public enum RosettaSquint {
         segmentationImageSize: Int = 300
     ) throws -> ImageMultiHash {
         let img = try decodeBytes(bytes)
-        return try RosettaImageHash.cropResistantHash(
+        return try RosettaSquintHash.cropResistantHash(
             img,
             limitSegments: limitSegments,
             segmentThreshold: segmentThreshold,

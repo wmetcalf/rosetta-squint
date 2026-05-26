@@ -1,0 +1,61 @@
+{
+  "name": "rosetta-squint-decode",
+  "version": "1.0.0",
+  "description": "Byte-exact PIL-compatible image decoder library (JS/TS). Part of rosetta-squint.",
+  "keywords": [
+    "image",
+    "decoder",
+    "pillow",
+    "byte-exact",
+    "cross-language",
+    "libheif",
+    "libjpeg-turbo"
+  ],
+  "homepage": "https://github.com/wmetcalf/rosetta-squint#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wmetcalf/rosetta-squint.git",
+    "directory": "decode/js/rosetta-squint-decode"
+  },
+  "bugs": {
+    "url": "https://github.com/wmetcalf/rosetta-squint/issues"
+  },
+  "author": "Will Metcalf <william.metcalf@gmail.com>",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "BSD-2-Clause",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@jsquash/jpeg": "^1.6.0",
+    "@jsquash/webp": "^1.5.0",
+    "libheif-js": "1.17.1",
+    "pngjs": "^7",
+    "utif2": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/pngjs": "^6",
+    "fast-check": "^4.8.0",
+    "typescript": "^5.5",
+    "vitest": "^2"
+  }
+}

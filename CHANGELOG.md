@@ -46,7 +46,7 @@ migration:
   bit 0 on tie) rather than strict `v > threshold`. Eliminates
   cross-port FP-noise divergence at large hash sizes (32, 64). Hashes
   computed by upstream `imagehash` for inputs with near-median DCT
-  coefficients may differ by ≤ 1 bit from rosetta_imagehash hashes; the
+  coefficients may differ by ≤ 1 bit from rosetta_squint_hash hashes; the
   cross-port goldens are the new canonical reference. See SPEC.md
   §"Threshold tie-break" for the full rationale.
 
@@ -170,7 +170,7 @@ migration:
 - **Go fuzz harness** at `decode/go/imagedecode/fuzz_decode_test.go` —
   `FuzzDecodeAny` and `FuzzDecodeWithPrefix` mirror the Rust cargo-fuzz
   targets. Run: `go test -run='^$' -fuzz=FuzzDecodeAny -fuzztime=60s`.
-- **Rust hash-side fuzz harness** at `hash/rust/rosetta-image-hash/fuzz/`
+- **Rust hash-side fuzz harness** at `hash/rust/rosetta-squint-hash/fuzz/`
   with three targets: `hex_to_hash`, `hex_to_flathash`, `hex_to_multihash`.
 - **Python squint HEIC tests** in `squint/python/tests/test_squint.py`:
   7 new tests cover the ctypes-libheif bridge (happy path, RGBA path,

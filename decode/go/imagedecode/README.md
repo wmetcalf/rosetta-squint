@@ -1,4 +1,4 @@
-# rosetta-image-decode — Go port
+# rosetta-squint-decode — Go port
 
 Byte-exact PIL-compatible image decoder library, Go port (1.22+, current module is on 1.25).
 

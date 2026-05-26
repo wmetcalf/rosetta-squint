@@ -29,8 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 This umbrella project combines three sub-projects, each licensed under
 the same BSD 2-Clause terms above:
 
-- hash/ — formerly rosetta-image-hash, see hash/LICENSE
-- decode/ — formerly rosetta-image-decode, see decode/LICENSE
+- hash/ — formerly rosetta-squint-hash, see hash/LICENSE
+- decode/ — formerly rosetta-squint-decode, see decode/LICENSE
 - squint/ — convenience-layer code added during the merge
 
 Per-sub-project copyright notices are preserved in the respective LICENSE

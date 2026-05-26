@@ -92,7 +92,7 @@ merged IDAT, recomputes the CRC32, and re-emits the PNG with one combined
 IDAT chunk before invoking swift-png. This eliminates the inflator's
 boundary issue because there's only one IDAT to inflate.
 
-Our implementation is at `decode/swift/RosettaImageDecode/Sources/RosettaImageDecode/Internal/PNGDecoder.swift`
+Our implementation is at `decode/swift/RosettaSquintDecode/Sources/RosettaSquintDecode/Internal/PNGDecoder.swift`
 (open-source under BSD-2-Clause if useful as a reference).
 
 ## Why this is worth fixing upstream

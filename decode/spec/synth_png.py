@@ -1,6 +1,6 @@
-"""Synthesize PNG fixtures for rosetta-image-decode.
+"""Synthesize PNG fixtures for rosetta-squint-decode.
 
-Copies the 21 proven PNG fixtures from rosetta-image-hash/spec/fixtures/
+Copies the 21 proven PNG fixtures from rosetta-squint-hash/spec/fixtures/
 and generates 5 hand-crafted edge fixtures via PIL.
 
 Run:
@@ -12,7 +12,7 @@ import shutil
 from pathlib import Path
 from PIL import Image
 
-IMAGEHASH_FIXTURES = Path.home() / "rosetta-image-hash" / "spec" / "fixtures"
+IMAGEHASH_FIXTURES = Path.home() / "rosetta-squint-hash" / "spec" / "fixtures"
 OUT_DIR = Path(__file__).parent / "fixtures" / "png" / "valid"
 
 

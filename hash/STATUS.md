@@ -1,6 +1,6 @@
-# rosetta-image-hash — Status & Setup
+# rosetta-squint-hash — Status & Setup
 
-Byte-exact ports of the Python `imagehash` library (PyPI v4.3.2) to **Python, Java, Go, Rust, JavaScript/TypeScript, and Swift**. The Python port (`python/rosetta_imagehash/`) is a thin extension package that re-exports upstream `imagehash` unchanged and adds one cross-port-stable function — `whash_db4_robust`.
+Byte-exact ports of the Python `imagehash` library (PyPI v4.3.2) to **Python, Java, Go, Rust, JavaScript/TypeScript, and Swift**. The Python port (`python/rosetta_squint_hash/`) is a thin extension package that re-exports upstream `imagehash` unchanged and adds one cross-port-stable function — `whash_db4_robust`.
 
 Every port produces the same hex output as the Python `imagehash` package for the same input image, algorithm, and hash size.
 
@@ -8,7 +8,7 @@ Every port produces the same hex output as the Python `imagehash` package for th
 
 ## What is implemented
 
-| Algorithm | Python ref (`imagehash`) | Python ext (`rosetta_imagehash`) | Rust | Go | JS | Swift | Java |
+| Algorithm | Python ref (`imagehash`) | Python ext (`rosetta_squint_hash`) | Rust | Go | JS | Swift | Java |
 |---|---|---|---|---|---|---|---|
 | `average_hash` | ✓ | ✓ (re-export) | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `phash` | ✓ | ✓ (re-export) | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -64,11 +64,11 @@ Pinned in `spec/SPEC.md` and `spec/requirements.txt`. The actual versions used l
 | Port | Tests | How to run |
 |---|---|---|
 | Python ext | 442 | `cd python && pytest` |
-| Rust | 68 | `cd rust/rosetta-image-hash && cargo test` |
+| Rust | 68 | `cd rust/rosetta-squint-hash && cargo test` |
 | Go | all pkgs | `cd go/imagehash && go test ./...` |
 | Java | 843 | `cd java && mvn -B -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 test` |
-| JS/TS | 73 | `cd js/rosetta-image-hash && npm test` |
-| Swift | 65 | `cd swift/RosettaImageHash && swift test` |
+| JS/TS | 73 | `cd js/rosetta-squint-hash && npm test` |
+| Swift | 65 | `cd swift/RosettaSquintHash && swift test` |
 
 All numbers measured on Linux x86-64. **No macOS or Windows runs.**
 
@@ -79,7 +79,7 @@ All numbers measured on Linux x86-64. **No macOS or Windows runs.**
 ### Rust
 
 ```bash
-cd rust/rosetta-image-hash
+cd rust/rosetta-squint-hash
 cargo build
 cargo test
 ```
@@ -107,7 +107,7 @@ Requires JDK 17+. Test deps: JUnit 5, Jackson. No system libraries.
 ### JavaScript / TypeScript
 
 ```bash
-cd js/rosetta-image-hash
+cd js/rosetta-squint-hash
 npm install
 npm test       # runs vitest
 npm run build  # tsc → dist/
@@ -118,7 +118,7 @@ Requires Node 18+. Uses `vitest`. PNG decoding via `pngjs` (pure-JS).
 ### Swift
 
 ```bash
-cd swift/RosettaImageHash
+cd swift/RosettaSquintHash
 swift build
 swift test
 ```
@@ -158,14 +158,14 @@ Then re-run every port's tests against the new goldens.
 
 ## Security
 
-See [SECURITY.md](./SECURITY.md). Short version: the library operates on already-decoded RGB buffers, so the attack surface is small. All PNG decoder helpers are pure-language (no C FFI). Hash-size validation is in place but the library does NOT impose an upper bound on `hash_size` — the caller is responsible for sane values (recommended `<= 64`). For hashing **untrusted** images, decode them with [rosetta-image-decode](../decode) first, which enforces `MAX_PIXELS`.
+See [SECURITY.md](./SECURITY.md). Short version: the library operates on already-decoded RGB buffers, so the attack surface is small. All PNG decoder helpers are pure-language (no C FFI). Hash-size validation is in place but the library does NOT impose an upper bound on `hash_size` — the caller is responsible for sane values (recommended `<= 64`). For hashing **untrusted** images, decode them with [rosetta-squint-decode](../decode) first, which enforces `MAX_PIXELS`.
 
 ---
 
 ## Repository layout
 
 ```
-rosetta-image-hash/
+rosetta-squint-hash/
 ├── spec/                      # the bit-level specification + golden generator
 │   ├── SPEC.md
 │   ├── regenerate.py          # imports `imagehash`, writes goldens.json
@@ -179,9 +179,9 @@ rosetta-image-hash/
 │   ├── lanczos_cases/         # PIL Lanczos resize reference .bin files
 │   ├── fixtures/              # input PNGs (the things being hashed)
 │   └── decoded/               # PIL-decoded RGB buffers, one .bin per fixture
-├── rust/rosetta-image-hash/
+├── rust/rosetta-squint-hash/
 ├── go/imagehash/
 ├── java/
-├── js/rosetta-image-hash/
-└── swift/RosettaImageHash/
+├── js/rosetta-squint-hash/
+└── swift/RosettaSquintHash/
 ```

@@ -1,7 +1,7 @@
 // Package squint provides a single high-level API for byte-exact perceptual
 // image hashing across 6 languages. Each function takes either a file path
 // (`PHash`) or raw bytes (`PHashBytes`), internally decodes via
-// rosetta-image-decode, and hashes via rosetta-image-hash.
+// rosetta-squint-decode, and hashes via rosetta-squint-hash.
 package squint
 
 import (
@@ -26,11 +26,11 @@ type ImageMultiHash = imagehash.ImageMultiHash
 
 // MaxFileSize is the cap on path-based decode input size. Refuse anything
 // larger BEFORE reading bytes. Callers that genuinely need to process
-// images larger than this should decode via rosetta-image-decode directly
+// images larger than this should decode via rosetta-squint-decode directly
 // after explicit validation.
 const MaxFileSize int64 = 256 * 1024 * 1024 // 256 MiB
 
-// decodedToImage converts a rosetta-image-decode DecodedImage into a Go
+// decodedToImage converts a rosetta-squint-decode DecodedImage into a Go
 // image.Image (concrete type *image.NRGBA — both RGB and RGBA inputs are
 // represented as 4-channel NRGBA with opaque alpha for RGB inputs).
 func decodedToImage(d imagedecode.DecodedImage) image.Image {
@@ -90,7 +90,7 @@ func DecodeFile(path string) (image.Image, error) {
 		return nil, fmt.Errorf(
 			"input file too large: %d bytes (max %d bytes / 256 MiB). "+
 				"For images above this threshold, decode via "+
-				"rosetta-image-decode directly after explicit validation",
+				"rosetta-squint-decode directly after explicit validation",
 			info.Size(), MaxFileSize)
 	}
 	// Limit the read to MaxFileSize+1 — if we get a (MaxFileSize+1)th byte
@@ -103,7 +103,7 @@ func DecodeFile(path string) (image.Image, error) {
 		return nil, fmt.Errorf(
 			"input file too large: %d bytes (max %d bytes / 256 MiB). "+
 				"For images above this threshold, decode via "+
-				"rosetta-image-decode directly after explicit validation",
+				"rosetta-squint-decode directly after explicit validation",
 			len(b), MaxFileSize)
 	}
 	return DecodeBytes(b)

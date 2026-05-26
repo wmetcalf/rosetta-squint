@@ -78,8 +78,8 @@ The combination, exposed as a single top-level call per language, is `rosetta-sq
 
 This repo was merged from two previously-split sibling projects on 2026-05-22:
 
-- `rosetta-image-hash` → `hash/` (153 commits, 9 tags renamed with `hash-` prefix)
-- `rosetta-image-decode` → `decode/` (117 commits, 10 tags renamed with `decode-` prefix)
+- `rosetta-squint-hash` → `hash/` (153 commits, 9 tags renamed with `hash-` prefix)
+- `rosetta-squint-decode` → `decode/` (117 commits, 10 tags renamed with `decode-` prefix)
 
 Full git history preserved via `git-filter-repo` + `git merge --allow-unrelated-histories`.
 
@@ -124,20 +124,20 @@ Choose your port by deployment model, not algorithm speed:
 
 ```
 rosetta-squint/
-├── hash/                           # rosetta-image-hash, now under hash/
-│   ├── python/rosetta_imagehash/
-│   ├── rust/rosetta-image-hash/
+├── hash/                           # rosetta-squint-hash, now under hash/
+│   ├── python/rosetta_squint_hash/
+│   ├── rust/rosetta-squint-hash/
 │   ├── go/imagehash/
 │   ├── java/
-│   ├── js/rosetta-image-hash/
-│   ├── swift/RosettaImageHash/
+│   ├── js/rosetta-squint-hash/
+│   ├── swift/RosettaSquintHash/
 │   └── spec/
-├── decode/                         # rosetta-image-decode, now under decode/
-│   ├── rust/rosetta-image-decode/
+├── decode/                         # rosetta-squint-decode, now under decode/
+│   ├── rust/rosetta-squint-decode/
 │   ├── go/imagedecode/
-│   ├── java/rosetta-image-decode/
-│   ├── js/rosetta-image-decode/
-│   ├── swift/RosettaImageDecode/
+│   ├── java/rosetta-squint-decode/
+│   ├── js/rosetta-squint-decode/
+│   ├── swift/RosettaSquintDecode/
 │   ├── tools/cross-port-diff/
 │   └── spec/
 └── README.md                       # this file

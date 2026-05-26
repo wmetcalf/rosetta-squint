@@ -1,6 +1,6 @@
 # Security
 
-`rosetta-image-hash` operates on **already-decoded RGB or RGBA byte buffers**. The library does no image-format parsing (except the `decodePng` / `decodePNG` convenience helpers in the JS and Swift ports). Compared to `rosetta-image-decode`, the attack surface is much smaller.
+`rosetta-squint-hash` operates on **already-decoded RGB or RGBA byte buffers**. The library does no image-format parsing (except the `decodePng` / `decodePNG` convenience helpers in the JS and Swift ports). Compared to `rosetta-squint-decode`, the attack surface is much smaller.
 
 ## Threat model
 
@@ -33,7 +33,7 @@ Invalid sizes throw `ImageHashError::InvalidHashSize` (or per-port equivalent �
 
 ### Input buffer validation
 
-The decoders (when present: `decodePng`, `decodePNG`) reject malformed PNG signatures and propagate errors from the underlying PNG library (`image::ImageReader` Rust, `pngjs` JS, swift-png). They do **not** apply a MAX_PIXELS cap — the hash library is intended for already-trusted RGB input. **If you're hashing untrusted images, decode them with [rosetta-image-decode](../decode) first**, which does enforce MAX_PIXELS.
+The decoders (when present: `decodePng`, `decodePNG`) reject malformed PNG signatures and propagate errors from the underlying PNG library (`image::ImageReader` Rust, `pngjs` JS, swift-png). They do **not** apply a MAX_PIXELS cap — the hash library is intended for already-trusted RGB input. **If you're hashing untrusted images, decode them with [rosetta-squint-decode](../decode) first**, which does enforce MAX_PIXELS.
 
 ## Self-inflicted DoS to watch out for
 

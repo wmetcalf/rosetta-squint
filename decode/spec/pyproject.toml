@@ -1,7 +1,7 @@
 [project]
-name = "rosetta-image-decode-spec"
+name = "rosetta-squint-decode-spec"
 version = "0.1.0"
-description = "Bit-level reference spec and golden values for rosetta-image-decode ports"
+description = "Bit-level reference spec and golden values for rosetta-squint-decode ports"
 requires-python = ">=3.11,<3.13"
 
 dependencies = [

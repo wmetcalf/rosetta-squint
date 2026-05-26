@@ -1,4 +1,4 @@
-"""Group-2 byte-exact tests: rosetta_imagehash.whash_db4_robust output
+"""Group-2 byte-exact tests: rosetta_squint_hash.whash_db4_robust output
 matches spec/goldens.json on all 21 fixtures × 2 sizes. The goldens are
 generated from this same Python implementation (via spec/regenerate.py),
 so this is a self-consistency check.
@@ -18,7 +18,7 @@ import numpy as np
 import pytest
 from PIL import Image
 
-import rosetta_imagehash as rih
+import rosetta_squint_hash as rih
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent

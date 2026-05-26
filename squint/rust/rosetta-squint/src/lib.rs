@@ -15,17 +15,17 @@ use std::io::Read;
 use std::path::Path;
 
 use image::{DynamicImage, ImageBuffer, Rgb, Rgba};
-use rosetta_image_decode::{decode as rid_decode, Channels, DecodeError, DecodedImage};
-use rosetta_image_hash::ImageHashError;
+use rosetta_squint_decode::{decode as rid_decode, Channels, DecodeError, DecodedImage};
+use rosetta_squint_hash::ImageHashError;
 
-pub use rosetta_image_hash::{
+pub use rosetta_squint_hash::{
     hex_to_flathash, hex_to_hash, hex_to_multihash, Hash, ImageMultiHash,
 };
 
 /// Reject path-based decode of files that are too large or are non-regular
 /// (e.g., `/dev/zero`, named pipes, character devices) BEFORE reading bytes.
 /// Callers that genuinely need to process images larger than this threshold
-/// should decode via rosetta-image-decode directly after explicit validation.
+/// should decode via rosetta-squint-decode directly after explicit validation.
 pub const MAX_FILE_SIZE: u64 = 256 * 1024 * 1024; // 256 MiB
 
 // ── Error type ──────────────────────────────────────────────────────────────
@@ -46,7 +46,7 @@ pub enum RosettaError {
     SymlinkNotAllowed { path: String },
     #[error(
         "input file too large: {size} bytes (max {max} bytes / 256 MiB). \
-         For images above this threshold, decode via rosetta-image-decode \
+         For images above this threshold, decode via rosetta-squint-decode \
          directly after explicit validation."
     )]
     FileTooLarge { size: u64, max: u64 },
@@ -73,7 +73,7 @@ fn decoded_to_dynamic(d: DecodedImage) -> Result<DynamicImage, RosettaError> {
 
 // ── Public decode helpers ────────────────────────────────────────────────────
 
-/// Decode raw image bytes via rosetta-image-decode and return a `DynamicImage`.
+/// Decode raw image bytes via rosetta-squint-decode and return a `DynamicImage`.
 pub fn decode_to_image(bytes: &[u8]) -> Result<DynamicImage, RosettaError> {
     let decoded = rid_decode(bytes)?;
     decoded_to_dynamic(decoded)
@@ -176,13 +176,13 @@ pub fn decode_file<P: AsRef<Path>>(path: P) -> Result<DynamicImage, RosettaError
 /// Compute phash from a file path.
 pub fn phash<P: AsRef<Path>>(path: P, hash_size: usize) -> Result<Hash, RosettaError> {
     let img = decode_file(path)?;
-    Ok(rosetta_image_hash::phash(&img, hash_size)?)
+    Ok(rosetta_squint_hash::phash(&img, hash_size)?)
 }
 
 /// Compute phash from raw bytes.
 pub fn phash_bytes(bytes: &[u8], hash_size: usize) -> Result<Hash, RosettaError> {
     let img = decode_to_image(bytes)?;
-    Ok(rosetta_image_hash::phash(&img, hash_size)?)
+    Ok(rosetta_squint_hash::phash(&img, hash_size)?)
 }
 
 // ── phash_simple ─────────────────────────────────────────────────────────────
@@ -190,13 +190,13 @@ pub fn phash_bytes(bytes: &[u8], hash_size: usize) -> Result<Hash, RosettaError>
 /// Compute phash_simple from a file path.
 pub fn phash_simple<P: AsRef<Path>>(path: P, hash_size: usize) -> Result<Hash, RosettaError> {
     let img = decode_file(path)?;
-    Ok(rosetta_image_hash::phash_simple(&img, hash_size)?)
+    Ok(rosetta_squint_hash::phash_simple(&img, hash_size)?)
 }
 
 /// Compute phash_simple from raw bytes.
 pub fn phash_simple_bytes(bytes: &[u8], hash_size: usize) -> Result<Hash, RosettaError> {
     let img = decode_to_image(bytes)?;
-    Ok(rosetta_image_hash::phash_simple(&img, hash_size)?)
+    Ok(rosetta_squint_hash::phash_simple(&img, hash_size)?)
 }
 
 // ── dhash ────────────────────────────────────────────────────────────────────
@@ -204,13 +204,13 @@ pub fn phash_simple_bytes(bytes: &[u8], hash_size: usize) -> Result<Hash, Rosett
 /// Compute dhash from a file path.
 pub fn dhash<P: AsRef<Path>>(path: P, hash_size: usize) -> Result<Hash, RosettaError> {
     let img = decode_file(path)?;
-    Ok(rosetta_image_hash::dhash(&img, hash_size)?)
+    Ok(rosetta_squint_hash::dhash(&img, hash_size)?)
 }
 
 /// Compute dhash from raw bytes.
 pub fn dhash_bytes(bytes: &[u8], hash_size: usize) -> Result<Hash, RosettaError> {
     let img = decode_to_image(bytes)?;
-    Ok(rosetta_image_hash::dhash(&img, hash_size)?)
+    Ok(rosetta_squint_hash::dhash(&img, hash_size)?)
 }
 
 // ── dhash_vertical ───────────────────────────────────────────────────────────
@@ -218,13 +218,13 @@ pub fn dhash_bytes(bytes: &[u8], hash_size: usize) -> Result<Hash, RosettaError>
 /// Compute dhash_vertical from a file path.
 pub fn dhash_vertical<P: AsRef<Path>>(path: P, hash_size: usize) -> Result<Hash, RosettaError> {
     let img = decode_file(path)?;
-    Ok(rosetta_image_hash::dhash_vertical(&img, hash_size)?)
+    Ok(rosetta_squint_hash::dhash_vertical(&img, hash_size)?)
 }
 
 /// Compute dhash_vertical from raw bytes.
 pub fn dhash_vertical_bytes(bytes: &[u8], hash_size: usize) -> Result<Hash, RosettaError> {
     let img = decode_to_image(bytes)?;
-    Ok(rosetta_image_hash::dhash_vertical(&img, hash_size)?)
+    Ok(rosetta_squint_hash::dhash_vertical(&img, hash_size)?)
 }
 
 // ── average_hash ─────────────────────────────────────────────────────────────
@@ -232,13 +232,13 @@ pub fn dhash_vertical_bytes(bytes: &[u8], hash_size: usize) -> Result<Hash, Rose
 /// Compute average_hash from a file path.
 pub fn average_hash<P: AsRef<Path>>(path: P, hash_size: usize) -> Result<Hash, RosettaError> {
     let img = decode_file(path)?;
-    Ok(rosetta_image_hash::average_hash(&img, hash_size)?)
+    Ok(rosetta_squint_hash::average_hash(&img, hash_size)?)
 }
 
 /// Compute average_hash from raw bytes.
 pub fn average_hash_bytes(bytes: &[u8], hash_size: usize) -> Result<Hash, RosettaError> {
     let img = decode_to_image(bytes)?;
-    Ok(rosetta_image_hash::average_hash(&img, hash_size)?)
+    Ok(rosetta_squint_hash::average_hash(&img, hash_size)?)
 }
 
 // ── whash_haar ───────────────────────────────────────────────────────────────
@@ -246,13 +246,13 @@ pub fn average_hash_bytes(bytes: &[u8], hash_size: usize) -> Result<Hash, Rosett
 /// Compute whash_haar from a file path.
 pub fn whash_haar<P: AsRef<Path>>(path: P, hash_size: usize) -> Result<Hash, RosettaError> {
     let img = decode_file(path)?;
-    Ok(rosetta_image_hash::whash_haar(&img, hash_size)?)
+    Ok(rosetta_squint_hash::whash_haar(&img, hash_size)?)
 }
 
 /// Compute whash_haar from raw bytes.
 pub fn whash_haar_bytes(bytes: &[u8], hash_size: usize) -> Result<Hash, RosettaError> {
     let img = decode_to_image(bytes)?;
-    Ok(rosetta_image_hash::whash_haar(&img, hash_size)?)
+    Ok(rosetta_squint_hash::whash_haar(&img, hash_size)?)
 }
 
 // ── whash_db4 ────────────────────────────────────────────────────────────────
@@ -260,13 +260,13 @@ pub fn whash_haar_bytes(bytes: &[u8], hash_size: usize) -> Result<Hash, RosettaE
 /// Compute whash_db4 from a file path.
 pub fn whash_db4<P: AsRef<Path>>(path: P, hash_size: usize) -> Result<Hash, RosettaError> {
     let img = decode_file(path)?;
-    Ok(rosetta_image_hash::whash_db4(&img, hash_size)?)
+    Ok(rosetta_squint_hash::whash_db4(&img, hash_size)?)
 }
 
 /// Compute whash_db4 from raw bytes.
 pub fn whash_db4_bytes(bytes: &[u8], hash_size: usize) -> Result<Hash, RosettaError> {
     let img = decode_to_image(bytes)?;
-    Ok(rosetta_image_hash::whash_db4(&img, hash_size)?)
+    Ok(rosetta_squint_hash::whash_db4(&img, hash_size)?)
 }
 
 // ── whash_db4_robust ─────────────────────────────────────────────────────────
@@ -274,13 +274,13 @@ pub fn whash_db4_bytes(bytes: &[u8], hash_size: usize) -> Result<Hash, RosettaEr
 /// Compute whash_db4_robust from a file path.
 pub fn whash_db4_robust<P: AsRef<Path>>(path: P, hash_size: usize) -> Result<Hash, RosettaError> {
     let img = decode_file(path)?;
-    Ok(rosetta_image_hash::whash_db4_robust(&img, hash_size)?)
+    Ok(rosetta_squint_hash::whash_db4_robust(&img, hash_size)?)
 }
 
 /// Compute whash_db4_robust from raw bytes.
 pub fn whash_db4_robust_bytes(bytes: &[u8], hash_size: usize) -> Result<Hash, RosettaError> {
     let img = decode_to_image(bytes)?;
-    Ok(rosetta_image_hash::whash_db4_robust(&img, hash_size)?)
+    Ok(rosetta_squint_hash::whash_db4_robust(&img, hash_size)?)
 }
 
 // ── colorhash ────────────────────────────────────────────────────────────────
@@ -290,13 +290,13 @@ pub fn whash_db4_robust_bytes(bytes: &[u8], hash_size: usize) -> Result<Hash, Ro
 /// `binbits` controls the number of bits per histogram bin (default is 3 in Python).
 pub fn colorhash<P: AsRef<Path>>(path: P, binbits: usize) -> Result<Hash, RosettaError> {
     let img = decode_file(path)?;
-    Ok(rosetta_image_hash::colorhash(&img, binbits)?)
+    Ok(rosetta_squint_hash::colorhash(&img, binbits)?)
 }
 
 /// Compute colorhash from raw bytes.
 pub fn colorhash_bytes(bytes: &[u8], binbits: usize) -> Result<Hash, RosettaError> {
     let img = decode_to_image(bytes)?;
-    Ok(rosetta_image_hash::colorhash(&img, binbits)?)
+    Ok(rosetta_squint_hash::colorhash(&img, binbits)?)
 }
 
 // ── crop_resistant_hash ───────────────────────────────────────────────────────
@@ -311,7 +311,7 @@ pub fn crop_resistant_hash<P: AsRef<Path>>(
     limit_segments: Option<usize>,
 ) -> Result<ImageMultiHash, RosettaError> {
     let img = decode_file(path)?;
-    Ok(rosetta_image_hash::crop_resistant_hash(&img, limit_segments)?)
+    Ok(rosetta_squint_hash::crop_resistant_hash(&img, limit_segments)?)
 }
 
 /// Compute crop_resistant_hash from raw bytes.
@@ -322,5 +322,5 @@ pub fn crop_resistant_hash_bytes(
     limit_segments: Option<usize>,
 ) -> Result<ImageMultiHash, RosettaError> {
     let img = decode_to_image(bytes)?;
-    Ok(rosetta_image_hash::crop_resistant_hash(&img, limit_segments)?)
+    Ok(rosetta_squint_hash::crop_resistant_hash(&img, limit_segments)?)
 }

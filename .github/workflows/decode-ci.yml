@@ -78,7 +78,7 @@ jobs:
 
       - name: Java — mvn test
         if: matrix.port == 'java'
-        run: cd decode/java/rosetta-image-decode && mvn -B -ntp test
+        run: cd decode/java/rosetta-squint-decode && mvn -B -ntp test
 
       # Go
       - name: Set up Go 1.22
@@ -109,11 +109,11 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            decode/rust/rosetta-image-decode/target
-          key: cargo-${{ runner.os }}-${{ hashFiles('decode/rust/rosetta-image-decode/Cargo.lock') }}
+            decode/rust/rosetta-squint-decode/target
+          key: cargo-${{ runner.os }}-${{ hashFiles('decode/rust/rosetta-squint-decode/Cargo.lock') }}
       - name: Rust — cargo test
         if: matrix.port == 'rust'
-        run: cd decode/rust/rosetta-image-decode && cargo test --no-fail-fast
+        run: cd decode/rust/rosetta-squint-decode && cargo test --no-fail-fast
 
       # JS
       - name: Set up Node 20
@@ -122,10 +122,10 @@ jobs:
         with:
           node-version: '20'
           cache: npm
-          cache-dependency-path: decode/js/rosetta-image-decode/package-lock.json
+          cache-dependency-path: decode/js/rosetta-squint-decode/package-lock.json
       - name: JS — npm ci + test
         if: matrix.port == 'js'
-        run: cd decode/js/rosetta-image-decode && npm ci && npm test
+        run: cd decode/js/rosetta-squint-decode && npm ci && npm test
 
       # Swift
       - name: Set up Swift 5.9
@@ -139,7 +139,7 @@ jobs:
 
       - name: Swift — swift test
         if: matrix.port == 'swift'
-        run: cd decode/swift/RosettaImageDecode && swift test
+        run: cd decode/swift/RosettaSquintDecode && swift test
 
   dep-audit:
     # Per-ecosystem vulnerability scan. Runs on PR/push and weekly so
@@ -164,7 +164,7 @@ jobs:
         run: cargo install --locked cargo-audit
       - name: cargo audit (decode crate)
         if: matrix.ecosystem == 'rust'
-        run: cd decode/rust/rosetta-image-decode && cargo audit --deny warnings
+        run: cd decode/rust/rosetta-squint-decode && cargo audit --deny warnings
 
       # JS — npm audit at high severity
       - name: Set up Node 20
@@ -173,10 +173,10 @@ jobs:
         with:
           node-version: '20'
           cache: npm
-          cache-dependency-path: decode/js/rosetta-image-decode/package-lock.json
+          cache-dependency-path: decode/js/rosetta-squint-decode/package-lock.json
       - name: npm audit (decode JS)
         if: matrix.ecosystem == 'js'
-        run: cd decode/js/rosetta-image-decode && npm ci && npm audit --audit-level=high
+        run: cd decode/js/rosetta-squint-decode && npm ci && npm audit --audit-level=high
 
       # Python — pip-audit on spec tooling deps
       - name: Set up Python 3.11
@@ -247,11 +247,11 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            decode/rust/rosetta-image-decode/target
-          key: cargo-lint-${{ runner.os }}-${{ hashFiles('decode/rust/rosetta-image-decode/Cargo.lock') }}
+            decode/rust/rosetta-squint-decode/target
+          key: cargo-lint-${{ runner.os }}-${{ hashFiles('decode/rust/rosetta-squint-decode/Cargo.lock') }}
       - name: cargo clippy
         if: matrix.port == 'rust'
-        run: cd decode/rust/rosetta-image-decode && cargo clippy --all-targets --all-features -- -D warnings
+        run: cd decode/rust/rosetta-squint-decode && cargo clippy --all-targets --all-features -- -D warnings
 
       # Go — golangci-lint via the official action.
       - name: Set up Go 1.22
@@ -277,11 +277,11 @@ jobs:
         with:
           node-version: '20'
           cache: npm
-          cache-dependency-path: decode/js/rosetta-image-decode/package-lock.json
+          cache-dependency-path: decode/js/rosetta-squint-decode/package-lock.json
       - name: tsc --noEmit
         if: matrix.port == 'js'
         run: |
-          cd decode/js/rosetta-image-decode
+          cd decode/js/rosetta-squint-decode
           npm ci
           if npm run | grep -qE '^  (typecheck|lint)$'; then
             npm run typecheck 2>/dev/null || npm run lint 2>/dev/null || npx tsc --noEmit
@@ -300,13 +300,13 @@ jobs:
         run: sudo apt-get update -qq && sudo apt-get install -y libturbojpeg libturbojpeg0-dev libwebp-dev libsharpyuv-dev libtiff-dev libheif-dev libheif-plugin-libde265 libde265-dev libde265-0 pkg-config
       - name: swift build (type-check)
         if: matrix.port == 'swift'
-        run: cd decode/swift/RosettaImageDecode && swift build
+        run: cd decode/swift/RosettaSquintDecode && swift build
       - name: swift-format lint (best-effort)
         if: matrix.port == 'swift'
         continue-on-error: true
         run: |
           if command -v swift-format >/dev/null 2>&1; then
-            swift-format lint --recursive swift/RosettaImageDecode/Sources
+            swift-format lint --recursive swift/RosettaSquintDecode/Sources
           else
             echo "swift-format not available on this image; skipping"
           fi
@@ -346,7 +346,7 @@ jobs:
         run: brew install libheif libde265 pkg-config
       - name: Rust — cargo test
         if: matrix.port == 'rust'
-        run: cd decode/rust/rosetta-image-decode && cargo test --no-fail-fast
+        run: cd decode/rust/rosetta-squint-decode && cargo test --no-fail-fast
 
       # Go
       - name: Set up Go 1.22
@@ -372,7 +372,7 @@ jobs:
         if: matrix.port == 'java'
         continue-on-error: true
         run: |
-          cd decode/java/rosetta-image-decode
+          cd decode/java/rosetta-squint-decode
           ls -la /opt/homebrew/share/java/ 2>/dev/null || echo "(no homebrew java dir)"
           ls -la /opt/homebrew/opt/jpeg-turbo/lib/ 2>/dev/null || echo "(no jpeg-turbo lib dir)"
           ls -la /opt/homebrew/opt/webp/lib/ 2>/dev/null || echo "(no webp lib dir)"
@@ -390,10 +390,10 @@ jobs:
         with:
           node-version: '20'
           cache: npm
-          cache-dependency-path: decode/js/rosetta-image-decode/package-lock.json
+          cache-dependency-path: decode/js/rosetta-squint-decode/package-lock.json
       - name: JS — npm ci + test
         if: matrix.port == 'js'
-        run: cd decode/js/rosetta-image-decode && npm ci && npm test
+        run: cd decode/js/rosetta-squint-decode && npm ci && npm test
 
       # Swift — native
       - name: Set up Swift 5.9
@@ -403,4 +403,4 @@ jobs:
           swift-version: '5.10.1'
       - name: Swift — swift test
         if: matrix.port == 'swift'
-        run: cd decode/swift/RosettaImageDecode && swift test
+        run: cd decode/swift/RosettaSquintDecode && swift test

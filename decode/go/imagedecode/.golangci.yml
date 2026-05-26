@@ -1,4 +1,4 @@
-# golangci-lint v2 config for rosetta-image-decode (Go port).
+# golangci-lint v2 config for rosetta-squint-decode (Go port).
 #
 # Security/correctness focus per the CI lint job. We deliberately omit the
 # noisy stylistic linters because the codebase is heavily cgo and the

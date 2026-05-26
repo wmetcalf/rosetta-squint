@@ -1,0 +1,63 @@
+{
+  "name": "rosetta-squint-hash",
+  "version": "1.0.0",
+  "description": "Byte-exact perceptual-hash library — JS/TS port of Python imagehash 4.3.2. Part of rosetta-squint.",
+  "keywords": [
+    "perceptual-hashing",
+    "imagehash",
+    "phash",
+    "dhash",
+    "wavelet-hash",
+    "byte-exact",
+    "cross-language"
+  ],
+  "homepage": "https://github.com/wmetcalf/rosetta-squint#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wmetcalf/rosetta-squint.git",
+    "directory": "hash/js/rosetta-squint-hash"
+  },
+  "bugs": {
+    "url": "https://github.com/wmetcalf/rosetta-squint/issues"
+  },
+  "author": "Will Metcalf <william.metcalf@gmail.com>",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./browser": {
+      "types": "./dist/browser.d.ts",
+      "import": "./dist/browser.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "BSD-2-Clause",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "pngjs": "^7.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/pngjs": "^6",
+    "esbuild": "^0.28.0",
+    "fast-check": "^4.8.0",
+    "playwright": "^1.60.0",
+    "typescript": "^5.5",
+    "vitest": "^2"
+  }
+}

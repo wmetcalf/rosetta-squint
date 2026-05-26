@@ -1,4 +1,4 @@
-"""rosetta-image-decode spec-only consistency checks.
+"""rosetta-squint-decode spec-only consistency checks.
 
 Does NOT re-run PIL. Validates:
   - formats.json is valid against formats.schema.json

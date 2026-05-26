@@ -1,4 +1,4 @@
-# rosetta-image-hash — Java port
+# rosetta-squint-hash — Java port
 
 Byte-exact port of Python `imagehash==4.3.2` algorithms to Java 17+.
 
@@ -7,9 +7,9 @@ The hex string produced here equals the hex Python `imagehash` produces for the 
 ## Quick start
 
 ```java
-import io.rosetta.imagehash.PHash;
-import io.rosetta.imagehash.Hex;
-import io.rosetta.imagehash.ImageHash;
+import io.github.wmetcalf.rosettasquint.hash.PHash;
+import io.github.wmetcalf.rosettasquint.hash.Hex;
+import io.github.wmetcalf.rosettasquint.hash.ImageHash;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -78,7 +78,7 @@ Not on Maven Central yet. After `mvn install` from this directory:
 ```xml
 <dependency>
   <groupId>io.rosetta</groupId>
-  <artifactId>rosetta-image-hash</artifactId>
+  <artifactId>rosetta-squint-hash</artifactId>
   <version>0.1.0-SNAPSHOT</version>
 </dependency>
 ```

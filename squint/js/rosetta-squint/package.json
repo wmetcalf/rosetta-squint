@@ -1,7 +1,26 @@
 {
   "name": "rosetta-squint",
-  "version": "0.1.0",
-  "description": "Cross-language byte-exact perceptual image hashing — decode + hash in one call",
+  "version": "1.0.0",
+  "description": "Cross-language byte-exact perceptual image hashing — decode + hash in one call. Umbrella package combining rosetta-squint-decode + rosetta-squint-hash.",
+  "keywords": [
+    "perceptual-hashing",
+    "imagehash",
+    "byte-exact",
+    "cross-language",
+    "image-decoder",
+    "phash"
+  ],
+  "homepage": "https://github.com/wmetcalf/rosetta-squint#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wmetcalf/rosetta-squint.git",
+    "directory": "squint/js/rosetta-squint"
+  },
+  "bugs": {
+    "url": "https://github.com/wmetcalf/rosetta-squint/issues"
+  },
+  "author": "Will Metcalf <william.metcalf@gmail.com>",
+  "license": "BSD-2-Clause",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -16,7 +35,6 @@
     }
   },
   "engines": { "node": ">=18" },
-  "license": "BSD-2-Clause",
   "bin": {
     "squint-cli": "./scripts/squint-cli.mjs"
   },
@@ -25,8 +43,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "rosetta-image-decode": "file:../../../decode/js/rosetta-image-decode",
-    "rosetta-image-hash": "file:../../../hash/js/rosetta-image-hash",
+    "rosetta-squint-decode": "file:../../../decode/js/rosetta-squint-decode",
+    "rosetta-squint-hash": "file:../../../hash/js/rosetta-squint-hash",
     "@jsquash/jpeg": "^1.6.0",
     "@jsquash/webp": "^1.5.0",
     "libheif-js": "1.17.1",

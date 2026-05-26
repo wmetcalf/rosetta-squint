@@ -1,0 +1,21 @@
+[package]
+name = "rosetta-squint-hash"
+version = "1.0.0"
+edition = "2021"
+rust-version = "1.84"
+description = "Byte-exact perceptual-hash library — Rust port of Python imagehash 4.3.2. Part of rosetta-squint."
+license = "BSD-2-Clause"
+repository = "https://github.com/wmetcalf/rosetta-squint"
+homepage = "https://github.com/wmetcalf/rosetta-squint"
+documentation = "https://docs.rs/rosetta-squint-hash"
+readme = "README.md"
+categories = ["multimedia::images", "algorithms"]
+keywords = ["perceptual-hashing", "imagehash", "phash", "dhash", "wavelet-hash"]
+
+[dependencies]
+image = { version = "0.25", default-features = false, features = ["png"] }
+thiserror = "2"
+
+[dev-dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

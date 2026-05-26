@@ -1,4 +1,4 @@
-"""Verify that rosetta_imagehash re-exports the upstream `imagehash` surface
+"""Verify that rosetta_squint_hash re-exports the upstream `imagehash` surface
 correctly: each public function/class is importable, callable with the same
 signature, and produces byte-exact output identical to calling `imagehash`
 directly (since it IS the same function — these tests guard against
@@ -20,7 +20,7 @@ import pytest
 from PIL import Image
 
 import imagehash
-import rosetta_imagehash as rih
+import rosetta_squint_hash as rih
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent

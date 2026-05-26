@@ -1,7 +1,7 @@
 [project]
-name = "rosetta-image-hash-spec"
+name = "rosetta-squint-hash-spec"
 version = "0.1.0"
-description = "Bit-level reference spec and golden values for rosetta-image-hash ports"
+description = "Bit-level reference spec and golden values for rosetta-squint-hash ports"
 requires-python = ">=3.11,<3.13"
 
 dependencies = [

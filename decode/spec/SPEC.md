@@ -1,4 +1,4 @@
-# rosetta-image-decode SPEC
+# rosetta-squint-decode SPEC
 
 Bit-level specification for byte-exact image decoding across all supported
 formats and language ports. Each format section describes its reference
@@ -28,7 +28,7 @@ Decoders return a `DecodedImage` value type:
 
 **Alpha channel policy:** Decoders preserve alpha from the source. PNG
 with alpha → 4 channels. BMP without alpha → 3 channels. Composite-to-RGB
-is the caller's job (rosetta-image-hash uses `ImgRGB.toRGB()` for this).
+is the caller's job (rosetta-squint-hash uses `ImgRGB.toRGB()` for this).
 
 **Color space policy:** All output is in sRGB. Embedded ICC profiles are
 ignored in v1; format-specific sub-projects may add ICC handling later.

@@ -38,7 +38,7 @@ FIXTURES = ROOT / "spec" / "fixtures"
 PORTS = {
     "pil": [sys.executable, str(TOOLS / "decode_pil.py")],
     "rust": [
-        str(ROOT / "rust" / "rosetta-image-decode" / "target" / "release" / "examples" / "decode-cli"),
+        str(ROOT / "rust" / "rosetta-squint-decode" / "target" / "release" / "examples" / "decode-cli"),
     ],
     "go": [
         str(TOOLS / "decode-go"),
@@ -48,15 +48,15 @@ PORTS = {
         "-Djava.library.path=/usr/lib/x86_64-linux-gnu",
         "--enable-native-access=ALL-UNNAMED",
         "-cp",
-        f"{ROOT}/java/rosetta-image-decode/target/decode-cli.jar:/usr/share/java/turbojpeg.jar",
-        "io.rosetta.imagedecode.cli.DecodeCli",
+        f"{ROOT}/java/rosetta-squint-decode/target/decode-cli.jar:/usr/share/java/turbojpeg.jar",
+        "io.github.wmetcalf.rosettasquint.decode.cli.DecodeCli",
     ],
     "js": [
         "node",
-        str(ROOT / "js" / "rosetta-image-decode" / "scripts" / "decode-cli.mjs"),
+        str(ROOT / "js" / "rosetta-squint-decode" / "scripts" / "decode-cli.mjs"),
     ],
     "swift": [
-        str(ROOT / "swift" / "RosettaImageDecode" / ".build" / "release" / "DecodeCLI"),
+        str(ROOT / "swift" / "RosettaSquintDecode" / ".build" / "release" / "DecodeCLI"),
     ],
 }
 
@@ -64,7 +64,7 @@ PORTS = {
 # and libheif-js (the WASM build) diverges from system libheif too. decode_pil.py
 # uses the ctypes system wrapper, so PIL is fine. But the JS port's HEIC
 # output will diverge from system libheif by ±2 px (documented in
-# js/rosetta-image-decode/DECODER_NOTES.md). For HEIC we use a tolerance.
+# js/rosetta-squint-decode/DECODER_NOTES.md). For HEIC we use a tolerance.
 HEIC_MAX_DELTA = 2
 
 

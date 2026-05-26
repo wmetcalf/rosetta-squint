@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://rosetta-image-decode.example/formats.schema.json",
-  "title": "rosetta-image-decode format registry",
+  "$id": "https://rosetta-squint-decode.example/formats.schema.json",
+  "title": "rosetta-squint-decode format registry",
   "type": "object",
   "required": ["schema_version", "version", "formats"],
   "additionalProperties": false,

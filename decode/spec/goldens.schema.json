@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://rosetta-image-decode.example/goldens.schema.json",
-  "title": "rosetta-image-decode golden pixel manifest",
+  "$id": "https://rosetta-squint-decode.example/goldens.schema.json",
+  "title": "rosetta-squint-decode golden pixel manifest",
   "type": "object",
   "required": ["schema_version", "pillow_version", "regenerated_at", "fixtures"],
   "additionalProperties": false,

@@ -101,7 +101,7 @@ jobs:
         run: |
           # Install sibling halves first (squint depends on hash + decode JARs).
           cd hash/java && mvn -B -ntp -DskipTests -Dmaven.compiler.source=21 -Dmaven.compiler.target=21 install
-          cd ../../decode/java/rosetta-image-decode && mvn -B -ntp -DskipTests -Dmaven.compiler.source=21 -Dmaven.compiler.target=21 install
+          cd ../../decode/java/rosetta-squint-decode && mvn -B -ntp -DskipTests -Dmaven.compiler.source=21 -Dmaven.compiler.target=21 install
           cd ../../../squint/java/rosetta-squint && mvn -B -ntp -Dmaven.compiler.source=21 -Dmaven.compiler.target=21 test
 
       # ── JS
@@ -117,8 +117,8 @@ jobs:
         run: |
           # The squint JS package has file: deps on the sibling halves; install
           # those siblings first so npm can link them.
-          cd hash/js/rosetta-image-hash && npm ci && npm run build
-          cd ../../../decode/js/rosetta-image-decode && npm ci && npm run build
+          cd hash/js/rosetta-squint-hash && npm ci && npm run build
+          cd ../../../decode/js/rosetta-squint-decode && npm ci && npm run build
           cd ../../../squint/js/rosetta-squint && npm install && npm test
 
       # ── Swift
@@ -178,9 +178,9 @@ jobs:
         run: |
           # Install Java/JS sibling halves first.
           cd hash/java && mvn -B -ntp -DskipTests -Dmaven.compiler.source=21 -Dmaven.compiler.target=21 install
-          cd ../../decode/java/rosetta-image-decode && mvn -B -ntp -DskipTests -Dmaven.compiler.source=21 -Dmaven.compiler.target=21 install
-          cd ../../../hash/js/rosetta-image-hash && npm ci && npm run build
-          cd ../../../decode/js/rosetta-image-decode && npm ci && npm run build
+          cd ../../decode/java/rosetta-squint-decode && mvn -B -ntp -DskipTests -Dmaven.compiler.source=21 -Dmaven.compiler.target=21 install
+          cd ../../../hash/js/rosetta-squint-hash && npm ci && npm run build
+          cd ../../../decode/js/rosetta-squint-decode && npm ci && npm run build
           cd ../../..
           make build-all-squint-clis
 
@@ -219,9 +219,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip && pip install -e hash/python && pip install -e squint/python
           cd hash/java && mvn -B -ntp -DskipTests -Dmaven.compiler.source=21 -Dmaven.compiler.target=21 install
-          cd ../../decode/java/rosetta-image-decode && mvn -B -ntp -DskipTests -Dmaven.compiler.source=21 -Dmaven.compiler.target=21 install
-          cd ../../../hash/js/rosetta-image-hash && npm ci && npm run build
-          cd ../../../decode/js/rosetta-image-decode && npm ci && npm run build
+          cd ../../decode/java/rosetta-squint-decode && mvn -B -ntp -DskipTests -Dmaven.compiler.source=21 -Dmaven.compiler.target=21 install
+          cd ../../../hash/js/rosetta-squint-hash && npm ci && npm run build
+          cd ../../../decode/js/rosetta-squint-decode && npm ci && npm run build
           cd ../../..
           make build-all-squint-clis
 
@@ -237,7 +237,7 @@ jobs:
           # the `_probe_turbojpeg` pattern in tools/cross-squint-diff/.
           : "${TURBOJPEG_LIB_PATH:=/usr/lib/x86_64-linux-gnu}"
           : "${TURBOJPEG_JAR_PATH:=/usr/share/java/turbojpeg.jar}"
-          JAVA_CMD="java -Djava.library.path=$TURBOJPEG_LIB_PATH --enable-native-access=ALL-UNNAMED -cp squint/java/rosetta-squint/target/squint-cli.jar:$TURBOJPEG_JAR_PATH io.rosetta.squint.cli.SquintCli"
+          JAVA_CMD="java -Djava.library.path=$TURBOJPEG_LIB_PATH --enable-native-access=ALL-UNNAMED -cp squint/java/rosetta-squint/target/squint-cli.jar:$TURBOJPEG_JAR_PATH io.github.wmetcalf.rosettasquint.cli.SquintCli"
           for cmd in \
               "squint/rust/rosetta-squint/target/release/examples/squint-cli phash 8 /tmp/big.bin" \
               "tools/cross-squint-diff/squint-go phash 8 /tmp/big.bin" \
@@ -269,7 +269,7 @@ jobs:
           fail=0
           : "${TURBOJPEG_LIB_PATH:=/usr/lib/x86_64-linux-gnu}"
           : "${TURBOJPEG_JAR_PATH:=/usr/share/java/turbojpeg.jar}"
-          JAVA_CMD="java -Djava.library.path=$TURBOJPEG_LIB_PATH --enable-native-access=ALL-UNNAMED -cp squint/java/rosetta-squint/target/squint-cli.jar:$TURBOJPEG_JAR_PATH io.rosetta.squint.cli.SquintCli"
+          JAVA_CMD="java -Djava.library.path=$TURBOJPEG_LIB_PATH --enable-native-access=ALL-UNNAMED -cp squint/java/rosetta-squint/target/squint-cli.jar:$TURBOJPEG_JAR_PATH io.github.wmetcalf.rosettasquint.cli.SquintCli"
           for cmd in \
               "squint/rust/rosetta-squint/target/release/examples/squint-cli phash 8 /dev/zero" \
               "tools/cross-squint-diff/squint-go phash 8 /dev/zero" \
@@ -326,8 +326,8 @@ jobs:
         if: matrix.ecosystem == 'js'
         run: |
           # squint depends on local file: siblings — install them first.
-          cd hash/js/rosetta-image-hash && npm ci
-          cd ../../../decode/js/rosetta-image-decode && npm ci
+          cd hash/js/rosetta-squint-hash && npm ci
+          cd ../../../decode/js/rosetta-squint-decode && npm ci
           cd ../../../squint/js/rosetta-squint && npm install && npm audit --audit-level=high
 
       # Python
@@ -339,7 +339,7 @@ jobs:
         if: matrix.ecosystem == 'python'
         run: |
           python -m pip install --upgrade pip pip-audit
-          # squint/python depends on the local rosetta-imagehash sibling
+          # squint/python depends on the local rosetta-squint-hash sibling
           # (not on PyPI yet), so pip-audit can't resolve the pyproject.toml
           # directly. Install the sibling first into an isolated venv, then
           # audit the installed environment against the advisory DB.
@@ -466,8 +466,8 @@ jobs:
         if: matrix.port == 'js'
         run: |
           # Install sibling halves so the file: deps resolve.
-          cd hash/js/rosetta-image-hash && npm ci && npm run build
-          cd ../../../decode/js/rosetta-image-decode && npm ci && npm run build
+          cd hash/js/rosetta-squint-hash && npm ci && npm run build
+          cd ../../../decode/js/rosetta-squint-decode && npm ci && npm run build
           cd ../../../squint/js/rosetta-squint
           npm install
           if npm run | grep -qE '^  (typecheck|lint)$'; then
@@ -571,7 +571,7 @@ jobs:
           ls -la /opt/homebrew/share/java/ 2>/dev/null || echo "(no homebrew java dir)"
           ls -la /opt/homebrew/opt/jpeg-turbo/lib/ 2>/dev/null || echo "(no jpeg-turbo lib dir)"
           cd hash/java && mvn -B -ntp -DskipTests -Dmaven.compiler.source=21 -Dmaven.compiler.target=21 install
-          cd ../../decode/java/rosetta-image-decode && mvn -B -ntp -DskipTests -Dmaven.compiler.source=21 -Dmaven.compiler.target=21 install
+          cd ../../decode/java/rosetta-squint-decode && mvn -B -ntp -DskipTests -Dmaven.compiler.source=21 -Dmaven.compiler.target=21 install
           cd ../../../squint/java/rosetta-squint && mvn -B -ntp \
             -Djava.library.path="$TURBOJPEG_LIB_PATH:/opt/homebrew/opt/webp/lib:/opt/homebrew/opt/libheif/lib" \
             -Djna.library.path="$TURBOJPEG_LIB_PATH:/opt/homebrew/opt/webp/lib:/opt/homebrew/opt/libheif/lib" \
@@ -588,8 +588,8 @@ jobs:
       - name: JS — npm ci + test
         if: matrix.port == 'js'
         run: |
-          cd hash/js/rosetta-image-hash && npm ci && npm run build
-          cd ../../../decode/js/rosetta-image-decode && npm ci && npm run build
+          cd hash/js/rosetta-squint-hash && npm ci && npm run build
+          cd ../../../decode/js/rosetta-squint-decode && npm ci && npm run build
           cd ../../../squint/js/rosetta-squint && npm install && npm test
 
       # Swift — native

@@ -2,7 +2,7 @@
 hex string as every other rosetta-squint port for the same input.
 
 This is the Python implementation of the cross-language perceptual-hash
-convenience API. It depends on `rosetta_imagehash` (which re-exports
+convenience API. It depends on `rosetta_squint_hash` (which re-exports
 upstream `imagehash` + adds `whash_db4_robust`) and uses PIL/Pillow for
 decoding most formats. HEIC is decoded via a ctypes wrapper around
 system libheif so that output matches the 5 native ports (which all FFI
@@ -48,9 +48,9 @@ from ._impl import (
     decode_file,
 )
 
-# Re-export hash types so callers don't need to import rosetta_imagehash
+# Re-export hash types so callers don't need to import rosetta_squint_hash
 # separately.
-from rosetta_imagehash import (
+from rosetta_squint_hash import (
     ImageHash,
     ImageMultiHash,
     hex_to_flathash,

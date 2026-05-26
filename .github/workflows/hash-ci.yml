@@ -98,11 +98,11 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            hash/rust/rosetta-image-hash/target
-          key: cargo-${{ runner.os }}-${{ hashFiles('hash/rust/rosetta-image-hash/Cargo.lock') }}
+            hash/rust/rosetta-squint-hash/target
+          key: cargo-${{ runner.os }}-${{ hashFiles('hash/rust/rosetta-squint-hash/Cargo.lock') }}
       - name: Rust — cargo test
         if: matrix.port == 'rust'
-        run: cd hash/rust/rosetta-image-hash && cargo test --no-fail-fast
+        run: cd hash/rust/rosetta-squint-hash && cargo test --no-fail-fast
 
       # JS/TS
       - name: Set up Node 20
@@ -111,10 +111,10 @@ jobs:
         with:
           node-version: '20'
           cache: npm
-          cache-dependency-path: hash/js/rosetta-image-hash/package-lock.json
+          cache-dependency-path: hash/js/rosetta-squint-hash/package-lock.json
       - name: JS — npm ci + build + test
         if: matrix.port == 'js'
-        run: cd hash/js/rosetta-image-hash && npm ci && npm run build && npm test
+        run: cd hash/js/rosetta-squint-hash && npm ci && npm run build && npm test
 
       # Swift
       - name: Set up Swift 5.9
@@ -124,7 +124,7 @@ jobs:
           swift-version: '5.10.1'
       - name: Swift — swift test
         if: matrix.port == 'swift'
-        run: cd hash/swift/RosettaImageHash && swift test
+        run: cd hash/swift/RosettaSquintHash && swift test
 
   dep-audit:
     # Per-ecosystem vulnerability scan. Runs on PR/push and weekly.
@@ -147,7 +147,7 @@ jobs:
         run: cargo install --locked cargo-audit
       - name: cargo audit (hash crate)
         if: matrix.ecosystem == 'rust'
-        run: cd hash/rust/rosetta-image-hash && cargo audit --deny warnings
+        run: cd hash/rust/rosetta-squint-hash && cargo audit --deny warnings
 
       - name: Set up Node 20
         if: matrix.ecosystem == 'js'
@@ -155,10 +155,10 @@ jobs:
         with:
           node-version: '20'
           cache: npm
-          cache-dependency-path: hash/js/rosetta-image-hash/package-lock.json
+          cache-dependency-path: hash/js/rosetta-squint-hash/package-lock.json
       - name: npm audit (hash JS)
         if: matrix.ecosystem == 'js'
-        run: cd hash/js/rosetta-image-hash && npm ci && npm audit --audit-level=high
+        run: cd hash/js/rosetta-squint-hash && npm ci && npm audit --audit-level=high
 
       - name: Set up Python 3.11
         if: matrix.ecosystem == 'python'
@@ -215,11 +215,11 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            hash/rust/rosetta-image-hash/target
-          key: cargo-lint-${{ runner.os }}-${{ hashFiles('hash/rust/rosetta-image-hash/Cargo.lock') }}
+            hash/rust/rosetta-squint-hash/target
+          key: cargo-lint-${{ runner.os }}-${{ hashFiles('hash/rust/rosetta-squint-hash/Cargo.lock') }}
       - name: cargo clippy
         if: matrix.port == 'rust'
-        run: cd hash/rust/rosetta-image-hash && cargo clippy --all-targets --all-features -- -D warnings
+        run: cd hash/rust/rosetta-squint-hash && cargo clippy --all-targets --all-features -- -D warnings
 
       # Go — golangci-lint via the official action.
       - name: Set up Go 1.22
@@ -249,11 +249,11 @@ jobs:
           pip install -e hash/python
       - name: ruff check (Python wrapper)
         if: matrix.port == 'python'
-        run: ruff check hash/python/rosetta_imagehash --line-length=120
+        run: ruff check hash/python/rosetta_squint_hash --line-length=120
       - name: mypy (Python wrapper)
         if: matrix.port == 'python'
         continue-on-error: true
-        run: mypy --strict --ignore-missing-imports hash/python/rosetta_imagehash
+        run: mypy --strict --ignore-missing-imports hash/python/rosetta_squint_hash
 
       # JS/TS — tsc --noEmit (already implicit in npm test, but isolated here for clarity).
       - name: Set up Node 20
@@ -262,11 +262,11 @@ jobs:
         with:
           node-version: '20'
           cache: npm
-          cache-dependency-path: hash/js/rosetta-image-hash/package-lock.json
+          cache-dependency-path: hash/js/rosetta-squint-hash/package-lock.json
       - name: tsc --noEmit
         if: matrix.port == 'js'
         run: |
-          cd hash/js/rosetta-image-hash
+          cd hash/js/rosetta-squint-hash
           npm ci
           # Use the project's own typecheck script if present; otherwise tsc --noEmit.
           if npm run | grep -qE '^  (typecheck|lint)$'; then
@@ -283,13 +283,13 @@ jobs:
           swift-version: '5.10.1'
       - name: swift build (type-check)
         if: matrix.port == 'swift'
-        run: cd hash/swift/RosettaImageHash && swift build
+        run: cd hash/swift/RosettaSquintHash && swift build
       - name: swift-format lint (best-effort)
         if: matrix.port == 'swift'
         continue-on-error: true
         run: |
           if command -v swift-format >/dev/null 2>&1; then
-            swift-format lint --recursive swift/RosettaImageHash/Sources
+            swift-format lint --recursive swift/RosettaSquintHash/Sources
           else
             echo "swift-format not available on this image; skipping"
           fi
@@ -331,7 +331,7 @@ jobs:
         run: brew install libheif libde265 pkg-config
       - name: Rust — cargo test
         if: matrix.port == 'rust'
-        run: cd hash/rust/rosetta-image-hash && cargo test --no-fail-fast
+        run: cd hash/rust/rosetta-squint-hash && cargo test --no-fail-fast
 
       # Go
       - name: Set up Go 1.22
@@ -384,10 +384,10 @@ jobs:
         with:
           node-version: '20'
           cache: npm
-          cache-dependency-path: hash/js/rosetta-image-hash/package-lock.json
+          cache-dependency-path: hash/js/rosetta-squint-hash/package-lock.json
       - name: JS — npm ci + build + test
         if: matrix.port == 'js'
-        run: cd hash/js/rosetta-image-hash && npm ci && npm run build && npm test
+        run: cd hash/js/rosetta-squint-hash && npm ci && npm run build && npm test
 
       # Swift — native; should just work.
       - name: Set up Swift 5.9
@@ -397,4 +397,4 @@ jobs:
           swift-version: '5.10.1'
       - name: Swift — swift test
         if: matrix.port == 'swift'
-        run: cd hash/swift/RosettaImageHash && swift test
+        run: cd hash/swift/RosettaSquintHash && swift test

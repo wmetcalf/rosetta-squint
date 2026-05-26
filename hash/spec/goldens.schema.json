@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://rosetta-image-hash.example/goldens.schema.json",
-  "title": "rosetta-image-hash goldens",
+  "$id": "https://rosetta-squint-hash.example/goldens.schema.json",
+  "title": "rosetta-squint-hash goldens",
   "type": "object",
   "required": ["schema_version", "imagehash_version", "pillow_version", "numpy_version", "scipy_version", "pywavelets_version", "regenerated_at", "algorithms", "decoded_sha256"],
   "properties": {

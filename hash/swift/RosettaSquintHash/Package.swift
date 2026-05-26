@@ -1,0 +1,24 @@
+// swift-tools-version:5.9
+import PackageDescription
+
+let package = Package(
+    name: "RosettaSquintHash",
+    products: [
+        .library(name: "RosettaSquintHash", targets: ["RosettaSquintHash"]),
+    ],
+    dependencies: [
+        .package(url: "https://github.com/tayloraswift/swift-png", "4.0.0"..<"4.4.0"),
+    ],
+    targets: [
+        .target(
+            name: "RosettaSquintHash",
+            dependencies: [
+                .product(name: "PNG", package: "swift-png"),
+            ]
+        ),
+        .testTarget(
+            name: "RosettaSquintHashTests",
+            dependencies: ["RosettaSquintHash"]
+        ),
+    ]
+)

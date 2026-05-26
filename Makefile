@@ -52,7 +52,7 @@ test-python-hash:
 .PHONY: test-rust-hash
 test-rust-hash:
 	@echo "→ rust (hash)"
-	@cd hash/rust/rosetta-image-hash && cargo test --no-fail-fast --quiet
+	@cd hash/rust/rosetta-squint-hash && cargo test --no-fail-fast --quiet
 
 .PHONY: test-go-hash
 test-go-hash:
@@ -67,19 +67,19 @@ test-java-hash:
 .PHONY: test-js-hash
 test-js-hash:
 	@echo "→ js (hash)"
-	@cd hash/js/rosetta-image-hash && npm test --silent
+	@cd hash/js/rosetta-squint-hash && npm test --silent
 
 .PHONY: test-swift-hash
 test-swift-hash:
 	@echo "→ swift (hash)"
-	@cd hash/swift/RosettaImageHash && PATH=$(SWIFT_PATH):$$PATH swift test --quiet
+	@cd hash/swift/RosettaSquintHash && PATH=$(SWIFT_PATH):$$PATH swift test --quiet
 
 # ─── Decode side ────────────────────────────────────────────────────────────
 
 .PHONY: test-rust-decode
 test-rust-decode:
 	@echo "→ rust (decode)"
-	@cd decode/rust/rosetta-image-decode && cargo test --no-fail-fast --quiet
+	@cd decode/rust/rosetta-squint-decode && cargo test --no-fail-fast --quiet
 
 .PHONY: test-go-decode
 test-go-decode:
@@ -89,17 +89,17 @@ test-go-decode:
 .PHONY: test-java-decode
 test-java-decode:
 	@echo "→ java (decode)"
-	@cd decode/java/rosetta-image-decode && mvn -B -ntp -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 test -q
+	@cd decode/java/rosetta-squint-decode && mvn -B -ntp -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 test -q
 
 .PHONY: test-js-decode
 test-js-decode:
 	@echo "→ js (decode)"
-	@cd decode/js/rosetta-image-decode && npm test --silent
+	@cd decode/js/rosetta-squint-decode && npm test --silent
 
 .PHONY: test-swift-decode
 test-swift-decode:
 	@echo "→ swift (decode)"
-	@cd decode/swift/RosettaImageDecode && PATH=$(SWIFT_PATH):$$PATH swift test --quiet
+	@cd decode/swift/RosettaSquintDecode && PATH=$(SWIFT_PATH):$$PATH swift test --quiet
 
 # ─── Squint side ────────────────────────────────────────────────────────────
 
@@ -174,12 +174,12 @@ differential-hash-fuzz:
 .PHONY: fuzz-rust-decode
 fuzz-rust-decode:
 	@echo "→ fuzz: rust decode (cargo-fuzz, 60s)"
-	@cd decode/rust/rosetta-image-decode && cargo +nightly fuzz run decode_any -- -max_total_time=60
+	@cd decode/rust/rosetta-squint-decode && cargo +nightly fuzz run decode_any -- -max_total_time=60
 
 .PHONY: fuzz-rust-hash
 fuzz-rust-hash:
 	@echo "→ fuzz: rust hash (cargo-fuzz, 60s per target)"
-	@cd hash/rust/rosetta-image-hash && cargo +nightly fuzz run hex_to_hash -- -max_total_time=60
+	@cd hash/rust/rosetta-squint-hash && cargo +nightly fuzz run hex_to_hash -- -max_total_time=60
 
 .PHONY: fuzz-go-decode
 fuzz-go-decode:
@@ -189,7 +189,7 @@ fuzz-go-decode:
 .PHONY: fuzz-java-decode
 fuzz-java-decode:
 	@echo "→ fuzz: java decode (Jazzer, 60s)"
-	@cd decode/java/rosetta-image-decode && JAZZER_FUZZ=1 mvn -B -ntp -Pfuzz -Dtest='DecoderFuzzTest#decodeAny' test -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 -DjazzerArgs="-max_total_time=60"
+	@cd decode/java/rosetta-squint-decode && JAZZER_FUZZ=1 mvn -B -ntp -Pfuzz -Dtest='DecoderFuzzTest#decodeAny' test -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 -DjazzerArgs="-max_total_time=60"
 
 .PHONY: fuzz-java-hash
 fuzz-java-hash:
@@ -212,11 +212,11 @@ build-all-clis: build-all-decode-clis build-all-squint-clis
 .PHONY: build-all-decode-clis
 build-all-decode-clis:
 	@echo "→ building per-port decode CLIs"
-	@cd decode/rust/rosetta-image-decode && cargo build --release --example decode-cli
+	@cd decode/rust/rosetta-squint-decode && cargo build --release --example decode-cli
 	@cd decode/go/imagedecode && go build -o ../../tools/cross-port-diff/decode-go ./cmd/decode-cli
-	@cd decode/java/rosetta-image-decode && mvn -B -ntp -DskipTests -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 package
-	@cd decode/js/rosetta-image-decode && npm install && npm run build
-	@cd decode/swift/RosettaImageDecode && PATH=$(SWIFT_PATH):$$PATH swift build --product DecodeCLI -c release
+	@cd decode/java/rosetta-squint-decode && mvn -B -ntp -DskipTests -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 package
+	@cd decode/js/rosetta-squint-decode && npm install && npm run build
+	@cd decode/swift/RosettaSquintDecode && PATH=$(SWIFT_PATH):$$PATH swift build --product DecodeCLI -c release
 
 .PHONY: build-all-squint-clis
 build-all-squint-clis:

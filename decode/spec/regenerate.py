@@ -1,4 +1,4 @@
-"""rosetta-image-decode spec regenerator.
+"""rosetta-squint-decode spec regenerator.
 
 Reads every fixture under fixtures/<format>/ and produces:
   - decoded/<format>/<fixture-relative-path>.bin   pre-decoded pixel buffer
