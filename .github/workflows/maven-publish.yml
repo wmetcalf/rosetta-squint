@@ -1,0 +1,91 @@
+name: Maven Central Publish
+
+# Manually triggered Maven Central publish for the 3 Java artifacts:
+#   io.github.wmetcalf:rosetta-squint-hash
+#   io.github.wmetcalf:rosetta-squint-decode
+#   io.github.wmetcalf:rosetta-squint
+#
+# Required GitHub repo secrets (set in Settings → Secrets and variables → Actions):
+#   MAVEN_CENTRAL_USERNAME — Sonatype Central Portal user-token username
+#   MAVEN_CENTRAL_PASSWORD — Sonatype Central Portal user-token password
+#   MAVEN_GPG_PRIVATE_KEY  — ASCII-armored GPG private key (single secret, multi-line)
+#
+# Uploads land in Central Portal staging. The pom config has autoPublish=false,
+# so the final "go" is a manual click in https://central.sonatype.com/publishing/deployments.
+
+on:
+  workflow_dispatch:
+    inputs:
+      module:
+        description: "Module to publish"
+        required: true
+        default: "all"
+        type: choice
+        options: [hash, decode, squint, all]
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21 + Maven settings.xml
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          # Wires up ~/.m2/settings.xml with the `central` server entry referencing
+          # the env vars below — the central-publishing-maven-plugin pom config
+          # uses publishingServerId=central to match.
+          server-id: central
+          server-username: MAVEN_CENTRAL_USERNAME
+          server-password: MAVEN_CENTRAL_PASSWORD
+          # Imports the private key into the runner's gpg keyring. No passphrase
+          # configured (our key has none) — maven-gpg-plugin uses --pinentry-mode
+          # loopback per the pom config, so it signs without prompting.
+          gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+
+      - name: Verify GPG key imported
+        run: |
+          gpg --list-secret-keys --keyid-format=long
+          echo "--- public keys ---"
+          gpg --list-keys --keyid-format=long
+
+      # The umbrella depends on hash + decode being available in the local Maven
+      # repo (it's a Maven dependency, not a path dep like Cargo). Install all
+      # three locally first so the umbrella's `mvn -Prelease deploy` resolves.
+      - name: mvn install all three locally
+        run: |
+          (cd hash/java && mvn -B -ntp install -DskipTests)
+          (cd decode/java/rosetta-squint-decode && mvn -B -ntp install -DskipTests)
+          (cd squint/java/rosetta-squint && mvn -B -ntp install -DskipTests)
+
+      - name: Deploy rosetta-squint-hash to Maven Central (staging)
+        if: ${{ inputs.module == 'hash' || inputs.module == 'all' }}
+        working-directory: hash/java
+        env:
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+        run: mvn -B -ntp -Prelease -DskipTests deploy
+
+      - name: Deploy rosetta-squint-decode to Maven Central (staging)
+        if: ${{ inputs.module == 'decode' || inputs.module == 'all' }}
+        working-directory: decode/java/rosetta-squint-decode
+        env:
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+        run: mvn -B -ntp -Prelease -DskipTests deploy
+
+      - name: Deploy rosetta-squint umbrella to Maven Central (staging)
+        if: ${{ inputs.module == 'squint' || inputs.module == 'all' }}
+        working-directory: squint/java/rosetta-squint
+        env:
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+        run: mvn -B -ntp -Prelease -DskipTests deploy
+
+      - name: Done — check staging
+        run: |
+          echo "All requested modules uploaded to Maven Central staging."
+          echo "Visit https://central.sonatype.com/publishing/deployments to inspect and release."
