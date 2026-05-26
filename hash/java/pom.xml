@@ -169,9 +169,10 @@
                             </execution>
                         </executions>
                     </plugin>
-                    <!-- GPG signing (mandatory for Maven Central). --pinentry-mode
-                         loopback lets gpg run non-interactively; key has no
-                         passphrase so MAVEN_GPG_PASSPHRASE can be empty/unset. -->
+                    <!-- GPG signing (mandatory for Maven Central). The
+                         pinentry-mode=loopback argument lets gpg run
+                         non-interactively; key has no passphrase so the
+                         MAVEN_GPG_PASSPHRASE env var can be empty/unset. -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
