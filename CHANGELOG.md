@@ -2,12 +2,16 @@
 
 All notable changes to rosetta-squint go here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased] — pre-1.0 hardening pass
+## [1.0.0] — 2026-05-26
+
+Initial public release across PyPI, crates.io, npm, and Maven Central.
 
 This release rolls up the work from three external/fresh-eyes security audits
 (Raptor, GPT-5.4, Claude Opus 4.7) on the merged `hash/` + `decode/` + `squint/`
-codebase. The raw audit reports are kept internal; this changelog lists the
-per-finding fix status.
+codebase, plus the cross-port rename from `rosetta-image-{hash,decode}` to
+`rosetta-squint-{hash,decode}` (Java `io.rosetta` → `io.github.wmetcalf`). The
+raw audit reports are kept internal; this changelog lists the per-finding fix
+status.
 
 ### Breaking changes
 

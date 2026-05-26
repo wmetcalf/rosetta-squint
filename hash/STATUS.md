@@ -151,10 +151,8 @@ Then re-run every port's tests against the new goldens.
 ## Known gaps & caveats
 
 - **No macOS testing.** All `swift test` runs are on Linux. The Mac path should work (pure Swift) but is unverified.
-- **No CI execution.** `.github/workflows/ci.yml` exists but the repo is local-only — no GitHub runs have happened.
 - **No live Python diff job.** Goldens are frozen at fixture-gen time; no test runs Python and a port side by side.
 - **Missing algorithms:** see top table.
-- **No published packages.** Nothing is on crates.io, Maven Central, npm, or Swift Package Index yet.
 
 ## Security
 

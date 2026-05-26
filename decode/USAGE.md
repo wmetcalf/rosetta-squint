@@ -65,7 +65,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 `Cargo.toml`:
 ```toml
 [dependencies]
-rosetta-squint-decode = { path = "../rosetta-squint-decode/rust/rosetta-squint-decode" }   # not on crates.io yet
+rosetta-squint-decode = "1"
 ```
 
 Types: `DecodedImage { width: usize, height: usize, data: Vec<u8>, channels: Channels, format: Format }`. `Channels::Rgb` or `Channels::Rgba`. `Format` covers `Bmp, Png, Gif, Jpeg, Webp, Tiff, Heic`. `DecodeError` has `kind: DecodeErrorKind`, `format: Option<Format>`, `detail: String`.
@@ -145,15 +145,14 @@ public class Demo {
 
 Public surface: `Decoder.decode(byte[]) throws DecodeException`, `Decoder.detectFormat(byte[]) -> Optional<Format>`, `Decoder.supportedFormats() -> Set<Format>`. `DecodedImage` exposes `width(), height(), data(), channels(), format()` (the `data()` method returns a defensive copy — cache it if you'll touch it in a hot loop). `DecodeException extends IOException`; `Kind` enum is `UNSUPPORTED_FORMAT`, `CORRUPT_INPUT`, `TRUNCATED`, `UNSUPPORTED_FEATURE`.
 
-Maven (until published):
+Maven coordinates (Maven Central):
 ```xml
 <dependency>
-  <groupId>io.rosetta</groupId>
+  <groupId>io.github.wmetcalf</groupId>
   <artifactId>rosetta-squint-decode</artifactId>
-  <version>0.1.0</version>
+  <version>1.0.0</version>
 </dependency>
 ```
-(`mvn install` the local module first.)
 
 ---
 
@@ -214,9 +213,10 @@ do {
 
 Public surface: `enum Decoder` with static methods `decode(_ bytes: [UInt8]) throws -> DecodedImage`, `detectFormat(_ bytes: [UInt8]) -> Format?`, `supportedFormats() -> [Format]`. `DecodedImage` is a `struct` with `width: Int`, `height: Int`, `data: [UInt8]`, `channels: Channels`, `format: Format`. `DecodeError` is an `enum` conforming to `Error, Equatable` with cases `.unsupportedFormat(detail:)`, `.corruptInput(format:detail:)`, `.truncated(format:detail:)`, `.unsupportedFeature(format:detail:)`.
 
-`Package.swift` dependency (until published):
+`Package.swift` dependency (SwiftPM is git-based, no central registry). Until a top-level `Package.swift` is added at the repo root, consumers clone the repo and reference by path:
+
 ```swift
-.package(path: "../rosetta-squint-decode/swift/RosettaSquintDecode"),
+.package(path: "/path/to/rosetta-squint/decode/swift/RosettaSquintDecode"),
 ```
 
 The 4 system-library targets (`Cjpeg`, `Cwebp`, `Ctiff`, `Cheif`) are internal — consumers only see the `RosettaSquintDecode` module. Build system handles linking via `pkg-config`. On macOS you may need `PKG_CONFIG_PATH=$(brew --prefix libheif)/lib/pkgconfig:$(brew --prefix libtiff)/lib/pkgconfig swift build` if Homebrew put the libraries in keg-only paths.

@@ -100,4 +100,4 @@ The harness is scriptable for CI:
   run: tools/cross-port-diff/diff_all.py --vs-goldens --regression
 ```
 
-Not yet wired into `.github/workflows/ci.yml` because the repo is local-only.
+Wired into `.github/workflows/decode-ci.yml` as the `cross-port-diff` job that runs after the per-port matrix completes.

@@ -53,7 +53,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 `Cargo.toml`:
 ```toml
 [dependencies]
-rosetta-squint-hash = { path = "../rosetta-squint-hash/rust/rosetta-squint-hash" }   # path; not on crates.io yet
+rosetta-squint-hash = "1"
 image = { version = "0.25", default-features = false, features = ["png"] }
 ```
 
@@ -136,7 +136,7 @@ public class Demo {
 
 Public static methods: `AverageHash.compute(img)`, `AverageHash.compute(img, hashSize)`, `PHash.compute(img, hashSize)`, `PHash.compute(img, hashSize, highfreqFactor)`, `DHash.compute(img, hashSize)`, `WHashHaar.compute(img, hashSize)`, `ColorHash.compute(img)`, `ColorHash.compute(img, binbits)`, `ColorHash.binEncode(v, binbits)`, `Hex.hexToHash(hex)`, `Hex.hexToFlathash(hex, hashSize)`. Input is `java.awt.image.BufferedImage`. `ImageHash` has `toString()` (hex), `equals()`, `hashCode()`, `subtract(other) → int`.
 
-The Java port is not on Maven Central yet — depend on the local `java/` module from a sibling Maven project, or `mvn install` it once and reference `io.rosetta:rosetta-squint-hash:0.1.0-SNAPSHOT`.
+Maven coordinates: `io.github.wmetcalf:rosetta-squint-hash:1.0.0` (on Maven Central). For local-only consumption: `cd hash/java && mvn install`, then reference the installed coordinates the same way.
 
 ---
 
@@ -190,10 +190,13 @@ print(restored == h)                                     // true
 
 Public symbols: `averageHash(_:hashSize:)`, `dhash(_:hashSize:)`, `phash(_:hashSize:highfreqFactor:)` (default `highfreqFactor: 4`), `whashHaar(_:hashSize:)`, `colorhash(_:binbits:)`, `colorhashBinEncode(_:binbits:)`, `hexToHash(_:)`, `hexToFlathash(_:hashSize:)`, `decodePNG(_:)`. All hashing functions throw `ImageHashError`. `Hash` conforms to `Equatable`, `Hashable`, `CustomStringConvertible` (hex), and exposes `subtract(_:) throws -> Int`.
 
-`Package.swift` dependency (path-based until the package is on Swift Package Index):
+`Package.swift` dependency (SwiftPM is git-based, no central registry). Until a top-level `Package.swift` is added at the repo root, remote consumption requires cloning the repo:
+
 ```swift
-.package(path: "../rosetta-squint-hash/swift/RosettaSquintHash"),
+.package(path: "/path/to/rosetta-squint/hash/swift/RosettaSquintHash"),
 ```
+
+Tracking issue for top-level `Package.swift` (would enable `.package(url: "https://github.com/wmetcalf/rosetta-squint.git", from: "1.0.0")`): not yet filed.
 
 ---
 

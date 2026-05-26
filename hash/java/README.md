@@ -73,13 +73,13 @@ Every test in Groups 1–4 asserts byte-exact equality with Python `imagehash 4.
 
 ## Maven dependency
 
-Not on Maven Central yet. After `mvn install` from this directory:
+Maven coordinates (Maven Central):
 
 ```xml
 <dependency>
-  <groupId>io.rosetta</groupId>
+  <groupId>io.github.wmetcalf</groupId>
   <artifactId>rosetta-squint-hash</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
+  <version>1.0.0</version>
 </dependency>
 ```
 

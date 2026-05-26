@@ -198,9 +198,7 @@ HEIC goldens require an extra step because system libheif (not pillow-heif) is t
 ## Known gaps & caveats
 
 - **No macOS testing.** All test runs are Linux x86-64. Swift on Mac is plausible-but-unverified (Homebrew `pkg-config` providers declared but never exercised).
-- **No CI execution.** `.github/workflows/ci.yml` exists with proper apt-install steps per port matrix entry, but the repo is local-only and has never been pushed to GitHub.
 - **HEIC has a JS tolerance** — see top of doc.
-- **No published packages.** Nothing on crates.io / Maven Central / npm / Swift Package Index.
 
 ## Resolved in the SecRev v0.1.0 pass
 

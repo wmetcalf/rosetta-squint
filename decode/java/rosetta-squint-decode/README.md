@@ -117,13 +117,13 @@ brew install jpeg-turbo webp libtiff libheif
 
 ## Maven dependency
 
-Not on Maven Central yet. After `mvn install` from this directory:
+Maven coordinates (Maven Central):
 
 ```xml
 <dependency>
-  <groupId>io.rosetta</groupId>
+  <groupId>io.github.wmetcalf</groupId>
   <artifactId>rosetta-squint-decode</artifactId>
-  <version>0.1.0</version>
+  <version>1.0.0</version>
 </dependency>
 ```
 
