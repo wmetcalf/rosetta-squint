@@ -30,6 +30,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # decode/java has a system-scope dep on /usr/share/java/turbojpeg.jar
+      # (Ubuntu package libturbojpeg-java) and JNA wrappers for libheif/libwebp.
+      # Mirrors the apt install step in decode-ci.yml.
+      - name: Install native libraries (Ubuntu)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y \
+            libturbojpeg libturbojpeg0-dev libturbojpeg-java \
+            libwebp-dev libsharpyuv-dev \
+            libtiff-dev \
+            libheif-dev libheif-plugin-libde265 libde265-dev libde265-0 \
+            pkg-config
+
       - name: Set up Java 21 + Maven settings.xml
         uses: actions/setup-java@v4
         with:
