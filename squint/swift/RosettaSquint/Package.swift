@@ -3,6 +3,11 @@ import PackageDescription
 
 let package = Package(
     name: "RosettaSquint",
+    platforms: [
+        // Matches the minimum from RosettaSquintHash + RosettaSquintDecode
+        // (swift-png 4.x requires macOS 10.15+).
+        .macOS(.v10_15),
+    ],
     products: [
         .library(name: "RosettaSquint", targets: ["RosettaSquint"]),
         .executable(name: "SquintCLI", targets: ["SquintCLI"]),

@@ -3,6 +3,10 @@ import PackageDescription
 
 let package = Package(
     name: "RosettaSquintHash",
+    platforms: [
+        // swift-png 4.x requires macOS 10.15+. Set our minimum to match.
+        .macOS(.v10_15),
+    ],
     products: [
         .library(name: "RosettaSquintHash", targets: ["RosettaSquintHash"]),
     ],
