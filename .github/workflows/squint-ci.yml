@@ -99,6 +99,16 @@ jobs:
       - name: Java — mvn test
         if: matrix.port == 'java'
         run: |
+          # decode/java has an optional compile-scope dep on
+          # org.libjpeg-turbo:turbojpeg (not on Maven Central). Install the
+          # Ubuntu-provided JAR into the local Maven repo so the decode +
+          # squint Java tests find it.
+          mvn install:install-file \
+            -Dfile=/usr/share/java/turbojpeg.jar \
+            -DgroupId=org.libjpeg-turbo \
+            -DartifactId=turbojpeg \
+            -Dversion=2.1.5 \
+            -Dpackaging=jar
           # Install sibling halves first (squint depends on hash + decode JARs).
           cd hash/java && mvn -B -ntp -DskipTests -Dmaven.compiler.source=21 -Dmaven.compiler.target=21 install
           cd ../../decode/java/rosetta-squint-decode && mvn -B -ntp -DskipTests -Dmaven.compiler.source=21 -Dmaven.compiler.target=21 install
@@ -218,6 +228,16 @@ jobs:
       - name: Build all squint CLIs
         run: |
           python -m pip install --upgrade pip && pip install -e hash/python && pip install -e squint/python
+          # decode/java has an optional compile-scope dep on
+          # org.libjpeg-turbo:turbojpeg (not on Maven Central). Install the
+          # Ubuntu-provided JAR into the local Maven repo so the decode +
+          # squint Java builds find it.
+          mvn install:install-file \
+            -Dfile=/usr/share/java/turbojpeg.jar \
+            -DgroupId=org.libjpeg-turbo \
+            -DartifactId=turbojpeg \
+            -Dversion=2.1.5 \
+            -Dpackaging=jar
           cd hash/java && mvn -B -ntp -DskipTests -Dmaven.compiler.source=21 -Dmaven.compiler.target=21 install
           cd ../../decode/java/rosetta-squint-decode && mvn -B -ntp -DskipTests -Dmaven.compiler.source=21 -Dmaven.compiler.target=21 install
           cd ../../../hash/js/rosetta-squint-hash && npm ci && npm run build
