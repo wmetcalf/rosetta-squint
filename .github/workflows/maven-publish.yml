@@ -50,17 +50,19 @@ jobs:
           java-version: '21'
           # Wires up ~/.m2/settings.xml with the `central` server entry referencing
           # the env vars below — the central-publishing-maven-plugin pom config
-          # uses publishingServerId=central to match.
+          # uses publishingServerId=central to match. We do NOT pass
+          # gpg-private-key/gpg-passphrase here because setup-java would add a
+          # `gpg.passphrase` server entry that requires settings-security.xml
+          # to decrypt. We import the key manually in the next step instead.
           server-id: central
           server-username: MAVEN_CENTRAL_USERNAME
           server-password: MAVEN_CENTRAL_PASSWORD
-          # Imports the private key into the runner's gpg keyring. No passphrase
-          # configured (our key has none) — maven-gpg-plugin uses --pinentry-mode
-          # loopback per the pom config, so it signs without prompting.
-          gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
 
-      - name: Verify GPG key imported
+      - name: Import GPG private key + verify
+        env:
+          MAVEN_GPG_PRIVATE_KEY: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
         run: |
+          echo "$MAVEN_GPG_PRIVATE_KEY" | gpg --batch --import
           gpg --list-secret-keys --keyid-format=long
           echo "--- public keys ---"
           gpg --list-keys --keyid-format=long
