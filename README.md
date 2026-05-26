@@ -2,12 +2,31 @@
 
 > "Squint at two images: do they look the same?" The Python `imagehash` library answers that question for one language. `rosetta-squint` answers it identically in **six** — Python, Rust, Go, Java, JavaScript/TypeScript, and Swift — for the same input bytes.
 
+## Install
+
+| Language | Registry | Install |
+|---|---|---|
+| Python | [PyPI](https://pypi.org/project/rosetta-squint/) | `pip install rosetta-squint` |
+| Rust | [crates.io](https://crates.io/crates/rosetta-squint) | `cargo add rosetta-squint` |
+| Go | [pkg.go.dev](https://pkg.go.dev/github.com/wmetcalf/rosetta-squint/squint/go/squint) | `go get github.com/wmetcalf/rosetta-squint/squint/go/squint@v1.0.0` |
+| Java | [Maven Central](https://central.sonatype.com/artifact/io.github.wmetcalf/rosetta-squint) | `<dependency><groupId>io.github.wmetcalf</groupId><artifactId>rosetta-squint</artifactId><version>1.0.0</version></dependency>` |
+| JS / TS | [npm](https://www.npmjs.com/package/rosetta-squint) | `npm install rosetta-squint` |
+| Swift | SwiftPM (git tag) | `.package(url: "https://github.com/wmetcalf/rosetta-squint", from: "1.0.0")` — note: subpath-based Package.swift currently requires a local clone; see [hash/USAGE.md](./hash/USAGE.md) |
+
+Each port also exposes the two lower-level libraries on the same registries if you only need one half:
+
+| Library | PyPI | crates.io | npm | Maven Central |
+|---|---|---|---|---|
+| **`rosetta-squint-hash`** (decode-free perceptual hashing) | [link](https://pypi.org/project/rosetta-squint-hash/) | [link](https://crates.io/crates/rosetta-squint-hash) | [link](https://www.npmjs.com/package/rosetta-squint-hash) | [link](https://central.sonatype.com/artifact/io.github.wmetcalf/rosetta-squint-hash) |
+| **`rosetta-squint-decode`** (byte-exact PIL-compatible image decoders) | n/a (Python uses Pillow directly) | [link](https://crates.io/crates/rosetta-squint-decode) | [link](https://www.npmjs.com/package/rosetta-squint-decode) | [link](https://central.sonatype.com/artifact/io.github.wmetcalf/rosetta-squint-decode) |
+
 ## What's in this repo
 
 | Subdirectory | What it is |
 |---|---|
-| **`hash/`** | Byte-exact perceptual-hash algorithms (port of Python `imagehash` 4.3.2 + extensions). Takes an already-decoded pixel buffer in. Tagged via `hash-*-v0.1.0`. |
-| **`decode/`** | Byte-exact image decoders for BMP, PNG, GIF, JPEG, WebP, TIFF, HEIC. Takes bytes in, produces an RGB/RGBA buffer out. Tagged via `decode-*-v0.1.0`. |
+| **`hash/`** | Byte-exact perceptual-hash algorithms (port of Python `imagehash` 4.3.2 + extensions). Takes an already-decoded pixel buffer in. Published as `rosetta-squint-hash`. |
+| **`decode/`** | Byte-exact image decoders for BMP, PNG, GIF, JPEG, WebP, TIFF, HEIC. Takes bytes in, produces an RGB/RGBA buffer out. Published as `rosetta-squint-decode`. |
+| **`squint/`** | The umbrella `rosetta-squint` library combining decode + hash behind one top-level call per language. |
 
 The two halves are independently useful — `hash/` works fine if you've already decoded your images via your language's native libs (matching the original `imagehash` + `Pillow` model) — but together they deliver something neither half can on its own:
 
