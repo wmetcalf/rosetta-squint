@@ -76,6 +76,16 @@ jobs:
         if: matrix.port == 'java'
         run: sudo apt-get update -qq && sudo apt-get install -y libturbojpeg libturbojpeg0-dev libturbojpeg-java libwebp-dev libsharpyuv-dev libtiff-dev libheif-dev libheif-plugin-libde265 libde265-dev libde265-0 pkg-config
 
+      - name: Install turbojpeg.jar into local Maven repo
+        if: matrix.port == 'java'
+        run: |
+          mvn install:install-file \
+            -Dfile=/usr/share/java/turbojpeg.jar \
+            -DgroupId=org.libjpeg-turbo \
+            -DartifactId=turbojpeg \
+            -Dversion=2.1.5 \
+            -Dpackaging=jar
+
       - name: Java — mvn test
         if: matrix.port == 'java'
         run: cd decode/java/rosetta-squint-decode && mvn -B -ntp test

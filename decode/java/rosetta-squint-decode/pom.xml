@@ -76,12 +76,17 @@
       <version>5.10.2</version>
       <scope>test</scope>
     </dependency>
+    <!-- TurboJPEG Java bindings. The artifact is not on Maven Central; consumers
+         need to provide it themselves (Ubuntu: `apt install libturbojpeg-java`
+         then `mvn install:install-file -Dfile=/usr/share/java/turbojpeg.jar
+         -DgroupId=org.libjpeg-turbo -DartifactId=turbojpeg -Dversion=2.1.5
+         -Dpackaging=jar`). Marked optional so consumers who don't use JPEG
+         decoding don't need it. -->
     <dependency>
       <groupId>org.libjpeg-turbo</groupId>
       <artifactId>turbojpeg</artifactId>
       <version>2.1.5</version>
-      <scope>system</scope>
-      <systemPath>/usr/share/java/turbojpeg.jar</systemPath>
+      <optional>true</optional>
     </dependency>
 <dependency>
       <groupId>com.twelvemonkeys.imageio</groupId>

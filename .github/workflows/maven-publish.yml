@@ -67,6 +67,19 @@ jobs:
           echo "--- public keys ---"
           gpg --list-keys --keyid-format=long
 
+      # decode/java declares an optional compile-scope dep on
+      # org.libjpeg-turbo:turbojpeg:2.1.5 — the artifact is not on Maven Central,
+      # so we install the Ubuntu-provided /usr/share/java/turbojpeg.jar into the
+      # runner's local Maven repo before any mvn install/deploy.
+      - name: Install turbojpeg.jar into local Maven repo
+        run: |
+          mvn install:install-file \
+            -Dfile=/usr/share/java/turbojpeg.jar \
+            -DgroupId=org.libjpeg-turbo \
+            -DartifactId=turbojpeg \
+            -Dversion=2.1.5 \
+            -Dpackaging=jar
+
       # The umbrella depends on hash + decode being available in the local Maven
       # repo (it's a Maven dependency, not a path dep like Cargo). Install all
       # three locally first so the umbrella's `mvn -Prelease deploy` resolves.
