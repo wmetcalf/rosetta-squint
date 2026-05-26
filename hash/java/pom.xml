@@ -10,7 +10,38 @@
     <packaging>jar</packaging>
 
     <name>rosetta-squint-hash</name>
-    <description>Byte-exact port of Python imagehash 4.3.2 to Java</description>
+    <description>Byte-exact perceptual-hash library — Java port of Python imagehash 4.3.2. Part of rosetta-squint.</description>
+    <url>https://github.com/wmetcalf/rosetta-squint</url>
+    <inceptionYear>2026</inceptionYear>
+
+    <licenses>
+        <license>
+            <name>BSD-2-Clause</name>
+            <url>https://opensource.org/licenses/BSD-2-Clause</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>wmetcalf</id>
+            <name>Will Metcalf</name>
+            <email>william.metcalf@gmail.com</email>
+            <url>https://github.com/wmetcalf</url>
+        </developer>
+    </developers>
+
+    <scm>
+        <url>https://github.com/wmetcalf/rosetta-squint</url>
+        <connection>scm:git:https://github.com/wmetcalf/rosetta-squint.git</connection>
+        <developerConnection>scm:git:git@github.com:wmetcalf/rosetta-squint.git</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
+
+    <issueManagement>
+        <system>GitHub</system>
+        <url>https://github.com/wmetcalf/rosetta-squint/issues</url>
+    </issueManagement>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -100,6 +131,66 @@
                         <version>3.2.5</version>
                         <configuration>
                             <excludes combine.self="override"/>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- Activated with `mvn -Prelease deploy` for Maven Central publishing.
+             Requires GPG key configured + ~/.m2/settings.xml with `central`
+             server credentials (Sonatype Central Portal user token). See
+             RELEASING-java.md. -->
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <!-- Source jar -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>3.3.1</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals><goal>jar-no-fork</goal></goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <!-- Javadoc jar -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>3.6.3</version>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals><goal>jar</goal></goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <!-- GPG signing (mandatory for Maven Central) -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>3.2.4</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals><goal>sign</goal></goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <!-- Sonatype Central Portal (modern publish path) -->
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>0.5.0</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                            <autoPublish>false</autoPublish>
                         </configuration>
                     </plugin>
                 </plugins>

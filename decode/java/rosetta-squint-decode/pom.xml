@@ -6,7 +6,38 @@
   <version>1.0.0</version>
   <packaging>jar</packaging>
   <name>rosetta-squint-decode</name>
-  <description>Byte-exact PIL-compatible image decoder library (Java)</description>
+  <description>Byte-exact PIL-compatible image decoder library (Java). Part of rosetta-squint.</description>
+  <url>https://github.com/wmetcalf/rosetta-squint</url>
+  <inceptionYear>2026</inceptionYear>
+
+  <licenses>
+    <license>
+      <name>BSD-2-Clause</name>
+      <url>https://opensource.org/licenses/BSD-2-Clause</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <id>wmetcalf</id>
+      <name>Will Metcalf</name>
+      <email>william.metcalf@gmail.com</email>
+      <url>https://github.com/wmetcalf</url>
+    </developer>
+  </developers>
+
+  <scm>
+    <url>https://github.com/wmetcalf/rosetta-squint</url>
+    <connection>scm:git:https://github.com/wmetcalf/rosetta-squint.git</connection>
+    <developerConnection>scm:git:git@github.com:wmetcalf/rosetta-squint.git</developerConnection>
+    <tag>HEAD</tag>
+  </scm>
+
+  <issueManagement>
+    <system>GitHub</system>
+    <url>https://github.com/wmetcalf/rosetta-squint/issues</url>
+  </issueManagement>
 
   <properties>
     <maven.compiler.source>21</maven.compiler.source>
@@ -137,6 +168,59 @@
             <configuration>
               <argLine>-Djava.library.path=/usr/lib/x86_64-linux-gnu --enable-native-access=ALL-UNNAMED</argLine>
               <excludes combine.self="override"/>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <!-- `mvn -Prelease deploy` for Maven Central. See RELEASING-java.md. -->
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <version>3.3.1</version>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals><goal>jar-no-fork</goal></goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>3.6.3</version>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <goals><goal>jar</goal></goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>3.2.4</version>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals><goal>sign</goal></goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.sonatype.central</groupId>
+            <artifactId>central-publishing-maven-plugin</artifactId>
+            <version>0.5.0</version>
+            <extensions>true</extensions>
+            <configuration>
+              <publishingServerId>central</publishingServerId>
+              <autoPublish>false</autoPublish>
             </configuration>
           </plugin>
         </plugins>
