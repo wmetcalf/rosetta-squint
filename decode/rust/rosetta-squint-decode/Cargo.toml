@@ -18,7 +18,9 @@ thiserror = "1"
 image = { version = "0.25", default-features = false, features = ["png", "gif", "tiff"] }
 mozjpeg-sys = "2"
 libwebp-sys2 = { version = "0.1.11", features = ["0_5"] }
-libheif-rs = { version = "2.7", default-features = false, features = ["v1_17"] }
+
+wasmtime = { version = "37", default-features = false, features = ["cranelift", "runtime", "threads"] }
+wasmtime-wasi = "37"
 
 [build-dependencies]
 cc = "1"
