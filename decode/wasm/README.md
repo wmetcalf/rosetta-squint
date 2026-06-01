@@ -49,6 +49,23 @@ heif_decode_image(err, handle, &img, 0/*YCbCr*/, 1/*chroma_420*/, 0)
 #   heif_image_get_width/height(img, ch); de-stride to packed planes.
 ```
 
-Each port then does the shared integer YCbCr→RGB + 4:2:0 upsampling (next step).
 A C++ `throw` on malformed input becomes a wasm trap — the host catches it and
 reports a decode error (use a fresh instance per decode, or reset).
+
+## Runtime support
+
+This is a **non-shared-memory** `wasm32-wasi` reactor — it imports only
+`wasi_snapshot_preview1` and needs **no threads / atomics feature** in any
+runtime. (It runs single-threaded: libde265's pthread thread pool is never
+started — linked against wasi-libc's emulated-pthread stubs — and de265.cc's one
+`std::mutex` init-guard is satisfied by `shim/std_mutex_shim.h` since the
+no-pthread libc++ omits `<mutex>`.) Verified **byte-exact** in all five ports'
+runtimes:
+
+| Port | Runtime |
+|------|---------|
+| Go | wazero (pure-Go) |
+| JS | Node / V8 native |
+| Rust | wasmtime |
+| Java | Chicory (pure-JVM) |
+| Swift | WasmKit (pure-Swift) |

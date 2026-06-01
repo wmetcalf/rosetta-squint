@@ -13,6 +13,10 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/tayloraswift/swift-png", "4.0.0"..<"4.4.0"),
+        .package(url: "https://github.com/swiftwasm/WasmKit", exact: "0.1.6"),
+        // Pin swift-system below 1.5.0: its IORing.swift fails to compile under
+        // newer Swift parsers (e.g. 5.10.1 in CI). WasmKit allows >= 1.3.0.
+        .package(url: "https://github.com/apple/swift-system", "1.3.0"..<"1.5.0"),
     ],
     targets: [
         .systemLibrary(
@@ -30,11 +34,6 @@ let package = Package(
             pkgConfig: "libtiff-4",
             providers: [.apt(["libtiff-dev"]), .brew(["libtiff"])]
         ),
-        .systemLibrary(
-            name: "Cheif",
-            pkgConfig: "libheif",
-            providers: [.apt(["libheif-dev"]), .brew(["libheif"])]
-        ),
         .target(
             name: "RosettaSquintDecode",
             dependencies: [
@@ -42,7 +41,11 @@ let package = Package(
                 "Cjpeg",
                 "Cwebp",
                 "Ctiff",
-                "Cheif",
+                .product(name: "WasmKit", package: "WasmKit"),
+                .product(name: "WasmKitWASI", package: "WasmKit"),
+            ],
+            resources: [
+                .copy("Resources/libheif_decode.wasm")
             ]
         ),
         .executableTarget(

@@ -15,6 +15,8 @@ let package = Package(
     dependencies: [
         .package(path: "../../../hash/swift/RosettaSquintHash"),
         .package(path: "../../../decode/swift/RosettaSquintDecode"),
+        // swift-system pinned <1.5.0: IORing.swift (1.5+) breaks newer Swift parsers; WasmKit allows >=1.3.0.
+        .package(url: "https://github.com/apple/swift-system", "1.3.0"..<"1.5.0"),
     ],
     targets: [
         .target(

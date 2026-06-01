@@ -2,13 +2,13 @@ import { describe, it, expect } from "vitest";
 import { decode } from "../src/index.js";
 import { listValidFixtures, readFixture, readGolden } from "./testkit.js";
 
-// HEIC goldens are produced by system libheif 1.17.6. libheif-js bundles its
-// own WASM libheif build that diverges by ±1-2 per pixel due to differing YCbCr
-// → RGB conversion paths. JS HEIC is verified to a max-delta tolerance rather
-// than byte-exact. See DECODER_NOTES.md.
-const HEIC_MAX_DELTA = 2;
+// HEIC is decoded by the shared libheif+libde265 WASM (decode/wasm/) — the same
+// artifact the goldens are generated from — so it is now BYTE-EXACT, like every
+// other format. (Previously libheif-js, which disables deblocking+SAO, forced a
+// ±2 tolerance.) See decode/spec/HEIC_REPRODUCIBILITY.md.
+const HEIC_MAX_DELTA = 0;
 
-describe("Group 2 — HEIC goldens (within ±2 px tolerance)", () => {
+describe("Group 2 — HEIC goldens (byte-exact)", () => {
   // Smoke test for alpha detection — this is the only signal we'll get if
   // a future libheif-js version reshapes the private `$$.ptr` field that
   // heic.ts pokes for `has_alpha_channel`. Pinned via package.json, but
