@@ -49,6 +49,26 @@ heif_decode_image(err, handle, &img, 0/*YCbCr*/, 1/*chroma_420*/, 0)
 #   heif_image_get_width/height(img, ch); de-stride to packed planes.
 ```
 
-Each port then does the shared integer YCbCr→RGB + 4:2:0 upsampling (next step).
 A C++ `throw` on malformed input becomes a wasm trap — the host catches it and
 reports a decode error (use a fresh instance per decode, or reset).
+
+## Runtime support / shared memory
+
+This is a `wasm32-wasi-threads` build, so it declares a **shared memory**
+(libde265's libc++ needs `<mutex>`, which the no-pthread wasi sysroot lacks).
+It runs single-threaded (no worker threads spawned), but the runtime must
+accept shared memory + the atomics proposal. Verified byte-exact in:
+
+| Port | Runtime | Status |
+|------|---------|--------|
+| Go | wazero (`experimental.CoreFeaturesThreads`) | ✅ byte-exact |
+| JS | Node/V8 native | ✅ byte-exact |
+| Rust | wasmtime (`Config::wasm_threads`) | ✅ byte-exact |
+| Java | Chicory 1.7.5 | ✅ byte-exact |
+| Swift | WasmKit | ⛔ blocked — WasmKit's threads/atomics support needs Swift 6.1; only 5.9 available |
+
+**To unblock Swift (and simplify every port):** build a **non-shared-memory**
+variant — patch libde265 to drop its `std::mutex` usage (the worker pool is
+already disabled) and compile with the *non*-pthread wasi-sdk toolchain. The
+result needs no threads/atomics feature in any runtime and runs in WasmKit on
+Swift 5.9. That is the recommended next build iteration.
