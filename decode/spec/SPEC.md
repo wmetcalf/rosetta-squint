@@ -626,28 +626,26 @@ on Linux x86 they link the *same* system `libheif`; the JS port (`libheif-js`
 WASM) decodes ±1–2 px differently and is verified to a **±2 tolerance**, not
 byte-exact (`tests/group2-heic.test.ts`).
 
-Phase 0 investigation (2026-06-01) established *why* and *what it costs*:
-- The divergence is in the **HEVC decode itself** — even raw YCbCr 4:2:0 planes
-  differ ±1 between a native build and the WASM build of the *same* libde265
-  (native SIMD vs WASM rounding). It is **not** confined to color conversion, so
-  it cannot be fixed by moving YCbCr→RGB into port code, and independent native
-  builds across architectures (x86 vs ARM) diverge for the same reason.
+Phase 0 investigation (2026-06-01) established the root cause and built the fix:
+- The ±1–2 px native-vs-`libheif-js` divergence is **not** SIMD rounding — it is
+  `libheif-js`'s emscripten build **disabling the HEVC deblocking + SAO in-loop
+  filters** for speed (`plugins/decoder_libde265.cc`). HEVC reconstruction is
+  bit-exact, so with the filters ON the builds agree.
 - That ±1–2 px drift is invisible to `average_hash`/`dhash`/`dhash_vertical`/
   `phash_simple`/`whash`, **but changes `phash`** (DCT) by up to 16/64 bits.
-  So **byte-exact HEIC is required only if cross-port `phash` is a hard goal.**
-- The **only** way to make HEIC byte-exact across heterogeneous ports/platforms
-  is **one shared compiled decoder artifact** (a single libheif+libde265 WASM run
-  in every port). This was proven viable: the wasm runs in wazero (pure-Go) and
-  produces **bit-identical** YCbCr to V8 (cross-runtime determinism holds for the
-  integer HEVC decode).
+  So **byte-exact HEIC matters mainly if cross-port `phash` is a hard goal.**
+- A clean WASI module was built (`decode/wasm/`, libheif 1.21.2 + libde265
+  1.0.15, **filters ON**, single-threaded) and measured **bit-identical to native
+  libheif 1.21.2** on all 10 fixtures, and **bit-identical across runtimes**
+  (wazero pure-Go vs V8).
 
-**Target architecture (when `phash`-on-HEIC byte-exactness is pursued):** one
-pinned libheif+libde265 WASM (security-clean **1.21.2**) → decode to YCbCr
-(bit-identical across runtimes) → shared integer YCbCr→RGB + 4:2:0 upsampling in
-port code → bit-identical RGB → bit-identical `phash`; then regenerate the HEIC
-goldens from this pipeline and flip JS off the ±2 tolerance. See
-`HEIC_REPRODUCIBILITY.md` for the full Phase 0 evidence, the rejected
-alternatives, and the build plan.
+**Path to byte-exact HEIC `phash`:** standardize every port on one libheif
+version (**1.21.2**, security-clean) with **filters ON** — cleanly delivered by
+the shared `decode/wasm/libheif_decode.wasm` driven via a wasm runtime in each
+port (decode → YCbCr → shared integer YCbCr→RGB + 4:2:0 upsampling → bit-identical
+RGB → bit-identical `phash`). The JS port must stop using filter-disabled
+`libheif-js`. Then regenerate the HEIC goldens and drop the ±2 tolerance. See
+`HEIC_REPRODUCIBILITY.md` for the evidence and `decode/wasm/` for the build.
 
 ---
 

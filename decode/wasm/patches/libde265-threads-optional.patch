@@ -1,0 +1,26 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 6066e9f..a805cd0 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -26,7 +26,7 @@ if (ENABLE_SDL)
+ 	find_package(SDL2)
+ endif()
+ 
+-find_package(Threads REQUIRED)
++message(STATUS "Threads via wasi-libc")
+ 
+ CHECK_INCLUDE_FILE(malloc.h HAVE_MALLOC_H)
+ CHECK_FUNCTION_EXISTS(posix_memalign HAVE_POSIX_MEMALIGN)
+diff --git a/libde265/CMakeLists.txt b/libde265/CMakeLists.txt
+index 79fc81f..d3f5f39 100644
+--- a/libde265/CMakeLists.txt
++++ b/libde265/CMakeLists.txt
+@@ -122,7 +122,7 @@ if(HAVE_X86)
+ endif()
+ 
+ add_library(de265 ${libde265_sources} ${ENCODER_OBJECTS} ${X86_OBJECTS})
+-target_link_libraries(de265 PRIVATE Threads::Threads)
++# Threads::Threads provided by wasi-libc
+ target_include_directories(de265 PRIVATE ${CMAKE_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+ 
+ write_basic_package_version_file(libde265ConfigVersion.cmake COMPATIBILITY ExactVersion)

@@ -1,6 +1,34 @@
 # HEIC cross-port reproducibility — Phase 0 findings & decision
 
-**Date:** 2026-06-01 · **Status:** decision recorded; build not yet started.
+**Date:** 2026-06-01 · **Status:** shared WASM decoder BUILT & validated (`../wasm/`).
+
+## UPDATE — root cause corrected, clean WASM built & bit-identical
+
+The Phase 0 "native vs WASM diverges ±1–2, even in the YCbCr planes" finding
+below was measured against **`libheif-js`**, whose emscripten build
+(`plugins/decoder_libde265.cc`) **disables the HEVC deblocking + SAO in-loop
+filters** "to speed up decoding from JavaScript". *That* — not SIMD rounding — is
+the entire divergence. HEVC reconstruction is bit-exact, so with the filters
+left ON the builds agree.
+
+Proven by building a clean WASI module (`decode/wasm/`, libheif 1.21.2 +
+libde265 1.0.15, filters ON, single-threaded) and measuring:
+- **Bit-identical to native libheif 1.21.2** (pillow-heif 1.3.0) on all 10
+  fixtures, every Y/Cb/Cr plane.
+- **Bit-identical across runtimes** (wazero pure-Go vs V8).
+
+So the corrected picture: byte-exact HEIC across ports needs **one libheif
+version + filters ON everywhere**. The shared WASM (now built) delivers exactly
+that and matches native — so native ports could even keep using native libheif
+at the same version, while the JS port must stop using filter-disabled
+`libheif-js`. The option table below still holds (one shared artifact is the
+clean way to guarantee uniform version+settings); only the *reason* changes from
+"SIMD diverges" to "libheif-js disables filters".
+
+Original Phase 0 write-up follows (kept for the record; read item 3 with the
+correction above).
+
+---
 
 ## Problem
 

@@ -1,0 +1,19 @@
+diff --git a/libheif/plugins/decoder_libde265.cc b/libheif/plugins/decoder_libde265.cc
+index 3dd5732..cfc9c95 100644
+--- a/libheif/plugins/decoder_libde265.cc
++++ b/libheif/plugins/decoder_libde265.cc
+@@ -178,7 +178,13 @@ heif_error libde265_new_decoder2(void** dec, const heif_decoder_plugin_options*
+   heif_error err = {heif_error_Ok, heif_suberror_Unspecified, kSuccess};
+ 
+   decoder->ctx = de265_new_decoder();
+-#if defined(__EMSCRIPTEN__)
++#if defined(__wasi__)
++  // rosetta-squint: WASI single-threaded build. Run the decode synchronously
++  // (no worker threads) but keep deblocking + SAO ENABLED so output is
++  // byte-identical to a native libheif decode (unlike the __EMSCRIPTEN__ path,
++  // which disables both filters for speed and thus diverges).
++  (void) options;
++#elif defined(__EMSCRIPTEN__)
+   // Speed up decoding from JavaScript.
+   de265_set_parameter_bool(decoder->ctx, DE265_DECODER_PARAM_DISABLE_DEBLOCKING, 1);
+   de265_set_parameter_bool(decoder->ctx, DE265_DECODER_PARAM_DISABLE_SAO, 1);
