@@ -1,6 +1,5 @@
 package io.github.wmetcalf.rosettasquint.decode.internal;
 
-import com.dylibso.chicory.runtime.HostFunction;
 import com.dylibso.chicory.runtime.ImportValues;
 import com.dylibso.chicory.runtime.Instance;
 import com.dylibso.chicory.runtime.Memory;
@@ -8,10 +7,8 @@ import com.dylibso.chicory.wasi.WasiOptions;
 import com.dylibso.chicory.wasi.WasiPreview1;
 import com.dylibso.chicory.wasm.Parser;
 import com.dylibso.chicory.wasm.WasmModule;
-import com.dylibso.chicory.wasm.types.ValType;
 
 import java.io.InputStream;
-import java.util.List;
 
 /**
  * Decodes HEIC via the shared libheif+libde265 WASM module (decode/wasm/), run
@@ -79,14 +76,8 @@ public final class HeicWasm {
     public static Result decode(byte[] bytes, long maxPixels)
             throws TooLargeException, CorruptException {
         WasiPreview1 wasi = WasiPreview1.builder().withOptions(WasiOptions.builder().build()).build();
-        // wasi-threads thread-spawn is never called (single-threaded decode).
-        HostFunction threadSpawn = new HostFunction(
-                "wasi", "thread-spawn",
-                List.of(ValType.I32), List.of(ValType.I32),
-                (inst, args) -> new long[] {-1L});
         ImportValues imports = ImportValues.builder()
                 .addFunction(wasi.toHostFunctions())
-                .addFunction(threadSpawn)
                 .build();
         Instance instance = Instance.builder(MODULE)
                 .withImportValues(imports)

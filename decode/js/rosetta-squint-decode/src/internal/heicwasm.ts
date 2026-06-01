@@ -67,7 +67,6 @@ export async function decodeHeicWasm(bytes: Uint8Array, maxPixels: number): Prom
   let memory!: WebAssembly.Memory;
   const instance = await WebAssembly.instantiate(module, {
     wasi_snapshot_preview1: wasiImports(() => memory) as unknown as WebAssembly.ModuleImports,
-    wasi: { "thread-spawn": () => -1 },
   });
   const ex = instance.exports as Record<string, CallableFunction> & { memory: WebAssembly.Memory };
   memory = ex.memory;

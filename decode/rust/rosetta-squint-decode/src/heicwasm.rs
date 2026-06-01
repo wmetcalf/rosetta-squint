@@ -6,7 +6,7 @@
 
 use std::sync::OnceLock;
 
-use wasmtime::{Engine, Instance, Linker, Module, SharedMemory, Store, TypedFunc};
+use wasmtime::{Engine, Instance, Linker, Memory, Module, Store, TypedFunc};
 use wasmtime_wasi::p1::{self, WasiP1Ctx};
 use wasmtime_wasi::WasiCtxBuilder;
 
@@ -34,9 +34,7 @@ pub enum HeicWasmError {
 fn engine_module() -> &'static (Engine, Module) {
     static EM: OnceLock<(Engine, Module)> = OnceLock::new();
     EM.get_or_init(|| {
-        let mut config = wasmtime::Config::new();
-        config.wasm_threads(true); // module uses shared memory (pthread build)
-        let engine = Engine::new(&config).expect("wasm engine");
+        let engine = Engine::default();
         let module = Module::from_binary(&engine, WASM).expect("compile libheif wasm");
         (engine, module)
     })
@@ -46,25 +44,21 @@ pub fn decode_heic_wasm(bytes: &[u8], max_pixels: u64) -> Result<HeicResult, Hei
     let (engine, module) = engine_module();
     let mut linker: Linker<WasiP1Ctx> = Linker::new(engine);
     p1::add_to_linker_sync(&mut linker, |c| c).map_err(corrupt)?;
-    // wasi-threads thread-spawn is never called (single-threaded decode).
-    linker
-        .func_wrap("wasi", "thread-spawn", |_tid: i32| -> i32 { -1 })
-        .map_err(corrupt)?;
 
     let wasi = WasiCtxBuilder::new().build_p1();
     let mut store = Store::new(engine, wasi);
     let instance = linker.instantiate(&mut store, module).map_err(corrupt)?;
-    let shared = instance
-        .get_shared_memory(&mut store, "memory")
-        .ok_or_else(|| HeicWasmError::Corrupt("no exported shared memory".into()))?;
+    let mem = instance
+        .get_memory(&mut store, "memory")
+        .ok_or_else(|| HeicWasmError::Corrupt("no exported memory".into()))?;
 
     let init: TypedFunc<(), ()> = instance.get_typed_func(&mut store, "_initialize").map_err(corrupt)?;
     init.call(&mut store, ()).map_err(corrupt)?;
 
-    let mut d = Driver { store, instance, shared };
+    let mut d = Driver { store, instance, mem };
 
     let data_ptr = d.malloc(bytes.len() as i32)?;
-    d.write(data_ptr as usize, bytes);
+    d.mem.write(&mut d.store, data_ptr as usize, bytes).map_err(corrupt)?;
     let err_ptr = d.malloc(16)?;
     let ctx = d.call0("heif_context_alloc")?;
     d.call_void("heif_context_set_max_decoding_threads", &[ctx, 0])?;
@@ -106,7 +100,7 @@ pub fn decode_heic_wasm(bytes: &[u8], max_pixels: u64) -> Result<HeicResult, Hei
     let height = d.call1("heif_image_get_height", &[img, CHAN_INTERLEAVED])? as usize;
 
     let row = width * bpp;
-    let heap = d.heap();
+    let heap = d.mem.data(&d.store);
     let mut data = Vec::with_capacity(row * height);
     for y in 0..height {
         let start = plane_ptr + y * stride;
@@ -118,24 +112,13 @@ pub fn decode_heic_wasm(bytes: &[u8], max_pixels: u64) -> Result<HeicResult, Hei
 struct Driver {
     store: Store<WasiP1Ctx>,
     instance: Instance,
-    shared: SharedMemory,
+    mem: Memory,
 }
 
 impl Driver {
-    // Single-threaded decode: no concurrent access to the shared memory, so a
-    // plain byte view is sound. Re-derived on each call since growth may move it.
-    fn heap(&self) -> &[u8] {
-        let d = self.shared.data();
-        unsafe { std::slice::from_raw_parts(d.as_ptr() as *const u8, d.len()) }
-    }
-    fn write(&self, ptr: usize, bytes: &[u8]) {
-        let d = self.shared.data();
-        let base = d.as_ptr() as *mut u8;
-        unsafe { std::ptr::copy_nonoverlapping(bytes.as_ptr(), base.add(ptr), bytes.len()) }
-    }
     fn read_u32(&self, ptr: i32) -> u32 {
         let p = ptr as usize;
-        let b = self.heap();
+        let b = self.mem.data(&self.store);
         u32::from_le_bytes([b[p], b[p + 1], b[p + 2], b[p + 3]])
     }
     fn malloc(&mut self, n: i32) -> Result<i32, HeicWasmError> {

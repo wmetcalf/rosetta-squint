@@ -12,8 +12,6 @@ import (
 	"sync"
 
 	"github.com/tetratelabs/wazero"
-	"github.com/tetratelabs/wazero/api"
-	"github.com/tetratelabs/wazero/experimental"
 	"github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 )
 
@@ -49,19 +47,9 @@ var (
 
 func ensure(ctx context.Context) error {
 	once.Do(func() {
-		rt = wazero.NewRuntimeWithConfig(ctx, wazero.NewRuntimeConfig().
-			WithCoreFeatures(api.CoreFeaturesV2|experimental.CoreFeaturesThreads))
+		// Non-shared-memory WASM: standard wasi reactor, no threads feature.
+		rt = wazero.NewRuntime(ctx)
 		wasi_snapshot_preview1.MustInstantiate(ctx, rt)
-		// wasi-threads thread-spawn is never called (single-threaded decode).
-		if _, err := rt.NewHostModuleBuilder("wasi").
-			NewFunctionBuilder().
-			WithGoModuleFunction(api.GoModuleFunc(func(_ context.Context, _ api.Module, stack []uint64) {
-				stack[0] = 0xffffffff
-			}), []api.ValueType{api.ValueTypeI32}, []api.ValueType{api.ValueTypeI32}).
-			Export("thread-spawn").Instantiate(ctx); err != nil {
-			initErr = err
-			return
-		}
 		c, err := rt.CompileModule(ctx, wasmBinary)
 		if err != nil {
 			initErr = err
