@@ -60,7 +60,7 @@ func main() {
 		binary.LittleEndian.PutUint32(hdr[4:], uint32(res.Height))
 		hdr[8] = byte(res.Channels)
 		blob := append(hdr, res.Data...)
-		if err := os.WriteFile(filepath.Join(outDir, name+".bin"), blob, 0o644); err != nil {
+		if err := os.WriteFile(filepath.Join(outDir, name+".bin"), blob, 0o600); err != nil {
 			panic(err)
 		}
 		sum := sha256.Sum256(res.Data)
@@ -75,5 +75,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "regenerated %s: %dx%d ch=%d\n", name, res.Width, res.Height, res.Channels)
 	}
 	out, _ := json.MarshalIndent(meta, "", "  ")
-	os.Stdout.Write(out)
+	if _, err := os.Stdout.Write(out); err != nil {
+		panic(err)
+	}
 }

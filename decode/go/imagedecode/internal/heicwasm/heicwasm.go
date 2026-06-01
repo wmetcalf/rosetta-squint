@@ -77,7 +77,7 @@ func Decode(b []byte, maxPixels int64) (Result, error) {
 	if err != nil {
 		return Result{}, fmt.Errorf("heicwasm: instantiate: %w", err)
 	}
-	defer mod.Close(ctx)
+	defer func() { _ = mod.Close(ctx) }()
 	mem := mod.Memory()
 
 	var callErr error
