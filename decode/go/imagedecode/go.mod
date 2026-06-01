@@ -4,6 +4,8 @@ go 1.25.0
 
 require (
 	github.com/chai2010/webp v1.4.0
-	github.com/strukturag/libheif v1.17.6
+	github.com/tetratelabs/wazero v1.12.0
 	golang.org/x/image v0.41.0
 )
+
+require golang.org/x/sys v0.44.0 // indirect
