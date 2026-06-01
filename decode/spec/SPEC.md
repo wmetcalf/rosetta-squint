@@ -619,6 +619,36 @@ macOS: `brew install libheif`.
 
 **Fixture corpus:** 10 valid synth fixtures (gradient RGB + RGBA, q50/q90/q100 lossless, various sizes) + 3 invalid (bad-magic, truncated, avif-brand). Encoded by `spec/synth_heic.py` using pillow-heif 1.3.0; decoded for goldens via ctypes wrapper around system libheif 1.17.6.
 
+**Cross-port reproducibility (KNOWN LIMITATION + decision):**
+HEIC is the one format that is **not byte-exact across all ports today**. The
+native ports (Go/Rust/Java/Swift) match the system-libheif golden only because
+on Linux x86 they link the *same* system `libheif`; the JS port (`libheif-js`
+WASM) decodes ±1–2 px differently and is verified to a **±2 tolerance**, not
+byte-exact (`tests/group2-heic.test.ts`).
+
+Phase 0 investigation (2026-06-01) established *why* and *what it costs*:
+- The divergence is in the **HEVC decode itself** — even raw YCbCr 4:2:0 planes
+  differ ±1 between a native build and the WASM build of the *same* libde265
+  (native SIMD vs WASM rounding). It is **not** confined to color conversion, so
+  it cannot be fixed by moving YCbCr→RGB into port code, and independent native
+  builds across architectures (x86 vs ARM) diverge for the same reason.
+- That ±1–2 px drift is invisible to `average_hash`/`dhash`/`dhash_vertical`/
+  `phash_simple`/`whash`, **but changes `phash`** (DCT) by up to 16/64 bits.
+  So **byte-exact HEIC is required only if cross-port `phash` is a hard goal.**
+- The **only** way to make HEIC byte-exact across heterogeneous ports/platforms
+  is **one shared compiled decoder artifact** (a single libheif+libde265 WASM run
+  in every port). This was proven viable: the wasm runs in wazero (pure-Go) and
+  produces **bit-identical** YCbCr to V8 (cross-runtime determinism holds for the
+  integer HEVC decode).
+
+**Target architecture (when `phash`-on-HEIC byte-exactness is pursued):** one
+pinned libheif+libde265 WASM (security-clean **1.21.2**) → decode to YCbCr
+(bit-identical across runtimes) → shared integer YCbCr→RGB + 4:2:0 upsampling in
+port code → bit-identical RGB → bit-identical `phash`; then regenerate the HEIC
+goldens from this pipeline and flip JS off the ±2 tolerance. See
+`HEIC_REPRODUCIBILITY.md` for the full Phase 0 evidence, the rejected
+alternatives, and the build plan.
+
 ---
 
 ## Versioning
