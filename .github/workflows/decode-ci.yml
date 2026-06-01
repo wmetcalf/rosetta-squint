@@ -149,7 +149,7 @@ jobs:
 
       - name: Swift — swift test
         if: matrix.port == 'swift'
-        run: cd decode/swift/RosettaSquintDecode && swift test
+        run: cd decode/swift/RosettaSquintDecode && swift test -j 1
 
   dep-audit:
     # Per-ecosystem vulnerability scan. Runs on PR/push and weekly so
@@ -310,7 +310,7 @@ jobs:
         run: sudo apt-get update -qq && sudo apt-get install -y libturbojpeg libturbojpeg0-dev libwebp-dev libsharpyuv-dev libtiff-dev libheif-dev libheif-plugin-libde265 libde265-dev libde265-0 pkg-config
       - name: swift build (type-check)
         if: matrix.port == 'swift'
-        run: cd decode/swift/RosettaSquintDecode && swift build
+        run: cd decode/swift/RosettaSquintDecode && swift build -j 1
       - name: swift-format lint (best-effort)
         if: matrix.port == 'swift'
         continue-on-error: true
@@ -413,4 +413,4 @@ jobs:
           swift-version: '5.10.1'
       - name: Swift — swift test
         if: matrix.port == 'swift'
-        run: cd decode/swift/RosettaSquintDecode && swift test
+        run: cd decode/swift/RosettaSquintDecode && swift test -j 1
