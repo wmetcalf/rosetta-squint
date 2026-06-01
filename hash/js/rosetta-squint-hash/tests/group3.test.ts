@@ -71,5 +71,5 @@ describe("PNG end-to-end (Group 3)", () => {
 		if (failures.length > 0) {
 			throw new Error(`${failures.length} Group-3 failures:\n  ${failures.join("\n  ")}`);
 		}
-	});
+	}, 60000); // heavy: 9 algorithms x all fixtures; default 5s timeout is too tight
 });
