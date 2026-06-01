@@ -1,6 +1,15 @@
 {
   "pins" : [
     {
+      "identity" : "swift-argument-parser",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-argument-parser",
+      "state" : {
+        "revision" : "626b5b7b2f45e1b0b1c6f4a309296d1d21d7311b",
+        "version" : "1.7.1"
+      }
+    },
+    {
       "identity" : "swift-hash",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/tayloraswift/swift-hash",
@@ -16,6 +25,24 @@
       "state" : {
         "revision" : "c92bfb0599dfbd83c7b98f29c469f44573905a58",
         "version" : "4.3.0"
+      }
+    },
+    {
+      "identity" : "swift-system",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-system",
+      "state" : {
+        "revision" : "a34201439c74b53f0fd71ef11741af7e7caf01e1",
+        "version" : "1.4.2"
+      }
+    },
+    {
+      "identity" : "wasmkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swiftwasm/WasmKit",
+      "state" : {
+        "revision" : "827056b014e37da50e2645a7634fddb32e441f32",
+        "version" : "0.1.6"
       }
     }
   ],
