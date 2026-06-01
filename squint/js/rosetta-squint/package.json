@@ -45,13 +45,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@jsquash/jpeg": "^1.6.0",
-    "@jsquash/webp": "^1.5.0",
-    "libheif-js": "1.17.1",
-    "pngjs": "^7",
     "rosetta-squint-decode": "file:../../../decode/js/rosetta-squint-decode",
-    "rosetta-squint-hash": "file:../../../hash/js/rosetta-squint-hash",
-    "utif2": "^4.1.0"
+    "rosetta-squint-hash": "file:../../../hash/js/rosetta-squint-hash"
   },
   "devDependencies": {
     "@types/node": "^20",
