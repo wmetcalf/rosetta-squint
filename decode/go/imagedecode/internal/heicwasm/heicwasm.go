@@ -95,7 +95,13 @@ func Decode(b []byte, maxPixels int64) (Result, error) {
 		}
 		return 0
 	}
-	malloc := func(n uint32) uint32 { return uint32(call("malloc", uint64(n))) }
+	malloc := func(n uint32) uint32 {
+		p := uint32(call("malloc", uint64(n)))
+		if callErr == nil && p == 0 {
+			callErr = fmt.Errorf("heicwasm: malloc(%d) failed (out of memory)", n)
+		}
+		return p
+	}
 	errAt := func(p uint32) uint32 { v, _ := mem.ReadUint32Le(p); return v }
 
 	dataPtr := malloc(uint32(len(b)))
@@ -153,14 +159,17 @@ func Decode(b []byte, maxPixels int64) (Result, error) {
 	if callErr != nil {
 		return Result{}, callErr
 	}
+	row := w * uint32(bpp)
+	if row > stride {
+		return Result{}, fmt.Errorf("heicwasm: invalid stride %d < row %d", stride, row)
+	}
 	raw, ok := mem.Read(planePtr, stride*h)
 	if !ok {
 		return Result{}, fmt.Errorf("heicwasm: plane read out of range")
 	}
-	row := w * uint32(bpp)
-	out := make([]byte, 0, row*h)
+	out := make([]byte, row*h)
 	for y := uint32(0); y < h; y++ {
-		out = append(out, raw[y*stride:y*stride+row]...)
+		copy(out[y*row:(y+1)*row], raw[y*stride:y*stride+row])
 	}
 	return Result{Width: int(w), Height: int(h), Channels: channels, Data: out}, nil
 }

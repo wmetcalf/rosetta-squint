@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 
@@ -22,7 +23,12 @@ import (
 const maxPixels = 256 * 1024 * 1024
 
 func main() {
-	specDir := "/home/coz/rosetta-squint/decode/spec"
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		panic("cannot resolve source path")
+	}
+	// .../decode/go/imagedecode/cmd/regen-heic-goldens/main.go -> .../decode/spec
+	specDir := filepath.Join(filepath.Dir(filename), "../../../../spec")
 	fixDir := filepath.Join(specDir, "fixtures/heic/valid")
 	outDir := filepath.Join(specDir, "decoded/heic/valid")
 

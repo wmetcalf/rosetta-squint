@@ -66,19 +66,26 @@ internal enum HeicWasm {
             v |= UInt32(d[p + 3]) << 24
             return v
         }
+        func malloc(_ n: UInt32) throws -> UInt32 {
+            let p = try call("malloc", [n])
+            guard p != 0 else {
+                throw HeicWasmError.corrupt("malloc(\(n)) failed (out of memory)")
+            }
+            return p
+        }
 
-        let dataPtr = try call("malloc", [UInt32(bytes.count)])
+        let dataPtr = try malloc(UInt32(bytes.count))
         mem.withUnsafeMutableBufferPointer(offset: UInt(dataPtr), count: bytes.count) { buf in
             buf.copyBytes(from: bytes)
         }
-        let errPtr = try call("malloc", [16])
+        let errPtr = try malloc(16)
         let ctx = try call("heif_context_alloc")
         _ = try call("heif_context_set_max_decoding_threads", [ctx, 0])
         _ = try call("heif_context_read_from_memory", [errPtr, ctx, dataPtr, UInt32(bytes.count), 0])
         if readU32(errPtr) != 0 {
             throw HeicWasmError.corrupt("read_from_memory heif_error \(readU32(errPtr))")
         }
-        let handlePP = try call("malloc", [4])
+        let handlePP = try malloc(4)
         _ = try call("heif_context_get_primary_image_handle", [errPtr, ctx, handlePP])
         if readU32(errPtr) != 0 {
             throw HeicWasmError.corrupt("get_primary_image_handle heif_error \(readU32(errPtr))")
@@ -96,27 +103,34 @@ internal enum HeicWasm {
         let bpp = hasAlpha ? 4 : 3
         let channels = hasAlpha ? 4 : 3
 
-        let imgPP = try call("malloc", [4])
+        let imgPP = try malloc(4)
         _ = try call("heif_decode_image", [errPtr, handle, imgPP, csRGB, chroma, 0])
         if readU32(errPtr) != 0 {
             throw HeicWasmError.corrupt("decode_image heif_error \(readU32(errPtr))")
         }
         let img = readU32(imgPP)
 
-        let strideP = try call("malloc", [4])
+        let strideP = try malloc(4)
         let planePtr = Int(try call("heif_image_get_plane_readonly", [img, chanInterleaved, strideP]))
         let stride = Int(readU32(strideP))
         let w = Int(try call("heif_image_get_width", [img, chanInterleaved]))
         let h = Int(try call("heif_image_get_height", [img, chanInterleaved]))
 
         let row = w * bpp
+        guard row <= stride else {
+            throw HeicWasmError.corrupt("invalid stride \(stride) < row \(row)")
+        }
         let heap = mem.data
+        guard planePtr + (h - 1) * stride + row <= heap.count else {
+            throw HeicWasmError.corrupt("plane read out of range")
+        }
         var out = [UInt8](repeating: 0, count: row * h)
         out.withUnsafeMutableBufferPointer { dst in
-            for y in 0..<h {
-                let src = planePtr + y * stride
-                for x in 0..<row {
-                    dst[y * row + x] = heap[src + x]
+            heap.withUnsafeBufferPointer { srcHeap in
+                for y in 0..<h {
+                    let srcPtr = srcHeap.baseAddress!.advanced(by: planePtr + y * stride)
+                    let dstPtr = dst.baseAddress!.advanced(by: y * row)
+                    dstPtr.initialize(from: srcPtr, count: row)
                 }
             }
         }

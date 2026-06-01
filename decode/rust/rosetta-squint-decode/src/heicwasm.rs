@@ -31,20 +31,19 @@ pub enum HeicWasmError {
     Corrupt(String),
 }
 
-fn engine_module() -> &'static (Engine, Module) {
-    static EM: OnceLock<(Engine, Module)> = OnceLock::new();
-    EM.get_or_init(|| {
+fn engine_module_linker() -> &'static (Engine, Module, Linker<WasiP1Ctx>) {
+    static EML: OnceLock<(Engine, Module, Linker<WasiP1Ctx>)> = OnceLock::new();
+    EML.get_or_init(|| {
         let engine = Engine::default();
         let module = Module::from_binary(&engine, WASM).expect("compile libheif wasm");
-        (engine, module)
+        let mut linker = Linker::new(&engine);
+        p1::add_to_linker_sync(&mut linker, |c| c).expect("add wasi to linker");
+        (engine, module, linker)
     })
 }
 
 pub fn decode_heic_wasm(bytes: &[u8], max_pixels: u64) -> Result<HeicResult, HeicWasmError> {
-    let (engine, module) = engine_module();
-    let mut linker: Linker<WasiP1Ctx> = Linker::new(engine);
-    p1::add_to_linker_sync(&mut linker, |c| c).map_err(corrupt)?;
-
+    let (engine, module, linker) = engine_module_linker();
     let wasi = WasiCtxBuilder::new().build_p1();
     let mut store = Store::new(engine, wasi);
     let instance = linker.instantiate(&mut store, module).map_err(corrupt)?;
@@ -100,11 +99,16 @@ pub fn decode_heic_wasm(bytes: &[u8], max_pixels: u64) -> Result<HeicResult, Hei
     let height = d.call1("heif_image_get_height", &[img, CHAN_INTERLEAVED])? as usize;
 
     let row = width * bpp;
-    let heap = d.mem.data(&d.store);
-    let mut data = Vec::with_capacity(row * height);
+    if row > stride {
+        return Err(HeicWasmError::Corrupt(format!("invalid stride {stride} < row {row}")));
+    }
+    let mut data = vec![0u8; row * height];
     for y in 0..height {
         let start = plane_ptr + y * stride;
-        data.extend_from_slice(&heap[start..start + row]);
+        let dest = y * row;
+        d.mem
+            .read(&d.store, start, &mut data[dest..dest + row])
+            .map_err(corrupt)?;
     }
     Ok(HeicResult { width, height, channels, data })
 }
@@ -122,7 +126,11 @@ impl Driver {
         u32::from_le_bytes([b[p], b[p + 1], b[p + 2], b[p + 3]])
     }
     fn malloc(&mut self, n: i32) -> Result<i32, HeicWasmError> {
-        self.call1("malloc", &[n])
+        let p = self.call1("malloc", &[n])?;
+        if p == 0 {
+            return Err(HeicWasmError::Corrupt(format!("malloc({n}) failed (out of memory)")));
+        }
+        Ok(p)
     }
     fn call0(&mut self, name: &str) -> Result<i32, HeicWasmError> {
         let f: TypedFunc<(), i32> = self.instance.get_typed_func(&mut self.store, name).map_err(corrupt)?;

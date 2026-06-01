@@ -75,7 +75,11 @@ export async function decodeHeicWasm(bytes: Uint8Array, maxPixels: number): Prom
   const dv = () => new DataView(memory.buffer);
   const u8 = () => new Uint8Array(memory.buffer);
   const call = (name: string, ...args: number[]): number => (ex[name] as CallableFunction)(...args) >>> 0;
-  const malloc = (n: number) => call("malloc", n);
+  const malloc = (n: number) => {
+    const p = call("malloc", n);
+    if (p === 0) throw new DecodeError("corruptInput", "heic", `malloc(${n}) failed (out of memory)`);
+    return p;
+  };
   const errAt = (p: number) => dv().getUint32(p, true);
 
   const dataPtr = malloc(bytes.length);
@@ -120,8 +124,14 @@ export async function decodeHeicWasm(bytes: Uint8Array, maxPixels: number): Prom
   const w = (ex.heif_image_get_width as CallableFunction)(img, CHAN_INTERLEAVED) | 0;
   const h = (ex.heif_image_get_height as CallableFunction)(img, CHAN_INTERLEAVED) | 0;
   const row = w * bpp;
-  const out = new Uint8Array(row * h);
+  if (row > stride) {
+    throw new DecodeError("corruptInput", "heic", `invalid stride ${stride} < row ${row}`);
+  }
   const heap = u8();
+  if (planePtr + (h - 1) * stride + row > heap.length) {
+    throw new DecodeError("corruptInput", "heic", "plane read out of range");
+  }
+  const out = new Uint8Array(row * h);
   for (let y = 0; y < h; y++) {
     out.set(heap.subarray(planePtr + y * stride, planePtr + y * stride + row), y * row);
   }

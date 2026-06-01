@@ -86,16 +86,16 @@ public final class HeicWasm {
         instance.export("_initialize").apply();
         Memory mem = instance.memory();
 
-        int dataPtr = i(instance.export("malloc").apply(bytes.length));
+        int dataPtr = malloc(instance, bytes.length);
         mem.write(dataPtr, bytes);
-        int errPtr = i(instance.export("malloc").apply(16));
+        int errPtr = malloc(instance, 16);
         int ctx = i(instance.export("heif_context_alloc").apply());
         instance.export("heif_context_set_max_decoding_threads").apply(ctx, 0);
         instance.export("heif_context_read_from_memory").apply(errPtr, ctx, dataPtr, bytes.length, 0);
         if (mem.readInt(errPtr) != 0) {
             throw new CorruptException("read_from_memory heif_error " + mem.readInt(errPtr));
         }
-        int handlePP = i(instance.export("malloc").apply(4));
+        int handlePP = malloc(instance, 4);
         instance.export("heif_context_get_primary_image_handle").apply(errPtr, ctx, handlePP);
         if (mem.readInt(errPtr) != 0) {
             throw new CorruptException("get_primary_image_handle heif_error " + mem.readInt(errPtr));
@@ -113,26 +113,37 @@ public final class HeicWasm {
         int bpp = hasAlpha ? 4 : 3;
         int channels = hasAlpha ? 4 : 3;
 
-        int imgPP = i(instance.export("malloc").apply(4));
+        int imgPP = malloc(instance, 4);
         instance.export("heif_decode_image").apply(errPtr, handle, imgPP, CS_RGB, chroma, 0);
         if (mem.readInt(errPtr) != 0) {
             throw new CorruptException("decode_image heif_error " + mem.readInt(errPtr));
         }
         int img = mem.readInt(imgPP);
 
-        int strideP = i(instance.export("malloc").apply(4));
+        int strideP = malloc(instance, 4);
         int planePtr = i(instance.export("heif_image_get_plane_readonly").apply(img, CHAN_INTERLEAVED, strideP));
         int stride = mem.readInt(strideP);
         int w = i(instance.export("heif_image_get_width").apply(img, CHAN_INTERLEAVED));
         int h = i(instance.export("heif_image_get_height").apply(img, CHAN_INTERLEAVED));
 
         int row = w * bpp;
+        if (row > stride) {
+            throw new CorruptException("invalid stride " + stride + " < row " + row);
+        }
         byte[] out = new byte[row * h];
         for (int y = 0; y < h; y++) {
             byte[] r = mem.readBytes(planePtr + y * stride, row);
             System.arraycopy(r, 0, out, y * row, row);
         }
         return new Result(w, h, channels, out);
+    }
+
+    private static int malloc(Instance instance, long n) throws CorruptException {
+        int p = i(instance.export("malloc").apply(n));
+        if (p == 0) {
+            throw new CorruptException("malloc(" + n + ") failed (out of memory)");
+        }
+        return p;
     }
 
     private static int i(long[] r) {
