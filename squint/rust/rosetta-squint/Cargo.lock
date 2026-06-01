@@ -1267,7 +1267,7 @@ dependencies = [
 
 [[package]]
 name = "rosetta-squint"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "image",
  "libc",
@@ -1278,7 +1278,7 @@ dependencies = [
 
 [[package]]
 name = "rosetta-squint-decode"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "cc",
  "image",

@@ -1,6 +1,6 @@
 [package]
 name = "rosetta-squint"
-version = "1.0.0"
+version = "1.1.0"
 edition = "2021"
 rust-version = "1.83"
 description = "Cross-language byte-exact perceptual image hashing — decode + hash in one call. Umbrella crate combining rosetta-squint-decode + rosetta-squint-hash."
@@ -14,7 +14,7 @@ keywords = ["perceptual-hashing", "imagehash", "byte-exact", "cross-language", "
 
 [dependencies]
 rosetta-squint-hash = { version = "1.0.0", path = "../../../hash/rust/rosetta-squint-hash" }
-rosetta-squint-decode = { version = "1.0.0", path = "../../../decode/rust/rosetta-squint-decode" }
+rosetta-squint-decode = { version = "1.1.0", path = "../../../decode/rust/rosetta-squint-decode" }
 image = { version = "0.25", default-features = false }
 thiserror = "2"
 

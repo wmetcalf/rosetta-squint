@@ -2,6 +2,37 @@
 
 All notable changes to rosetta-squint go here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.0] — 2026-06-01
+
+Affects **`rosetta-squint-decode`** and **`rosetta-squint`** (both 1.0.0 → 1.1.0).
+**`rosetta-squint-hash`** is unchanged (decode-free) and stays at **1.0.0**.
+
+### Changed — HEIC now decodes through one shared byte-exact WASM
+
+HEIC is decoded by a single repo-controlled WebAssembly module
+(`decode/wasm/libheif_decode.wasm` — **libheif 1.21.2 + libde265 1.0.15**,
+deblocking + SAO filters ON, single-threaded), run by each port's wasm runtime
+(wazero / V8 / wasmtime / Chicory / WasmKit). This replaces per-platform system
+libheif (native ports) and `libheif-js` (JS), neither of which was byte-stable:
+the emscripten `libheif-js` build *disables* the HEVC in-loop filters, which was
+the entire source of the old ±1–2 px JS divergence, and OS-managed libheif could
+drift on an unrelated package update. HEIC output is now **bit-identical across
+all six ports** and pinned to the repo, not the OS.
+
+- **Output change (why this is a minor, not a patch):** for a given HEIC file the
+  decoded bytes — and any perceptual hash derived from them — differ from 1.0.0.
+  Other formats (PNG/JPEG/WebP/TIFF/GIF/BMP) are byte-identical to 1.0.0. The JS
+  port's previous ±2 px HEIC tolerance is gone; it is now exact.
+- **Dependency change:** the system `libheif` requirement is dropped; each port
+  instead carries a pure wasm runtime (no native/system codec needed for HEIC).
+- **Security:** libheif 1.21.2 includes the CVE-2025-68431 fix.
+
+### Fixed (security/supply-chain)
+
+- Go: `golang.org/x/image` 0.40.0 → 0.41.0 (GO-2026-5032).
+- Rust: `wasmtime` → 45 (RUSTSEC-2026-0086 / -0087); `libheif-rs` dropped.
+- JS (dev): `vitest` 2 → 4.1.8 (GHSA-5xrq-8626-4rwp).
+
 ## [1.0.0] — 2026-05-26
 
 Initial public release across PyPI, crates.io, npm, and Maven Central.
