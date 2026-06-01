@@ -142,14 +142,14 @@ jobs:
         if: matrix.port == 'swift'
         uses: swift-actions/setup-swift@v2
         with:
-          swift-version: '5.9.2'
+          swift-version: '5.10.1'
       - name: Install libjpeg-turbo for Swift
         if: matrix.port == 'swift'
         run: sudo apt-get update -qq && sudo apt-get install -y libturbojpeg libturbojpeg0-dev libwebp-dev libsharpyuv-dev libtiff-dev libheif-dev libheif-plugin-libde265 libde265-dev libde265-0 pkg-config
 
       - name: Swift — swift test
         if: matrix.port == 'swift'
-        run: cd decode/swift/RosettaSquintDecode && swift test -j 1
+        run: cd decode/swift/RosettaSquintDecode && swift test
 
   dep-audit:
     # Per-ecosystem vulnerability scan. Runs on PR/push and weekly so
@@ -304,13 +304,13 @@ jobs:
         if: matrix.port == 'swift'
         uses: swift-actions/setup-swift@v2
         with:
-          swift-version: '5.9.2'
+          swift-version: '5.10.1'
       - name: Install libjpeg-turbo for Swift
         if: matrix.port == 'swift'
         run: sudo apt-get update -qq && sudo apt-get install -y libturbojpeg libturbojpeg0-dev libwebp-dev libsharpyuv-dev libtiff-dev libheif-dev libheif-plugin-libde265 libde265-dev libde265-0 pkg-config
       - name: swift build (type-check)
         if: matrix.port == 'swift'
-        run: cd decode/swift/RosettaSquintDecode && swift build -j 1
+        run: cd decode/swift/RosettaSquintDecode && swift build
       - name: swift-format lint (best-effort)
         if: matrix.port == 'swift'
         continue-on-error: true
@@ -410,7 +410,7 @@ jobs:
         if: matrix.port == 'swift'
         uses: swift-actions/setup-swift@v2
         with:
-          swift-version: '5.9.2'
+          swift-version: '5.10.1'
       - name: Swift — swift test
         if: matrix.port == 'swift'
-        run: cd decode/swift/RosettaSquintDecode && swift test -j 1
+        run: cd decode/swift/RosettaSquintDecode && swift test

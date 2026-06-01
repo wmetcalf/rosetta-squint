@@ -136,10 +136,10 @@ jobs:
         if: matrix.port == 'swift'
         uses: swift-actions/setup-swift@v2
         with:
-          swift-version: '5.9.2'
+          swift-version: '5.10.1'
       - name: Swift — swift test
         if: matrix.port == 'swift'
-        run: cd squint/swift/RosettaSquint && swift test -j 1
+        run: cd squint/swift/RosettaSquint && swift test
 
   # ─── Cross-squint live diff: build all CLIs, run the full grid ───────────
   cross-squint-diff:
@@ -176,7 +176,7 @@ jobs:
           node-version: '20'
       - uses: swift-actions/setup-swift@v2
         with:
-          swift-version: '5.9.2'
+          swift-version: '5.10.1'
 
       - name: Install Python wrappers
         run: |
@@ -231,7 +231,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: '20' }
       - uses: swift-actions/setup-swift@v2
-        with: { swift-version: '5.9.2' }
+        with: { swift-version: '5.10.1' }
 
       - name: Build all squint CLIs
         run: |
@@ -509,10 +509,10 @@ jobs:
         if: matrix.port == 'swift'
         uses: swift-actions/setup-swift@v2
         with:
-          swift-version: '5.9.2'
+          swift-version: '5.10.1'
       - name: swift build (squint type-check)
         if: matrix.port == 'swift'
-        run: cd squint/swift/RosettaSquint && swift build -j 1
+        run: cd squint/swift/RosettaSquint && swift build
       - name: swift-format lint (best-effort)
         if: matrix.port == 'swift'
         continue-on-error: true
@@ -625,7 +625,7 @@ jobs:
         if: matrix.port == 'swift'
         uses: swift-actions/setup-swift@v2
         with:
-          swift-version: '5.9.2'
+          swift-version: '5.10.1'
       - name: Swift — swift test
         if: matrix.port == 'swift'
-        run: cd squint/swift/RosettaSquint && swift test -j 1
+        run: cd squint/swift/RosettaSquint && swift test

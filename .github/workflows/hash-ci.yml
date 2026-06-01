@@ -121,7 +121,7 @@ jobs:
         if: matrix.port == 'swift'
         uses: swift-actions/setup-swift@v2
         with:
-          swift-version: '5.9.2'
+          swift-version: '5.10.1'
       - name: Swift — swift test
         if: matrix.port == 'swift'
         run: cd hash/swift/RosettaSquintHash && swift test
@@ -280,7 +280,7 @@ jobs:
         if: matrix.port == 'swift'
         uses: swift-actions/setup-swift@v2
         with:
-          swift-version: '5.9.2'
+          swift-version: '5.10.1'
       - name: swift build (type-check)
         if: matrix.port == 'swift'
         run: cd hash/swift/RosettaSquintHash && swift build
@@ -394,7 +394,7 @@ jobs:
         if: matrix.port == 'swift'
         uses: swift-actions/setup-swift@v2
         with:
-          swift-version: '5.9.2'
+          swift-version: '5.10.1'
       - name: Swift — swift test
         if: matrix.port == 'swift'
         run: cd hash/swift/RosettaSquintHash && swift test
