@@ -10,7 +10,7 @@ require (
 require (
 	github.com/chai2010/webp v1.4.0 // indirect
 	github.com/strukturag/libheif v1.17.6 // indirect
-	golang.org/x/image v0.40.0 // indirect
+	golang.org/x/image v0.41.0 // indirect
 )
 
 replace (
