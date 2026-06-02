@@ -39,6 +39,10 @@ Changelog = "https://github.com/wmetcalf/rosetta-squint/blob/main/CHANGELOG.md"
 include = ["rosetta_squint*"]
 exclude = ["tests*"]
 
+[tool.setuptools.package-data]
+# PEP 561: ship the typing marker so consumers get rosetta_squint's types.
+rosetta_squint = ["py.typed"]
+
 # ─── Static analysis config (consumed by the CI lint job) ─────────────────
 [tool.ruff]
 line-length = 120
