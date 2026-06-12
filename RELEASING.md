@@ -2,7 +2,7 @@
 
 This document covers how to cut a new release across all 5 registries. Run the steps in order — most registries have inter-crate ordering dependencies (the umbrella package needs the libs published first).
 
-Currently published versions: **1.0.0** (see [CHANGELOG.md](./CHANGELOG.md)).
+Currently published versions: **`rosetta-squint` 1.1.0**, **`rosetta-squint-decode` 1.1.0**, **`rosetta-squint-hash` 1.0.0** (see [CHANGELOG.md](./CHANGELOG.md)). The manifests in this tree are staged for **`rosetta-squint` 1.1.1** — bump this line to 1.1.1 once it is actually published.
 
 ## Quick map
 
