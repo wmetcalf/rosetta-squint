@@ -21,6 +21,11 @@
   },
   "author": "Will Metcalf <william.metcalf@gmail.com>",
   "license": "BSD-2-Clause",
+  "files": [
+    "dist",
+    "scripts",
+    "README.md"
+  ],
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

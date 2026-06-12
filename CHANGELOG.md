@@ -22,9 +22,17 @@ picks up the same `__version__` hygiene fix below, which ships with its next rel
   (falling back to `"0.0.0+unknown"` only in an uninstalled source tree). The same fix is
   applied to `rosetta_squint_hash`.
 
-The non-Python umbrella ports (crates.io / npm / Maven Central / Go / Swift) carry no
-functional change in 1.1.1 — the version is bumped in lockstep so the umbrella release
-stays coherent across all registries.
+- **npm: ship `dist/` in the umbrella tarball.** The `rosetta-squint` umbrella's
+  `package.json` was missing the `files` allowlist its siblings (`rosetta-squint-decode`,
+  `rosetta-squint-hash`) already have, so the gitignored `dist/` build output was dropped
+  from the published tarball while `main`/`types`/`exports` all point at `./dist/index.js`
+  — the package has been unimportable since 1.0.0. Added
+  `"files": ["dist", "scripts", "README.md"]`; the tarball now ships `dist/` + the
+  `squint-cli` bin and no longer leaks `src/`/`tests/`.
+
+The crates.io / Maven Central / Go / Swift umbrella ports carry no functional change in
+1.1.1 — bumped in lockstep so the umbrella release stays coherent across registries. (npm
+additionally carries the packaging fix above.)
 
 ## [1.1.0] — 2026-06-01
 
