@@ -2,6 +2,30 @@
 
 All notable changes to rosetta-squint go here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.1] — 2026-06-12
+
+Affects **`rosetta-squint`** (umbrella) — 1.1.0 → 1.1.1. **`rosetta-squint-decode`**
+(1.1.0) is unchanged. **`rosetta-squint-hash`**'s published version stays **1.0.0**; it
+picks up the same `__version__` hygiene fix below, which ships with its next release.
+
+### Fixed (packaging)
+
+- **Python: ship the PEP 561 `py.typed` marker.** `rosetta_squint` carries inline
+  type annotations, but the published 1.1.0 wheel shipped no `py.typed` marker — so
+  per PEP 561 type-checkers treated the package as untyped, and downstream consumers
+  (e.g. ClippyShot) needed an `import-untyped` override to see its types. The marker
+  is now declared via `[tool.setuptools.package-data]` and included in the wheel.
+
+- **Python: `__version__` now derives from installed distribution metadata**
+  (`importlib.metadata.version`) instead of a hand-maintained constant that had drifted
+  to a stale `"0.1.0"`. `rosetta_squint.__version__` now reports the real package version
+  (falling back to `"0.0.0+unknown"` only in an uninstalled source tree). The same fix is
+  applied to `rosetta_squint_hash`.
+
+The non-Python umbrella ports (crates.io / npm / Maven Central / Go / Swift) carry no
+functional change in 1.1.1 — the version is bumped in lockstep so the umbrella release
+stays coherent across all registries.
+
 ## [1.1.0] — 2026-06-01
 
 Affects **`rosetta-squint-decode`** and **`rosetta-squint`** (both 1.0.0 → 1.1.0).

@@ -20,6 +20,8 @@ API matches the same names in the non-Python rosetta-squint ports
 
 from __future__ import annotations
 
+from importlib.metadata import PackageNotFoundError, version as _dist_version
+
 from ._impl import (
     # Path-based entries
     average_hash,
@@ -58,7 +60,12 @@ from rosetta_squint_hash import (
     hex_to_multihash,
 )
 
-__version__ = "0.1.0"
+try:
+    # Single source of truth: the installed distribution metadata (pyproject
+    # `version`). Avoids a hand-maintained constant drifting out of sync.
+    __version__ = _dist_version("rosetta-squint")
+except PackageNotFoundError:  # pragma: no cover - uninstalled source tree
+    __version__ = "0.0.0+unknown"
 
 __all__ = [
     "ImageHash",

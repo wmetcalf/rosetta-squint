@@ -40,6 +40,8 @@ See ``spec/SPEC.md`` for the full pipeline-by-pipeline specification.
 
 from __future__ import annotations
 
+from importlib.metadata import PackageNotFoundError, version as _dist_version
+
 # Re-export the upstream public surface that we DON'T override (constants,
 # hash classes, hex helpers). Every algorithm name is imported from
 # ._impl below as a port-local override.
@@ -68,7 +70,12 @@ from ._impl import (  # noqa: F401
     whash_db4_robust,
 )
 
-__version__ = "0.1.0"
+try:
+    # Single source of truth: the installed distribution metadata (pyproject
+    # `version`). Avoids a hand-maintained constant drifting out of sync.
+    __version__ = _dist_version("rosetta-squint-hash")
+except PackageNotFoundError:  # pragma: no cover - uninstalled source tree
+    __version__ = "0.0.0+unknown"
 
 __all__ = [
     "ANTIALIAS",
