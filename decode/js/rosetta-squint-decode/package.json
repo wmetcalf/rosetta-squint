@@ -56,5 +56,8 @@
     "fast-check": "^4.8.0",
     "typescript": "^5.5",
     "vitest": "^4.1.8"
+  },
+  "overrides": {
+    "esbuild": "^0.28.1"
   }
 }
