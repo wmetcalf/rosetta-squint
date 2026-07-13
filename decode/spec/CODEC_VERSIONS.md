@@ -21,7 +21,7 @@ not just CI. See `SPEC.md` for the byte-level format specs; this file is the
 *version-control* companion to `formats.json`.
 
 **Reference / golden generator:** the Python port (`spec/regenerate.py`) using
-**Pillow 12.2.0**, whose manylinux wheels bundle their own
+**Pillow 12.3.0**, whose manylinux wheels bundle their own
 libjpeg-turbo / libpng / libwebp / libtiff / zlib. Every other port must match
 Pillow's bytes. **HEIC is the exception** — its golden is produced by
 `spec/synth_heic.py` / `regenerate.py` against **system libheif 1.17.6**, so the
@@ -36,14 +36,14 @@ codec (pure/stdlib everywhere) so they carry no drift risk and are omitted here.
 
 | Codec          | Canonical version            | Anchored to                        | Notes |
 |----------------|------------------------------|------------------------------------|-------|
-| `libjpeg-turbo`| `TODO` (Pillow 12.2.0 bundle)| JPEG golden (Pillow)               | Rust/JS use **mozjpeg**, a libjpeg-turbo fork; decode path is identical for baseline JPEG, hence they match. |
-| `libwebp`      | `1.4.0` (proposed)           | WebP golden (Pillow) — verify match| Go vendors `libwebp-1.4.0`; confirm Pillow 12.2.0 + jsquash bundle the same. |
-| `libtiff`      | `TODO` (Pillow 12.2.0 bundle)| TIFF golden (Pillow)               | Only Swift links real libtiff; Go/Rust/JS/Java **reimplement** TIFF and must byte-match libtiff. |
+| `libjpeg-turbo`| `TODO` (Pillow 12.3.0 bundle)| JPEG golden (Pillow)               | Rust/JS use **mozjpeg**, a libjpeg-turbo fork; decode path is identical for baseline JPEG, hence they match. |
+| `libwebp`      | `1.4.0` (proposed)           | WebP golden (Pillow) — verify match| Go vendors `libwebp-1.4.0`; confirm Pillow 12.3.0 + jsquash bundle the same. |
+| `libtiff`      | `TODO` (Pillow 12.3.0 bundle)| TIFF golden (Pillow)               | Only Swift links real libtiff; Go/Rust/JS/Java **reimplement** TIFF and must byte-match libtiff. |
 | `libheif`      | `1.17.6` (current, ⚠️ system)| HEIC golden (**system** libheif)   | The one codec whose golden is OS-generated. Target: pin to one repo-controlled libheif everywhere (incl. the golden). |
 
 > Extract the `TODO` bundle versions:
 > ```
-> python -c "import PIL.features as f; f.pilinfo()"        # libjpeg-turbo / libtiff / libwebp bundled in Pillow 12.2.0
+> python -c "import PIL.features as f; f.pilinfo()"        # libjpeg-turbo / libtiff / libwebp bundled in Pillow 12.3.0
 > # Rust mozjpeg-sys vendored version: see ~/.cargo/registry/.../mozjpeg-sys-2.2.3/mozjpeg/
 > # JS bundled versions: node_modules/@jsquash/{jpeg,webp}/package.json + upstream codec pin
 > # JS libheif: node_modules/libheif-js → bundled libheif build version
@@ -58,9 +58,9 @@ Python is the reference (golden generator), shown for completeness.
 
 | Format | Go | Rust | JS | Python (ref) | Java | Swift |
 |--------|----|----|----|--------------|------|-------|
-| **BMP**  | ✅ pure | ✅ pure | ✅ pure-TS | ✅ Pillow 12.2.0 | ✅ pure | ✅ pure |
-| **GIF**  | ✅ `image/gif` (stdlib) | ✅ `gif 0.14.2` | ✅ pure-TS | ✅ Pillow 12.2.0 | ✅ pure | ✅ pure |
-| **PNG**  | ✅ `image/png` (stdlib) | ✅ `png 0.18.1` | ✅ `pngjs 7.0.0` | ✅ Pillow 12.2.0 | ✅ `javax.imageio` (JDK 21) | ✅ `swift-png 4.3.0` |
+| **BMP**  | ✅ pure | ✅ pure | ✅ pure-TS | ✅ Pillow 12.3.0 | ✅ pure | ✅ pure |
+| **GIF**  | ✅ `image/gif` (stdlib) | ✅ `gif 0.14.2` | ✅ pure-TS | ✅ Pillow 12.3.0 | ✅ pure | ✅ pure |
+| **PNG**  | ✅ `image/png` (stdlib) | ✅ `png 0.18.1` | ✅ `pngjs 7.0.0` | ✅ Pillow 12.3.0 | ✅ `javax.imageio` (JDK 21) | ✅ `swift-png 4.3.0` |
 | **JPEG** | ⚠️ system `libturbojpeg` | ✅ `mozjpeg-sys 2.2.3` (vendored) | ✅ `@jsquash/jpeg 1.6.0` (WASM) | ✅ Pillow (bundled libjpeg-turbo) | ⚠️ `turbojpeg 2.1.5` → system | ⚠️ `Cjpeg` → system `libturbojpeg` |
 | **TIFF** | ✅ `x/image/tiff v0.41.0` | ✅ `tiff 0.11.3` | ✅ `utif2 4.1.0` | ✅ Pillow (bundled libtiff) | ✅ `twelvemonkeys imageio-tiff 3.10.1` | ⚠️ `Ctiff` → system `libtiff-4` |
 | **WebP** | ✅ `chai2010/webp 1.4.0` (vendored libwebp-1.4.0) | ⚠️ `libwebp-sys2 0.1.11` → system | ✅ `@jsquash/webp 1.5.0` (WASM) | ✅ Pillow (bundled libwebp) | ⚠️ JNA → system `libwebp` | ⚠️ `Cwebp` → system `libwebp` |
