@@ -2,6 +2,35 @@
 
 All notable changes to rosetta-squint go here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.2] — 2026-07-13
+
+Security-advisory patch sweep. Affects **`rosetta-squint`** (umbrella, PyPI 1.1.1 → 1.1.2),
+**`rosetta-squint-hash`** (PyPI 1.0.0 → 1.0.1), and **`rosetta-squint-decode`**
+(crates.io 1.1.0 → 1.1.1). Published per-registry only where the shipped artifact
+changed — npm and Maven Central carry no change this round and are not re-cut.
+
+### Security (dependencies)
+
+- **Python — Pillow `12.2.*` → `12.3.*`** (PYSEC-2026-2253 … -2257), across the shipped
+  `rosetta-squint-hash` and `rosetta-squint` pins and the spec tooling. Verified
+  reproducibility-safe: regenerating the decode and hash goldens under Pillow 12.3.0
+  changes only the recorded `pillow_version` stamp — every fixture's decoded-pixel
+  sha256 and every perceptual hash is byte-identical to 12.2.0, so the cross-port
+  byte-exact guarantee is preserved.
+
+- **Go — `golang.org/x/image` `0.41.0` → `0.43.0`** (GO-2026-5066, GO-2026-5062: TIFF
+  panic on out-of-bounds strip offset + missing tile-size limit, both reachable via the
+  decode path). Ships to Go consumers via the `v1.1.2` tag. Decode tests remain
+  byte-exact against goldens.
+
+- **Rust — `wasmtime-wasi` `45.0.2` → `45.0.3`** (RUSTSEC-2026-0188) and **`anyhow`
+  `1.0.102` → `1.0.103`** (RUSTSEC-2026-0190), refreshed in the decode + umbrella
+  lockfiles. `rosetta-squint-decode` 1.1.1 also carries a `clippy::byte_char_slices`
+  source tidy (behavior-identical). `wasmtime-wasi` / `anyhow` are transitive of the
+  decode WASM host; library consumers resolve them from range regardless.
+
+The advisory fixes landed in CI via #6; this entry records the follow-on registry cut.
+
 ## [1.1.1] — 2026-06-12
 
 Affects **`rosetta-squint`** (umbrella) — 1.1.0 → 1.1.1. **`rosetta-squint-decode`**
