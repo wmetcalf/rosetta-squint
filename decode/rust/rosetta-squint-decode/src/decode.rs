@@ -64,8 +64,8 @@ pub fn detect_format(bytes: &[u8]) -> Option<Format> {
     }
     // WebP: RIFF????WEBP (bytes 0-3 = "RIFF", bytes 8-11 = "WEBP")
     if bytes.len() >= 12
-        && bytes[0..4] == [b'R', b'I', b'F', b'F']
-        && bytes[8..12] == [b'W', b'E', b'B', b'P']
+        && bytes[0..4] == *b"RIFF"
+        && bytes[8..12] == *b"WEBP"
     {
         return Some(Format::Webp);
     }

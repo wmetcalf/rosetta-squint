@@ -26,7 +26,7 @@ authors = [
 dependencies = [
     "imagehash==4.3.2",
     "numpy>=1.26,<2.0",
-    "Pillow==12.2.*",       # tested against 12.2.0; allow patch-level only
+    "Pillow==12.3.*",       # tested against 12.3.0; allow patch-level only
     "PyWavelets>=1.5,<2.0",
 ]
 
