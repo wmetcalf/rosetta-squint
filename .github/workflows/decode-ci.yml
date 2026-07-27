@@ -91,11 +91,11 @@ jobs:
         run: cd decode/java/rosetta-squint-decode && mvn -B -ntp test
 
       # Go
-      - name: Set up Go 1.22
+      - name: Set up Go 1.25
         if: matrix.port == 'go'
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: '1.25'
           cache-dependency-path: decode/go/imagedecode/go.mod
       - name: Install libjpeg-turbo for Go
         if: matrix.port == 'go'
@@ -264,11 +264,11 @@ jobs:
         run: cd decode/rust/rosetta-squint-decode && cargo clippy --all-targets --all-features -- -D warnings
 
       # Go — golangci-lint via the official action.
-      - name: Set up Go 1.22
+      - name: Set up Go 1.25
         if: matrix.port == 'go'
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: '1.25'
           cache-dependency-path: decode/go/imagedecode/go.mod
       - name: Install libs (golangci needs to compile cgo packages)
         if: matrix.port == 'go'
@@ -359,11 +359,11 @@ jobs:
         run: cd decode/rust/rosetta-squint-decode && cargo test --no-fail-fast
 
       # Go
-      - name: Set up Go 1.22
+      - name: Set up Go 1.25
         if: matrix.port == 'go'
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: '1.25'
           cache-dependency-path: decode/go/imagedecode/go.mod
       - name: Go — go test
         if: matrix.port == 'go'
