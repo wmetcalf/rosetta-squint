@@ -66,7 +66,7 @@ jobs:
         run: sudo apt-get update -qq && sudo apt-get install -y libheif-dev libde265-dev pkg-config
       - name: Cache cargo (squint)
         if: matrix.port == 'rust'
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
@@ -436,7 +436,7 @@ jobs:
         run: sudo apt-get update -qq && sudo apt-get install -y libheif-dev libde265-dev pkg-config
       - name: Cache cargo (squint lint)
         if: matrix.port == 'rust'
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
