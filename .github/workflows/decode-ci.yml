@@ -93,7 +93,7 @@ jobs:
       # Go
       - name: Set up Go 1.25
         if: matrix.port == 'go'
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v7
         with:
           go-version: '1.25'
           cache-dependency-path: decode/go/imagedecode/go.mod
@@ -206,7 +206,7 @@ jobs:
       # don't false-positive.
       - name: Set up Go stable
         if: matrix.ecosystem == 'go'
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v7
         with:
           go-version: 'stable'
           cache-dependency-path: decode/go/imagedecode/go.mod
@@ -266,7 +266,7 @@ jobs:
       # Go — golangci-lint via the official action.
       - name: Set up Go 1.25
         if: matrix.port == 'go'
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v7
         with:
           go-version: '1.25'
           cache-dependency-path: decode/go/imagedecode/go.mod
@@ -361,7 +361,7 @@ jobs:
       # Go
       - name: Set up Go 1.25
         if: matrix.port == 'go'
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v7
         with:
           go-version: '1.25'
           cache-dependency-path: decode/go/imagedecode/go.mod
