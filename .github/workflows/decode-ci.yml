@@ -24,7 +24,7 @@ jobs:
         working-directory: decode/spec
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.11'
           cache: pip
@@ -42,7 +42,7 @@ jobs:
         working-directory: decode/spec
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.11'
           cache: pip
@@ -191,7 +191,7 @@ jobs:
       # Python — pip-audit on spec tooling deps
       - name: Set up Python 3.11
         if: matrix.ecosystem == 'python'
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.11'
       - name: Install pip-audit
