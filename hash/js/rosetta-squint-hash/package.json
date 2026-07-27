@@ -52,7 +52,7 @@
     "pngjs": "^7.0.0"
   },
   "devDependencies": {
-    "@types/node": "^20",
+    "@types/node": "^26",
     "@types/pngjs": "^6",
     "esbuild": "^0.28.1",
     "fast-check": "^4.8.0",
