@@ -49,7 +49,7 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <junit.version>5.10.0</junit.version>
-        <jackson.version>2.17.0</jackson.version>
+        <jackson.version>2.22.1</jackson.version>
     </properties>
 
     <!-- jazzer-junit:0.22.1 pulls junit-platform-commons/launcher 1.9.0, which
