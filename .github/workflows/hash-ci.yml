@@ -24,7 +24,7 @@ jobs:
         working-directory: hash/spec
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.11'
           cache: pip
@@ -44,7 +44,7 @@ jobs:
         working-directory: hash/spec
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.11'
           cache: pip
@@ -162,7 +162,7 @@ jobs:
 
       - name: Set up Python 3.11
         if: matrix.ecosystem == 'python'
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.11'
       - name: Install pip-audit
@@ -238,7 +238,7 @@ jobs:
       # Python — ruff (fast, configured via pyproject if present) + mypy on the wrapper.
       - name: Set up Python 3.11
         if: matrix.port == 'python'
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.11'
       - name: Install ruff + mypy + wrapper
@@ -347,7 +347,7 @@ jobs:
       # Python — not in the Ubuntu port-tests matrix; covered here for completeness.
       - name: Set up Python 3.11
         if: matrix.port == 'python'
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.11'
       - name: Python — pytest
