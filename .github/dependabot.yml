@@ -1,0 +1,49 @@
+version: 2
+
+# Scope: catch npm/pip/cargo advisory drift (the class of failure fixed in
+# PR #5, #6, #8) automatically instead of waiting for scheduled CI to go red.
+# Auto-merge is intentionally NOT configured — every PR still needs a human
+# to confirm CI is green before merging.
+#
+# No `ignore` rules for codec deps (Pillow, image, mozjpeg-sys, libwebp-sys2,
+# wasmtime*) on purpose: `ignore` suppresses security-update PRs too, and
+# those are exactly the packages where we most want to know about a real
+# CVE. The existing `spec drift check` / `cross-squint-diff` CI gates already
+# catch any byte-exactness regression from a codec bump — see the
+# regenerate.py --check verification method in decode/spec/CODEC_VERSIONS.md.
+# Same rule applies whether the bump PR is human- or Dependabot-authored:
+# verify goldens before merging, don't just wait for green CI.
+updates:
+  - package-ecosystem: npm
+    directories:
+      - /decode/js/rosetta-squint-decode
+      - /hash/js/rosetta-squint-hash
+      - /squint/js/rosetta-squint
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: pip
+    directories:
+      - /decode/spec
+      - /hash/spec
+      - /hash/python
+      - /squint/python
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: cargo
+    directories:
+      - /decode/rust/rosetta-squint-decode
+      - /hash/rust/rosetta-squint-hash
+      - /squint/rust/rosetta-squint
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
