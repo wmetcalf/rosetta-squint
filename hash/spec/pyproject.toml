@@ -8,7 +8,7 @@ dependencies = [
     "imagehash==4.3.2",
     "Pillow==12.3.0",
     "numpy>=1.26,<3.0",
-    "scipy>=1.11,<1.15",
+    "scipy>=1.11,<1.18",
     "PyWavelets>=1.5,<2.0",
 ]
 
