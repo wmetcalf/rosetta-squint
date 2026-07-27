@@ -14,7 +14,7 @@ keywords = ["image", "decoder", "pillow", "byte-exact", "libheif"]
 links = "rid_jpeg_shim"
 
 [dependencies]
-thiserror = "1"
+thiserror = "2"
 image = { version = "0.25", default-features = false, features = ["png", "gif", "tiff"] }
 mozjpeg-sys = "2"
 libwebp-sys2 = { version = "0.1.11", features = ["0_5"] }
