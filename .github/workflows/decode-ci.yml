@@ -140,7 +140,7 @@ jobs:
       # Swift
       - name: Set up Swift 5.9
         if: matrix.port == 'swift'
-        uses: swift-actions/setup-swift@v2
+        uses: swift-actions/setup-swift@v3
         with:
           swift-version: '5.10.1'
       - name: Install libjpeg-turbo for Swift
@@ -302,7 +302,7 @@ jobs:
       # Swift — build is the type-check; swift-format lint best-effort.
       - name: Set up Swift 5.9
         if: matrix.port == 'swift'
-        uses: swift-actions/setup-swift@v2
+        uses: swift-actions/setup-swift@v3
         with:
           swift-version: '5.10.1'
       - name: Install libjpeg-turbo for Swift
@@ -408,7 +408,7 @@ jobs:
       # Swift — native
       - name: Set up Swift 5.9
         if: matrix.port == 'swift'
-        uses: swift-actions/setup-swift@v2
+        uses: swift-actions/setup-swift@v3
         with:
           swift-version: '5.10.1'
       - name: Swift — swift test
