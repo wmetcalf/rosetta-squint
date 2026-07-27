@@ -29,7 +29,7 @@ jobs:
       matrix:
         port: [python, rust, go, java, js, swift]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # System libraries needed by the decode side (which squint chains into).
       - name: Install system libs
@@ -148,7 +148,7 @@ jobs:
     # No `needs:` — let this run in parallel with squint-tests. The diff
     # job rebuilds all CLIs anyway, so it doesn't reuse squint-tests output.
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install system libs
         run: |
@@ -213,7 +213,7 @@ jobs:
     # jobs share no state (each rebuilds the CLIs from scratch), so a flake
     # in cross-squint-diff shouldn't cancel a separate smoke test.
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Pull just enough to invoke the CLIs (built fresh below since we don't
       # cache them across jobs).
@@ -331,7 +331,7 @@ jobs:
       matrix:
         ecosystem: [rust, js, python, go]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Rust
       - uses: dtolnay/rust-toolchain@stable
@@ -413,7 +413,7 @@ jobs:
       matrix:
         port: [rust, go, python, js, swift]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install system libs (non-rust)
         if: matrix.port != 'rust'
@@ -540,7 +540,7 @@ jobs:
       TURBOJPEG_LIB_PATH: /opt/homebrew/opt/jpeg-turbo/lib
       TURBOJPEG_JAR_PATH: /opt/homebrew/share/java/turbojpeg.jar
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install system libs (brew, non-rust)
         if: matrix.port != 'rust' && matrix.port != 'js'
