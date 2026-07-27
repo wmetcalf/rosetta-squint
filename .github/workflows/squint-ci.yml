@@ -372,7 +372,7 @@ jobs:
           # directly. Install the sibling first into an isolated venv, then
           # audit the installed environment against the advisory DB.
           python -m venv /tmp/squint-audit-venv
-          /tmp/squint-audit-venv/bin/pip install --upgrade pip
+          /tmp/squint-audit-venv/bin/pip install --upgrade pip setuptools
           /tmp/squint-audit-venv/bin/pip install ./hash/python
           /tmp/squint-audit-venv/bin/pip install ./squint/python
           /tmp/squint-audit-venv/bin/pip install pip-audit
