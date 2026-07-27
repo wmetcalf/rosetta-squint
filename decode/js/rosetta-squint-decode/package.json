@@ -51,7 +51,7 @@
     "utif2": "^4.1.0"
   },
   "devDependencies": {
-    "@types/node": "^20",
+    "@types/node": "^26",
     "@types/pngjs": "^6",
     "fast-check": "^4.8.0",
     "typescript": "^5.5",
