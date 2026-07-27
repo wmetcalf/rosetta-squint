@@ -23,7 +23,7 @@ jobs:
       run:
         working-directory: decode/spec
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
           python-version: '3.11'
@@ -41,7 +41,7 @@ jobs:
       run:
         working-directory: decode/spec
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
           python-version: '3.11'
@@ -61,7 +61,7 @@ jobs:
       matrix:
         port: [java, go, rust, js, swift]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Java
       - name: Set up Java 17
@@ -163,7 +163,7 @@ jobs:
       matrix:
         ecosystem: [rust, js, python, go]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Rust — cargo audit (RustSec advisory DB)
       - name: Set up Rust stable
@@ -239,7 +239,7 @@ jobs:
       matrix:
         port: [rust, go, js, swift]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Rust — clippy with warnings treated as errors.
       - name: Set up Rust stable
@@ -341,7 +341,7 @@ jobs:
       TURBOJPEG_LIB_PATH: /opt/homebrew/opt/jpeg-turbo/lib
       TURBOJPEG_JAR_PATH: /opt/homebrew/share/java/turbojpeg.jar
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install system libs (brew)
         if: matrix.port != 'rust' && matrix.port != 'js'
