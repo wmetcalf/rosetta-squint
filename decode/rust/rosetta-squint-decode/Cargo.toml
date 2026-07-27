@@ -19,8 +19,8 @@ image = { version = "0.25", default-features = false, features = ["png", "gif", 
 mozjpeg-sys = "2"
 libwebp-sys2 = { version = "0.1.11", features = ["0_5"] }
 
-wasmtime = { version = "45", default-features = false, features = ["cranelift", "runtime"] }
-wasmtime-wasi = "45"
+wasmtime = { version = "46", default-features = false, features = ["cranelift", "runtime"] }
+wasmtime-wasi = "46"
 
 [build-dependencies]
 cc = "1"
