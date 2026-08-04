@@ -107,7 +107,7 @@ jobs:
       # JS/TS
       - name: Set up Node 20
         if: matrix.port == 'js'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '20'
           cache: npm
@@ -151,7 +151,7 @@ jobs:
 
       - name: Set up Node 20
         if: matrix.ecosystem == 'js'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '20'
           cache: npm
@@ -258,7 +258,7 @@ jobs:
       # JS/TS — tsc --noEmit (already implicit in npm test, but isolated here for clarity).
       - name: Set up Node 20
         if: matrix.port == 'js'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '20'
           cache: npm
@@ -380,7 +380,7 @@ jobs:
       # JS
       - name: Set up Node 20
         if: matrix.port == 'js'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '20'
           cache: npm
