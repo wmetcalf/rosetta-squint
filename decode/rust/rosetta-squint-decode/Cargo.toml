@@ -17,7 +17,7 @@ links = "rid_jpeg_shim"
 thiserror = "2"
 image = { version = "0.25", default-features = false, features = ["png", "gif", "tiff"] }
 mozjpeg-sys = "2"
-libwebp-sys2 = { version = "0.1.11", features = ["0_5"] }
+libwebp-sys2 = { version = "0.2.0", features = ["0_5"] }
 
 wasmtime = { version = "46", default-features = false, features = ["cranelift", "runtime"] }
 wasmtime-wasi = "46"
