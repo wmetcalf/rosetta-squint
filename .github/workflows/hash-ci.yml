@@ -230,7 +230,7 @@ jobs:
           cache-dependency-path: hash/go/imagehash/go.sum
       - name: golangci-lint
         if: matrix.port == 'go'
-        uses: golangci/golangci-lint-action@v8
+        uses: golangci/golangci-lint-action@v9
         with:
           version: latest
           working-directory: hash/go/imagehash

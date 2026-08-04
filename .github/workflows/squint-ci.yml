@@ -456,7 +456,7 @@ jobs:
           cache-dependency-path: squint/go/squint/go.mod
       - name: golangci-lint (squint)
         if: matrix.port == 'go'
-        uses: golangci/golangci-lint-action@v8
+        uses: golangci/golangci-lint-action@v9
         with:
           version: latest
           working-directory: squint/go/squint
