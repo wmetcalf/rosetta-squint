@@ -354,7 +354,7 @@ jobs:
         if: matrix.port == 'python'
         run: |
           python -m pip install --upgrade pip
-          pip install -e python
+          pip install -e hash/python
           pip install pytest
           cd hash/python && pytest -q
 
