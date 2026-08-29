@@ -79,7 +79,7 @@ Maven coordinates (Maven Central):
 <dependency>
   <groupId>io.github.wmetcalf</groupId>
   <artifactId>rosetta-squint-hash</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
 </dependency>
 ```
 

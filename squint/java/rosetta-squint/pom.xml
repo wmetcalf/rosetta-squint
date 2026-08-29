@@ -52,7 +52,11 @@
     <dependency>
       <groupId>io.github.wmetcalf</groupId>
       <artifactId>rosetta-squint-hash</artifactId>
-      <version>1.0.0</version>
+      <!-- 1.0.1 is the first release built with maven.compiler.release=17. Keep this in
+           step with hash/java/pom.xml: squint-ci installs hash/java locally before
+           building this module, so a stale pin here silently resolves the OLD artifact
+           from Central instead of the sibling in this tree. -->
+      <version>1.0.1</version>
     </dependency>
     <dependency>
       <groupId>io.github.wmetcalf</groupId>

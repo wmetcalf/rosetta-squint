@@ -136,7 +136,7 @@ public class Demo {
 
 Public static methods: `AverageHash.compute(img)`, `AverageHash.compute(img, hashSize)`, `PHash.compute(img, hashSize)`, `PHash.compute(img, hashSize, highfreqFactor)`, `DHash.compute(img, hashSize)`, `WHashHaar.compute(img, hashSize)`, `ColorHash.compute(img)`, `ColorHash.compute(img, binbits)`, `ColorHash.binEncode(v, binbits)`, `Hex.hexToHash(hex)`, `Hex.hexToFlathash(hex, hashSize)`. Input is `java.awt.image.BufferedImage`. `ImageHash` has `toString()` (hex), `equals()`, `hashCode()`, `subtract(other) → int`.
 
-Maven coordinates: `io.github.wmetcalf:rosetta-squint-hash:1.0.0` (on Maven Central). For local-only consumption: `cd hash/java && mvn install`, then reference the installed coordinates the same way.
+Maven coordinates: `io.github.wmetcalf:rosetta-squint-hash:1.0.1` (on Maven Central). For local-only consumption: `cd hash/java && mvn install`, then reference the installed coordinates the same way.
 
 ---
 
