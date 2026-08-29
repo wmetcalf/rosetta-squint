@@ -40,7 +40,7 @@ python3 -m twine check dist/*                      # must say PASSED
 python3 -m twine upload dist/*                     # publishes to PyPI
 
 # Verify:
-pip install --upgrade rosetta-squint-hash          # should pull 1.0.0
+pip install --upgrade rosetta-squint-hash          # should pull 1.0.1
 ```
 
 ## crates.io
