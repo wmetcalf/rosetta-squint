@@ -2,6 +2,28 @@
 
 All notable changes to rosetta-squint go here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.3] — 2026-08-29
+
+Affects **`rosetta-squint-hash`** on **Maven Central only** (1.0.0 → 1.0.1). PyPI
+(1.0.1), npm (1.0.0) and crates.io (1.0.0) carry no change this round and are not
+re-cut — the shipped artifact changed for the JVM port alone.
+
+### Fixed
+
+- **Java — compiled to release 17 instead of 21.** The `1.0.0` jar on Maven Central is
+  Java 21 bytecode (class file major version 65). Any consumer building with
+  `maven.compiler.release=17` cannot use it: javac rejects it outright with
+  *"class file has wrong version 65.0, should be 61.0"*, which then cascades into
+  `cannot find symbol` for every hash class. Apache Tika 4.x compiles at release 17, so
+  the dependency was unusable there on any clean checkout.
+
+  Nothing in the source requires 21 — the only post-17 construct is a `record`, which is
+  Java 16. Rebuilt at `release=17`; all 1,671 tests pass unchanged, and the artifact now
+  carries class major 61.
+
+  The 1.0.0 jar stays on Central as-is (Central artifacts are immutable); consumers on
+  JDK 21+ are unaffected either way and may stay on it.
+
 ## [1.1.2] — 2026-07-13
 
 Security-advisory patch sweep. Affects **`rosetta-squint`** (umbrella, PyPI 1.1.1 → 1.1.2),

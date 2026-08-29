@@ -2,7 +2,7 @@
 
 This document covers how to cut a new release across all 5 registries. Run the steps in order — most registries have inter-crate ordering dependencies (the umbrella package needs the libs published first).
 
-Currently published versions: **`rosetta-squint` 1.1.0**, **`rosetta-squint-decode` 1.1.0**, **`rosetta-squint-hash` 1.0.0** (see [CHANGELOG.md](./CHANGELOG.md)). The manifests in this tree are staged for **`rosetta-squint` 1.1.1** — bump this line to 1.1.1 once it is actually published.
+Currently published versions: **`rosetta-squint` 1.1.0**, **`rosetta-squint-decode` 1.1.0**, **`rosetta-squint-hash` 1.0.1 on Maven Central / 1.0.1 on PyPI / 1.0.0 on npm and crates.io** (see [CHANGELOG.md](./CHANGELOG.md)). The manifests in this tree are staged for **`rosetta-squint` 1.1.1** — bump this line to 1.1.1 once it is actually published.
 
 ## Quick map
 
@@ -156,7 +156,13 @@ mvn -Prelease deploy                       # builds source+javadoc jars, signs, 
 # Click "Publish" in the UI (or set autoPublish=true in the pom plugin config)
 
 # 3) Wait for hash to appear at search.maven.org (~10-30 min after release)
-# Verify: curl -sf https://repo1.maven.org/maven2/io/github/wmetcalf/rosetta-squint-hash/1.0.0/
+# Verify (set VERSION to the version you just cut):
+#   VERSION=1.0.1
+#   curl -sf https://repo1.maven.org/maven2/io/github/wmetcalf/rosetta-squint-hash/$VERSION/ >/dev/null \
+#     && echo "published" || echo "NOT published"
+#   Must name the new version explicitly. Central artifacts are immutable, so the artifact root
+#   and every previously released directory always exist -- a check pointed at either, or at an
+#   unset variable, passes even when the release never happened.
 
 # 4) Publish decode (same flow)
 cd ../../decode/java/rosetta-squint-decode
