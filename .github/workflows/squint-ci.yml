@@ -629,3 +629,27 @@ jobs:
       - name: Swift — swift test
         if: matrix.port == 'swift'
         run: cd squint/swift/RosettaSquint && swift test
+
+  # Every other Rust job tracks `stable`, so nothing else checks that the
+  # crate still builds on the `rust-version` it advertises to crates.io
+  # consumers. The toolchain is read from Cargo.toml so this can't drift
+  # from the declared MSRV.
+  msrv:
+    name: msrv (rust)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Read declared rust-version
+        id: msrv
+        run: |
+          v=$(sed -n 's/^rust-version *= *"\(.*\)"/\1/p' squint/rust/rosetta-squint/Cargo.toml)
+          test -n "$v" || { echo "no rust-version in squint/rust/rosetta-squint/Cargo.toml"; exit 1; }
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+      - name: Set up Rust (declared MSRV)
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ steps.msrv.outputs.version }}
+      - name: Install libheif
+        run: sudo apt-get update -qq && sudo apt-get install -y libheif-dev libheif-plugin-libde265 libde265-dev libde265-0 pkg-config
+      - name: cargo check --locked on declared MSRV
+        run: cd squint/rust/rosetta-squint && cargo check --locked --all-targets
