@@ -2,6 +2,41 @@
 
 All notable changes to rosetta-squint go here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.4] — 2026-10-05
+
+Security-advisory patch. Affects **`rosetta-squint-decode`** and **`rosetta-squint`**
+(umbrella) on **crates.io only**, 1.1.1 → 1.1.2 each. PyPI, npm, Maven Central and the
+Go/Swift tags carry no change and are not re-cut: only the Rust ports embed Wasmtime.
+
+### Security (dependencies)
+
+- **Rust — `wasmtime` / `wasmtime-wasi` `46` → `>=48.0.4, <49`** (resolves to 48.0.5),
+  clearing seven RustSec advisories against the WASM host that runs libheif for HEIC:
+  **RUSTSEC-2026-0327** (critical 9.3, native stack buffer overflow from an unvalidated
+  component async callback result count), -0316, -0321, -0322, -0323, -0324 and -0314.
+  The 46.x line had aged out of Wasmtime's support window and received no fix.
+
+  48 is a Wasmtime **LTS** release (24-month security backports, to ~Aug 2028) rather
+  than a 2-month normal release. Future Wasmtime advisories should therefore land as
+  lockfile-only bumps inside the range instead of forcing a range change each time.
+  The HEIC suite is byte-exact against the goldens on the new runtime; the
+  `libheif_decode.wasm` binary is unchanged.
+
+- **`rosetta-squint` now requires `rosetta-squint-decode` `1.1.2`** (was `1.1.0`), so
+  resolving the umbrella can no longer select a decode release with the vulnerable runtime.
+
+### Changed
+
+- **`rust-version` raised to 1.95** for both crates (decode declared 1.70, the umbrella
+  1.83). The old values were already inaccurate: Wasmtime 46 required 1.94. 1.95 is
+  Wasmtime 48's floor and the floor of the resolved dependency tree. A new `msrv (rust)`
+  CI job now builds each crate on exactly its declared `rust-version`.
+- `rosetta-squint-decode`: behavior-identical clippy tidies in the BMP stride/RLE and
+  16-bit gray+alpha PNG paths (`div_ceil`, `is_multiple_of`, `as_chunks`). Raising the
+  MSRV enabled these MSRV-gated lints; the BMP/PNG goldens are byte-identical.
+
+Landed in CI via #79.
+
 ## [1.1.3] — 2026-08-29
 
 Affects **`rosetta-squint-hash`** on **Maven Central only** (1.0.0 → 1.0.1). PyPI
