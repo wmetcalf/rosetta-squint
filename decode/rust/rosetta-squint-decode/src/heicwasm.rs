@@ -7,7 +7,7 @@
 use std::sync::OnceLock;
 
 use wasmtime::{Engine, Instance, Linker, Memory, Module, Store, TypedFunc};
-use wasmtime_wasi::p1::{self, WasiP1Ctx};
+use wasmtime_wasi::preview1::{self as p1, WasiP1Ctx};
 use wasmtime_wasi::WasiCtxBuilder;
 
 static WASM: &[u8] = include_bytes!("wasm/libheif_decode.wasm");
