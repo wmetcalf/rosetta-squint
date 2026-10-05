@@ -2,7 +2,7 @@
 name = "rosetta-squint-decode"
 version = "1.1.1"
 edition = "2021"
-rust-version = "1.70"
+rust-version = "1.96"
 description = "Byte-exact PIL-compatible image decoder library (Rust). Part of rosetta-squint."
 license = "BSD-2-Clause"
 repository = "https://github.com/wmetcalf/rosetta-squint"
@@ -19,8 +19,8 @@ image = { version = "0.25", default-features = false, features = ["png", "gif", 
 mozjpeg-sys = "2"
 libwebp-sys2 = { version = "0.2.0", features = ["0_5"] }
 
-wasmtime = { version = "49", default-features = false, features = ["cranelift", "runtime"] }
-wasmtime-wasi = "49"
+wasmtime = { version = ">=49.0.2, <50", default-features = false, features = ["cranelift", "runtime"] }
+wasmtime-wasi = ">=49.0.2, <50"
 
 [build-dependencies]
 cc = "1"
