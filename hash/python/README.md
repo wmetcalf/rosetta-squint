@@ -29,7 +29,7 @@ The wrapper pins upstream dependencies to the exact versions our goldens were va
 | Dep | Pinned to | Why |
 |---|---|---|
 | `imagehash` | `==4.3.2` | Algorithm output is what generates `spec/goldens.json`. New upstream release → potential drift → release of `rosetta-squint-hash` after re-validation. |
-| `Pillow` | `==10.4.*` | PIL's Lanczos resize, `Image.crop` rounding, `ImageFilter.GaussianBlur` box-radius formula, and grayscale conversion are all involved in our hash pipeline. A Pillow major-version bump can change any of these and silently break parity with the 5 other ports. |
+| `Pillow` | `==13.0.*` | PIL's Lanczos resize (pass order is fixed by the wrapper, not left to Pillow — see SPEC.md §"Step 4"), `Image.crop` rounding, `ImageFilter.GaussianBlur` box-radius formula, and grayscale conversion are all involved in our hash pipeline. A Pillow major-version bump can change any of these and silently break parity with the 5 other ports. |
 | `PyWavelets` | `>=1.5,<2.0` | db4 filter coefficients are mathematical constants; less drift risk, but bound the major version. |
 | `numpy` | `>=1.26,<2.0` | NumPy 2.0 changed some default dtypes and behaviors; pin to 1.x. |
 

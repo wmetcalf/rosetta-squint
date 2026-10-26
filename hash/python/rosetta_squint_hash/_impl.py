@@ -12,7 +12,7 @@ This module provides:
   threshold tie-break. ``rosetta_squint_hash`` exports THESE (not the upstream
   ones) so callers get cross-port stable hashes at every supported size.
 - ``average_hash`` / ``dhash`` / ``dhash_vertical`` / ``whash`` /
-  ``colorhash`` / ``crop_resistant_hash``: port-local wrappers around the
+  ``colorhash`` / ``crop_resistant_hash``: port-local versions of the
   matching upstream functions that first composite RGBA → RGB on opaque
   black using the same truncated 8-bit formula
   (``out_c = floor((src_c * alpha) / 255)``) that the 5 native ports use.
@@ -20,17 +20,42 @@ This module provides:
   simply *drop* the alpha channel, leaving the source RGB unchanged — which
   diverges from every native port on any partially-transparent input.
 
+Every Lanczos resize goes through :func:`_lanczos_resize`, which fixes the
+pass order to horizontal-then-vertical as ``spec/SPEC.md`` §"Step 4"
+requires, instead of leaving it to Pillow's internal heuristic.
+
 See ``__init__.py`` docstring and ``spec/SPEC.md`` §"Threshold tie-break"
 for the rationale.
 """
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import Any
+
 import numpy as np
 import pywt
 import scipy.fftpack
 import imagehash
-from PIL import Image
+from PIL import Image, ImageFilter
+
+
+def _lanczos_resize(image: Image.Image, size: tuple[int, int]) -> Image.Image:
+    """Lanczos resize with the spec's pass order: horizontal, then vertical.
+
+    Each pass rounds to uint8, so pass order affects output. Pillow chooses
+    the order internally (12.x: vertical-first above 100:1; 13.x: vertical-
+    first whenever height shrinks >2x more than width), so we issue each
+    single-axis pass ourselves to match the 5 native ports on every shape.
+    """
+    w, h = image.size
+    tw, th = size
+    out = image
+    if tw != w:
+        out = out.resize((tw, h), Image.Resampling.LANCZOS)
+    if th != h:
+        out = out.resize((tw, th), Image.Resampling.LANCZOS)
+    return out.copy() if out is image else out
 
 
 def _composite_over_black_truncated(image: Image.Image) -> Image.Image:
@@ -123,7 +148,7 @@ def phash(image: Image.Image, hash_size: int = 8, highfreq_factor: int = 4) -> i
         raise ValueError("Hash size must be greater than or equal to 2")
     image = _composite_over_black_truncated(image)
     img_size = hash_size * highfreq_factor
-    L = image.convert("L").resize((img_size, img_size), imagehash.ANTIALIAS)
+    L = _lanczos_resize(image.convert("L"), (img_size, img_size))
     pixels = np.asarray(L, dtype=np.float64)
     dct = scipy.fftpack.dct(scipy.fftpack.dct(pixels, axis=0), axis=1)
     block = dct[:hash_size, :hash_size]
@@ -141,7 +166,7 @@ def phash_simple(image: Image.Image, hash_size: int = 8, highfreq_factor: int = 
         raise ValueError("Hash size must be greater than or equal to 2")
     image = _composite_over_black_truncated(image)
     img_size = hash_size * highfreq_factor
-    L = image.convert("L").resize((img_size, img_size), imagehash.ANTIALIAS)
+    L = _lanczos_resize(image.convert("L"), (img_size, img_size))
     pixels = np.asarray(L, dtype=np.float64)
     dct = scipy.fftpack.dct(pixels)
     dctlowfreq = dct[:hash_size, 1:hash_size + 1]
@@ -178,7 +203,7 @@ def whash_db4(
     dwt_level = ll_max_level - level
 
     image = _composite_over_black_truncated(image)
-    L = image.convert("L").resize((image_scale, image_scale), imagehash.ANTIALIAS)
+    L = _lanczos_resize(image.convert("L"), (image_scale, image_scale))
     pixels = np.asarray(L) / 255.0
 
     coeffs = pywt.wavedec2(pixels, "haar", level=ll_max_level)
@@ -255,7 +280,7 @@ def whash_db4_robust(
     dwt_level = ll_max_level - level
 
     image = _composite_over_black_truncated(image)
-    L = image.convert("L").resize((image_scale, image_scale), imagehash.ANTIALIAS)
+    L = _lanczos_resize(image.convert("L"), (image_scale, image_scale))
     pixels = np.asarray(L) / 255.0
 
     coeffs = pywt.wavedec2(pixels, "haar", level=ll_max_level)
@@ -276,51 +301,40 @@ def whash_db4_robust(
     return imagehash.ImageHash(diff)
 
 
-# ─── RGBA-composite overrides for the remaining 6 upstream algorithms ────────
+# ─── Port-local versions of the remaining 6 upstream algorithms ──────────────
 #
-# These wrappers exist solely to apply :func:`_composite_over_black_truncated`
-# before forwarding into the upstream ``imagehash`` implementation. The
-# upstream functions otherwise call ``image.convert('L')`` (or
-# ``convert('HSV')``) directly on RGBA inputs, which would strip the alpha
-# channel without compositing. The 5 native ports all composite — see the
-# spec / triage report for the cross-port disagreement that motivated this.
-#
-# We DO forward to the upstream function (rather than re-implementing each
-# pipeline) so any future upstream bugfix in the body of e.g. ``dhash``
-# remains live. Only the alpha-handling preamble is overridden.
+# Each applies :func:`_composite_over_black_truncated` first (PIL's own
+# ``convert('L')`` / ``convert('HSV')`` drops alpha instead of compositing) and
+# routes every resize through :func:`_lanczos_resize`. Bodies otherwise mirror
+# ``imagehash==4.3.2`` line for line; ``colorhash`` has no resize and still
+# forwards upstream.
 
 
-def average_hash(image: Image.Image, hash_size: int = 8, mean=np.mean) -> imagehash.ImageHash:
-    """Port-local ``average_hash`` with cross-port alpha compositing.
-
-    Identical to ``imagehash.average_hash`` except RGBA / LA inputs are
-    composited against opaque black using the truncated 8-bit formula
-    before the upstream algorithm runs. See
-    :func:`_composite_over_black_truncated`.
-    """
-    return imagehash.average_hash(
-        _composite_over_black_truncated(image), hash_size=hash_size, mean=mean
-    )
+def average_hash(
+    image: Image.Image, hash_size: int = 8, mean: Callable[..., Any] = np.mean
+) -> imagehash.ImageHash:
+    """Port-local ``average_hash``; mirrors ``imagehash.average_hash``."""
+    if hash_size < 2:
+        raise ValueError("Hash size must be greater than or equal to 2")
+    image = _composite_over_black_truncated(image)
+    pixels = np.asarray(_lanczos_resize(image.convert("L"), (hash_size, hash_size)))
+    return imagehash.ImageHash(pixels > mean(pixels))
 
 
 def dhash(image: Image.Image, hash_size: int = 8) -> imagehash.ImageHash:
-    """Port-local ``dhash`` with cross-port alpha compositing.
-
-    See :func:`average_hash` for the rationale.
-    """
-    return imagehash.dhash(
-        _composite_over_black_truncated(image), hash_size=hash_size
-    )
+    """Port-local ``dhash``; mirrors ``imagehash.dhash``."""
+    if hash_size < 2:
+        raise ValueError("Hash size must be greater than or equal to 2")
+    image = _composite_over_black_truncated(image)
+    pixels = np.asarray(_lanczos_resize(image.convert("L"), (hash_size + 1, hash_size)))
+    return imagehash.ImageHash(pixels[:, 1:] > pixels[:, :-1])
 
 
 def dhash_vertical(image: Image.Image, hash_size: int = 8) -> imagehash.ImageHash:
-    """Port-local ``dhash_vertical`` with cross-port alpha compositing.
-
-    See :func:`average_hash` for the rationale.
-    """
-    return imagehash.dhash_vertical(
-        _composite_over_black_truncated(image), hash_size=hash_size
-    )
+    """Port-local ``dhash_vertical``; mirrors ``imagehash.dhash_vertical``."""
+    image = _composite_over_black_truncated(image)
+    pixels = np.asarray(_lanczos_resize(image.convert("L"), (hash_size, hash_size + 1)))
+    return imagehash.ImageHash(pixels[1:, :] > pixels[:-1, :])
 
 
 def whash(
@@ -330,23 +344,33 @@ def whash(
     mode: str = "haar",
     remove_max_haar_ll: bool = True,
 ) -> imagehash.ImageHash:
-    """Port-local ``whash`` with cross-port alpha compositing.
+    """Port-local ``whash``; mirrors ``imagehash.whash``.
 
-    Identical to ``imagehash.whash`` except RGBA / LA inputs are composited
-    against opaque black using the truncated 8-bit formula before the
-    upstream algorithm runs. Callers using ``mode='db4'`` should prefer
-    :func:`whash_db4` (which additionally applies the snap-to-threshold
-    tie-break) for cross-port stable hashes; this :func:`whash` wrapper is
-    here so ``whash(mode='haar')`` callers also get correct RGBA semantics
-    without needing to know the underlying machinery.
+    For ``mode='db4'`` prefer :func:`whash_db4`, which also applies the
+    snap-to-threshold tie-break.
     """
-    return imagehash.whash(
-        _composite_over_black_truncated(image),
-        hash_size=hash_size,
-        image_scale=image_scale,
-        mode=mode,
-        remove_max_haar_ll=remove_max_haar_ll,
-    )
+    if image_scale is not None:
+        assert image_scale & (image_scale - 1) == 0, "image_scale is not power of 2"
+    else:
+        image_natural_scale = 2 ** int(np.log2(min(image.size)))
+        image_scale = max(image_natural_scale, hash_size)
+
+    ll_max_level = int(np.log2(image_scale))
+    level = int(np.log2(hash_size))
+    assert hash_size & (hash_size - 1) == 0, "hash_size is not power of 2"
+    assert level <= ll_max_level, "hash_size in a wrong range"
+    dwt_level = ll_max_level - level
+
+    image = _composite_over_black_truncated(image)
+    pixels = np.asarray(_lanczos_resize(image.convert("L"), (image_scale, image_scale))) / 255.0
+
+    if remove_max_haar_ll:
+        coeffs = list(pywt.wavedec2(pixels, "haar", level=ll_max_level))
+        coeffs[0] *= 0
+        pixels = pywt.waverec2(coeffs, "haar")
+
+    dwt_low = pywt.wavedec2(pixels, mode, level=dwt_level)[0]
+    return imagehash.ImageHash(dwt_low > np.median(dwt_low))
 
 
 def colorhash(image: Image.Image, binbits: int = 3) -> imagehash.ImageHash:
@@ -364,31 +388,41 @@ def colorhash(image: Image.Image, binbits: int = 3) -> imagehash.ImageHash:
 
 def crop_resistant_hash(
     image: Image.Image,
-    hash_func=None,
+    hash_func: Callable[[Image.Image], imagehash.ImageHash] | None = None,
     limit_segments: int | None = None,
     segment_threshold: int = 128,
     min_segment_size: int = 500,
     segmentation_image_size: int = 300,
 ) -> imagehash.ImageMultiHash:
-    """Port-local ``crop_resistant_hash`` with cross-port alpha compositing.
+    """Port-local ``crop_resistant_hash``; mirrors ``imagehash.crop_resistant_hash``.
 
-    Composites the input once at the top of the pipeline so the
-    segmentation pass *and* each per-segment hash both see RGB pixels with
-    alpha already premultiplied against black. The default ``hash_func`` is
-    :func:`dhash` (the port-local snap/composite-applying wrapper, not
-    upstream's ``imagehash.dhash``) so per-segment hashes also see the
-    cross-port semantics — but on the composited RGB input that's already a
-    no-op for the alpha path, so the wrapper is only providing the
-    composite preamble belt-and-braces.
+    The default ``hash_func`` is the port-local :func:`dhash`, so per-segment
+    hashes also use the fixed resize pass order.
     """
-    composited = _composite_over_black_truncated(image)
     if hash_func is None:
         hash_func = dhash
-    return imagehash.crop_resistant_hash(
-        composited,
-        hash_func=hash_func,
-        limit_segments=limit_segments,
-        segment_threshold=segment_threshold,
-        min_segment_size=min_segment_size,
-        segmentation_image_size=segmentation_image_size,
+    orig_image = _composite_over_black_truncated(image)
+
+    gray = _lanczos_resize(orig_image.convert("L"), (segmentation_image_size, segmentation_image_size))
+    gray = gray.filter(ImageFilter.GaussianBlur()).filter(ImageFilter.MedianFilter())
+    pixels = np.array(gray).astype(np.float32)
+
+    segments = imagehash._find_all_segments(  # type: ignore[no-untyped-call]
+        pixels, segment_threshold, min_segment_size
     )
+    if not segments:
+        segments.append({(0, 0), (segmentation_image_size - 1, segmentation_image_size - 1)})
+    if limit_segments:
+        segments = sorted(segments, key=lambda s: len(s), reverse=True)[:limit_segments]
+
+    orig_w, orig_h = orig_image.size
+    scale_w = float(orig_w) / segmentation_image_size
+    scale_h = float(orig_h) / segmentation_image_size
+    hashes = []
+    for segment in segments:
+        min_y = min(coord[0] for coord in segment) * scale_h
+        min_x = min(coord[1] for coord in segment) * scale_w
+        max_y = (max(coord[0] for coord in segment) + 1) * scale_h
+        max_x = (max(coord[1] for coord in segment) + 1) * scale_w
+        hashes.append(hash_func(orig_image.crop((min_x, min_y, max_x, max_y))))
+    return imagehash.ImageMultiHash(hashes)
