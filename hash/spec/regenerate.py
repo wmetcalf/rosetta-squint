@@ -14,6 +14,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import contextlib
 import datetime as dt
 import hashlib
 import json
@@ -74,6 +75,41 @@ WHASH_DB4_ROBUST_EPS = 1e-12
 # Applied identically in all 6 ports (Python + Rust + Go + Java + JS + Swift).
 # See SPEC.md §"Threshold tie-break".
 SNAP_EPS = 1e-10
+
+
+_PIL_RESIZE = Image.Image.resize
+
+
+def _lanczos_resize(img: Image.Image, size: tuple[int, int]) -> Image.Image:
+    """Lanczos resize with SPEC.md §"Step 4" pass order: horizontal, then vertical.
+
+    Each pass rounds to uint8, so order matters. Pillow picks it internally
+    (12.x: vertical-first above 100:1; 13.x: vertical-first whenever height
+    shrinks >2x more than width); the spec and all 5 native ports fix it.
+    """
+    w, h = img.size
+    tw, th = size
+    out = img
+    if tw != w:
+        out = _PIL_RESIZE(out, (tw, h), Image.Resampling.LANCZOS)
+    if th != h:
+        out = _PIL_RESIZE(out, (tw, th), Image.Resampling.LANCZOS)
+    return out.copy() if out is img else out
+
+
+@contextlib.contextmanager
+def _spec_lanczos_pass_order():
+    """Route every LANCZOS resize (including inside upstream imagehash) through _lanczos_resize."""
+    def resize(self, size, resample=None, box=None, reducing_gap=None):
+        if resample == Image.Resampling.LANCZOS and box is None and reducing_gap is None:
+            return _lanczos_resize(self, (int(size[0]), int(size[1])))
+        return _PIL_RESIZE(self, size, resample, box, reducing_gap)
+
+    Image.Image.resize = resize
+    try:
+        yield
+    finally:
+        Image.Image.resize = _PIL_RESIZE
 
 
 def _phash_with_snap(img, hash_size: int):
@@ -224,41 +260,42 @@ def compute_goldens(fixtures: list[Path]) -> dict:
         "fixtures": {},
     }
 
-    for fix in sorted(fixtures):
-        img = Image.open(fix)
-        for size in ALGO_HASH_SIZES["average_hash"]:
-            algorithms["average_hash"]["fixtures"].setdefault(fix.name, {})[str(size)] = str(imagehash.average_hash(img, hash_size=size))
-        for size in ALGO_HASH_SIZES["dhash"]:
-            algorithms["dhash"]["fixtures"].setdefault(fix.name, {})[str(size)] = str(imagehash.dhash(img, hash_size=size))
-        for size in ALGO_HASH_SIZES["dhash_vertical"]:
-            algorithms["dhash_vertical"]["fixtures"].setdefault(fix.name, {})[str(size)] = str(imagehash.dhash_vertical(img, hash_size=size))
-        for size in ALGO_HASH_SIZES["phash"]:
-            # snap-to-threshold tie-break (SNAP_EPS) — see SPEC.md §"Threshold tie-break"
-            algorithms["phash"]["fixtures"].setdefault(fix.name, {})[str(size)] = str(_phash_with_snap(img, size))
-        for size in ALGO_HASH_SIZES["phash_simple"]:
-            algorithms["phash_simple"]["fixtures"].setdefault(fix.name, {})[str(size)] = str(_phash_simple_with_snap(img, size))
-        for size in ALGO_HASH_SIZES["whash_haar"]:
-            # whash needs hash_size <= image_natural_scale; skip if it would assert
-            try:
-                algorithms["whash_haar"]["fixtures"].setdefault(fix.name, {})[str(size)] = str(imagehash.whash(img, hash_size=size, mode="haar", remove_max_haar_ll=True))
-            except AssertionError:
-                # Fixture too small for this hash_size; emit explicit null sentinel
-                algorithms["whash_haar"]["fixtures"].setdefault(fix.name, {})[str(size)] = None
-        for size in ALGO_HASH_SIZES["whash_db4"]:
-            try:
-                algorithms["whash_db4"]["fixtures"].setdefault(fix.name, {})[str(size)] = str(_whash_db4_with_snap(img, size))
-            except (AssertionError, ValueError):
-                algorithms["whash_db4"]["fixtures"].setdefault(fix.name, {})[str(size)] = None
-        for size in ALGO_HASH_SIZES["whash_db4_robust"]:
-            try:
-                algorithms["whash_db4_robust"]["fixtures"].setdefault(fix.name, {})[str(size)] = str(_whash_db4_robust(img, size))
-            except (AssertionError, ValueError):
-                algorithms["whash_db4_robust"]["fixtures"].setdefault(fix.name, {})[str(size)] = None
-        for binbits in COLORHASH_BINBITS:
-            algorithms["colorhash"]["fixtures"].setdefault(fix.name, {})[str(binbits)] = str(imagehash.colorhash(img, binbits=binbits))
-        if fix.name not in CROP_RESISTANT_HASH_EXCLUDE:
-            # crop_resistant_hash uses default params; single "default" key per fixture.
-            algorithms["crop_resistant_hash"]["fixtures"].setdefault(fix.name, {})["default"] = str(imagehash.crop_resistant_hash(img))
+    with _spec_lanczos_pass_order():
+        for fix in sorted(fixtures):
+            img = Image.open(fix)
+            for size in ALGO_HASH_SIZES["average_hash"]:
+                algorithms["average_hash"]["fixtures"].setdefault(fix.name, {})[str(size)] = str(imagehash.average_hash(img, hash_size=size))
+            for size in ALGO_HASH_SIZES["dhash"]:
+                algorithms["dhash"]["fixtures"].setdefault(fix.name, {})[str(size)] = str(imagehash.dhash(img, hash_size=size))
+            for size in ALGO_HASH_SIZES["dhash_vertical"]:
+                algorithms["dhash_vertical"]["fixtures"].setdefault(fix.name, {})[str(size)] = str(imagehash.dhash_vertical(img, hash_size=size))
+            for size in ALGO_HASH_SIZES["phash"]:
+                # snap-to-threshold tie-break (SNAP_EPS) — see SPEC.md §"Threshold tie-break"
+                algorithms["phash"]["fixtures"].setdefault(fix.name, {})[str(size)] = str(_phash_with_snap(img, size))
+            for size in ALGO_HASH_SIZES["phash_simple"]:
+                algorithms["phash_simple"]["fixtures"].setdefault(fix.name, {})[str(size)] = str(_phash_simple_with_snap(img, size))
+            for size in ALGO_HASH_SIZES["whash_haar"]:
+                # whash needs hash_size <= image_natural_scale; skip if it would assert
+                try:
+                    algorithms["whash_haar"]["fixtures"].setdefault(fix.name, {})[str(size)] = str(imagehash.whash(img, hash_size=size, mode="haar", remove_max_haar_ll=True))
+                except AssertionError:
+                    # Fixture too small for this hash_size; emit explicit null sentinel
+                    algorithms["whash_haar"]["fixtures"].setdefault(fix.name, {})[str(size)] = None
+            for size in ALGO_HASH_SIZES["whash_db4"]:
+                try:
+                    algorithms["whash_db4"]["fixtures"].setdefault(fix.name, {})[str(size)] = str(_whash_db4_with_snap(img, size))
+                except (AssertionError, ValueError):
+                    algorithms["whash_db4"]["fixtures"].setdefault(fix.name, {})[str(size)] = None
+            for size in ALGO_HASH_SIZES["whash_db4_robust"]:
+                try:
+                    algorithms["whash_db4_robust"]["fixtures"].setdefault(fix.name, {})[str(size)] = str(_whash_db4_robust(img, size))
+                except (AssertionError, ValueError):
+                    algorithms["whash_db4_robust"]["fixtures"].setdefault(fix.name, {})[str(size)] = None
+            for binbits in COLORHASH_BINBITS:
+                algorithms["colorhash"]["fixtures"].setdefault(fix.name, {})[str(binbits)] = str(imagehash.colorhash(img, binbits=binbits))
+            if fix.name not in CROP_RESISTANT_HASH_EXCLUDE:
+                # crop_resistant_hash uses default params; single "default" key per fixture.
+                algorithms["crop_resistant_hash"]["fixtures"].setdefault(fix.name, {})["default"] = str(imagehash.crop_resistant_hash(img))
 
     return algorithms
 

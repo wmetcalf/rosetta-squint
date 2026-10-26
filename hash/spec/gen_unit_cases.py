@@ -22,6 +22,8 @@ import pywt
 import scipy.fftpack as sfp
 from PIL import Image
 
+from regenerate import _lanczos_resize
+
 SPEC_DIR = Path(__file__).parent
 GRAYSCALE_PATH = SPEC_DIR / "grayscale_cases.json"
 HSV_PATH = SPEC_DIR / "hsv_cases.json"
@@ -145,7 +147,7 @@ def gen_haar_cases() -> dict:
 def _write_lanczos_case(name: str, src: np.ndarray, dst_size: tuple[int, int]) -> dict:
     """Write a single Lanczos test case: input + output as raw bytes; entry for MANIFEST."""
     src_img = Image.fromarray(src.astype(np.uint8), mode="L")
-    dst_img = src_img.resize(dst_size, Image.Resampling.LANCZOS)
+    dst_img = _lanczos_resize(src_img, dst_size)
     dst_arr = np.asarray(dst_img, dtype=np.uint8)
     out_path = LANCZOS_DIR / f"{name}.bin"
     src_h, src_w = src.shape

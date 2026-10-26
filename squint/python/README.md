@@ -65,7 +65,7 @@ h = rih.phash(img, hash_size=8)
 ## Dependencies
 
 - `rosetta_squint_hash` (which re-exports `imagehash==4.3.2` + adds `whash_db4_robust`)
-- `Pillow==12.2.*`
+- `Pillow==13.0.*`
 
 Tight pins are intentional. See [`../../hash/python/README.md`](../../hash/python/README.md) under "Version policy" for the upgrade workflow.
 

@@ -1,7 +1,7 @@
 # rosetta-squint-hash bit-level specification
 
 Every language port reproduces this pipeline byte-exact. The Python reference is
-`imagehash==4.3.2` with `Pillow==12.2.0`, `numpy>=1.26,<2.0`, `scipy>=1.11,<1.15`,
+`imagehash==4.3.2` with `Pillow==13.0.0`, `numpy>=1.26,<2.0`, `scipy>=1.11,<1.15`,
 `PyWavelets>=1.5,<2.0`. Versions are recorded in `goldens.json`; ports that read
 different versions and fail parity should expect drift.
 
@@ -113,6 +113,16 @@ Pillow's `LANCZOS`/`ANTIALIAS` filter, called on a uint8 `'L'`-mode image.
 - kernel: `lanczos(x) = sinc(x) * sinc(x/3)` for `|x| < 3`, else 0 (with `sinc(0) = 1`)
 - weights normalized per output pixel (sum to 1.0)
 - separable: horizontal pass over source rows, then vertical pass over horizontal-pass output
+
+**Pass order is normative: always horizontal first, for every input shape.** Each
+pass rounds to uint8, so swapping the order changes output (up to ±15 per pixel,
+enough to flip hash bits). Pillow does not guarantee this order: 12.x runs the
+vertical pass first when `src_h > 100 * src_w`, and 13.x runs it first whenever
+`(src_h - dst_h) > 2 * (src_w - dst_w)`. The Python reference therefore issues the
+two single-axis resizes itself (`_lanczos_resize` in `rosetta_squint_hash/_impl.py`
+and `spec/regenerate.py`) instead of calling `resize((dst_w, dst_h))` directly.
+The `portrait-tall-256x768.png` and `sliver-8x1024.png` fixtures exercise both
+Pillow vertical-first paths.
 
 ### Byte-exact match requires fixed-point arithmetic
 
