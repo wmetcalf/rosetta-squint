@@ -142,10 +142,22 @@ def gen_haar_cases() -> dict:
     }
 
 
+def _spec_resize(image: Image.Image, size: tuple[int, int]) -> Image.Image:
+    """Lanczos resize in the spec's pass order (horizontal, then vertical).
+
+    Pillow >= 13 may run the vertical pass first for tall inputs, which
+    changes the uint8 output; two explicit calls pin the SPEC.md §Step 4
+    order on any Pillow. See regenerate.py for the full note.
+    """
+    width, height = size
+    horizontal = image.resize((width, image.size[1]), Image.Resampling.LANCZOS)
+    return horizontal.resize((width, height), Image.Resampling.LANCZOS)
+
+
 def _write_lanczos_case(name: str, src: np.ndarray, dst_size: tuple[int, int]) -> dict:
     """Write a single Lanczos test case: input + output as raw bytes; entry for MANIFEST."""
     src_img = Image.fromarray(src.astype(np.uint8), mode="L")
-    dst_img = src_img.resize(dst_size, Image.Resampling.LANCZOS)
+    dst_img = _spec_resize(src_img, dst_size)
     dst_arr = np.asarray(dst_img, dtype=np.uint8)
     out_path = LANCZOS_DIR / f"{name}.bin"
     src_h, src_w = src.shape

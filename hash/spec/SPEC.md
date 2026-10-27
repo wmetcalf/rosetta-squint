@@ -148,6 +148,19 @@ the accumulator stays well under int64 range.
 
 Vertical pass uses the same arithmetic, applied to the columns of the horizontal-pass output. **Both passes use the same fixed-point arithmetic; no intermediate float buffer exists** in PIL's C path.
 
+**Pass order is normative, and Pillow no longer guarantees it.** Each pass rounds to
+uint8, so running vertical-then-horizontal gives a different result from
+horizontal-then-vertical whenever both axes change. Pillow ≤ 12.3 always ran horizontal
+first. Pillow 13.0 added a heuristic to `ImagingResampleInner` (`Resample.c`) that runs
+the vertical pass first when `(src_h - dst_h) > 2 * (src_w - dst_w)` — i.e. on inputs
+taller than roughly 2:1 — so a bare `Image.resize` on Pillow ≥ 13 diverges from this
+spec (and from every native port) on such inputs. The Python reference
+(`rosetta_squint_hash._impl._spec_resize`, mirrored in `regenerate.py` and
+`gen_unit_cases.py`) therefore issues the two passes as two explicit `resize` calls,
+`resize((dst_w, src_h))` then `resize((dst_w, dst_h))`, which pins the spec order on any
+Pillow version. The per-pass arithmetic above is unchanged in Pillow 13; only the order
+moved. Native ports already implement horizontal-first and need no change.
+
 References: `lanczos_cases/*.bin` — 4 reference cases (downsample, upsample, identity,
 asymmetric). Group-1 test: `test_lanczos_fixed_point`. The downsample case is the
 one where float reference diverges; that's the most sensitive parity check.

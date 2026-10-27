@@ -7,7 +7,7 @@ name = "rosetta-squint-hash"
 version = "1.0.1"
 description = "Cross-port-stable extensions to Python imagehash, mirroring the 5 ports of rosetta-squint-hash"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 license = { text = "BSD-2-Clause" }
 authors = [
     { name = "Will Metcalf", email = "william.metcalf@gmail.com" },
@@ -26,7 +26,7 @@ authors = [
 dependencies = [
     "imagehash==4.3.2",
     "numpy>=1.26,<3.0",
-    "Pillow==12.3.*",       # tested against 12.3.0; allow patch-level only
+    "Pillow>=13.0,<14",     # tested against 13.0.0; the Lanczos pass order is pinned in-package (_spec_resize), so minor/patch Pillow updates are safe
     "PyWavelets>=1.5,<2.0",
 ]
 
@@ -39,7 +39,7 @@ test = [
 # emptor — cross-port byte-exact parity is no longer guaranteed.
 unpinned = [
     "imagehash>=4.3.2,<5.0",
-    "Pillow>=12.2,<14",
+    "Pillow>=13,<15",
 ]
 
 [project.urls]

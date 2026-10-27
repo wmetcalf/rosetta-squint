@@ -1631,10 +1631,10 @@
     "screenshot-1200.png": "f0958bf902891cce50eb6a6df2e7b1e9c2ebb696a5797b8051f1b98d1820a521"
   },
   "imagehash_version": "4.3.2",
-  "numpy_version": "1.26.4",
-  "pillow_version": "12.3.0",
+  "numpy_version": "2.4.6",
+  "pillow_version": "13.0.0",
   "pywavelets_version": "1.8.0",
-  "regenerated_at": "2026-07-13T14:33:31Z",
+  "regenerated_at": "2026-10-27T14:13:35Z",
   "schema_version": 1,
   "scipy_version": "1.17.1"
 }
