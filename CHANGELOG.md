@@ -2,6 +2,32 @@
 
 All notable changes to rosetta-squint go here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+Pillow security sweep. Affects **`rosetta-squint-hash`** and **`rosetta-squint`** on
+**PyPI** (the shipped Pillow pin changes); every other registry carries no change.
+
+### Security (dependencies)
+
+- **Python — Pillow `12.3.*` → `>=13.0,<14`** across the shipped `rosetta-squint-hash`
+  and `rosetta-squint` pins and the decode/hash spec tooling (`==13.0.0`). Clears the
+  Pillow 13.0.0 advisory batch flagged by `pip-audit` (CVE-2026-96636 … -96644, -96778,
+  -112398, -114501, GHSA-78g4-xqwv-q3g8), including the critical
+  GHSA-v9pv-5gc8-w2m6 (stale native image storage reused after mode transitions) and
+  the JPEG decoder buffer overflow, both reachable from `Image.open` on untrusted input.
+  Pillow 13 drops Python 3.10, so both packages now require **Python ≥ 3.11**.
+
+### Fixed
+
+- **Python — hash output no longer depends on the installed Pillow's resize pass
+  order.** Pillow 13.0 runs the vertical Lanczos pass before the horizontal one on
+  inputs taller than ~2:1, which changed `average_hash` / `dhash` / `phash` /
+  `crop_resistant_hash` for such images relative to Pillow ≤ 12.3, `spec/SPEC.md`
+  §Step 4 and all five native ports. `rosetta_squint_hash` now issues the two passes
+  explicitly (`_spec_resize`), so it matches the spec and the other ports on every
+  Pillow version. Verified: decode and hash goldens are byte-identical under Pillow
+  12.3.0 and 13.0.0; only the recorded `pillow_version` stamp changes.
+
 ## [1.1.4] — 2026-10-05
 
 Security-advisory patch. Affects **`rosetta-squint-decode`** and **`rosetta-squint`**
