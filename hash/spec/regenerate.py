@@ -28,7 +28,24 @@ import PIL
 import pywt
 import scipy
 import scipy.fftpack
-from PIL import Image
+from PIL import Image, ImageFilter
+
+
+def _spec_resize(image: Image.Image, size: tuple[int, int]) -> Image.Image:
+    """Lanczos resize in the spec's pass order: horizontal, then vertical.
+
+    SPEC.md §Step 4 defines the resize as a horizontal pass over the source
+    rows followed by a vertical pass, each rounding to uint8. Pillow <= 12.3
+    always did that; Pillow >= 13 runs the vertical pass first whenever the
+    height shrinks by more than twice as much as the width, which changes
+    the output for inputs taller than ~2:1. Issuing the two passes as two
+    explicit resize calls pins the spec order on every Pillow version, so
+    the goldens no longer depend on which Pillow generated them. Mirrors
+    `rosetta_squint_hash._impl._spec_resize`.
+    """
+    width, height = size
+    horizontal = image.resize((width, image.size[1]), Image.Resampling.LANCZOS)
+    return horizontal.resize((width, height), Image.Resampling.LANCZOS)
 
 SPEC_DIR = Path(__file__).parent
 FIXTURES_DIR = SPEC_DIR / "fixtures"
@@ -86,7 +103,7 @@ def _phash_with_snap(img, hash_size: int):
     """
     highfreq_factor = 4
     img_size = hash_size * highfreq_factor
-    L = img.convert("L").resize((img_size, img_size), imagehash.ANTIALIAS)
+    L = _spec_resize(img.convert("L"), (img_size, img_size))
     pixels = np.asarray(L, dtype=np.float64)
     dct = scipy.fftpack.dct(scipy.fftpack.dct(pixels, axis=0), axis=1)
     block = dct[:hash_size, :hash_size]
@@ -103,7 +120,7 @@ def _phash_simple_with_snap(img, hash_size: int):
     """
     highfreq_factor = 4
     img_size = hash_size * highfreq_factor
-    L = img.convert("L").resize((img_size, img_size), imagehash.ANTIALIAS)
+    L = _spec_resize(img.convert("L"), (img_size, img_size))
     pixels = np.asarray(L, dtype=np.float64)
     dct = scipy.fftpack.dct(pixels)
     dctlowfreq = dct[:hash_size, 1:hash_size + 1]
@@ -126,7 +143,7 @@ def _whash_db4_with_snap(img, hash_size: int):
     assert hash_size & (hash_size - 1) == 0, "hash_size must be power of 2"
     assert level <= ll_max_level, "hash_size in a wrong range"
     dwt_level = ll_max_level - level
-    L = img.convert("L").resize((image_scale, image_scale), imagehash.ANTIALIAS)
+    L = _spec_resize(img.convert("L"), (image_scale, image_scale))
     pixels = np.asarray(L) / 255.0
     coeffs = pywt.wavedec2(pixels, "haar", level=ll_max_level)
     coeffs = list(coeffs)
@@ -156,7 +173,7 @@ def _whash_db4_robust(img, hash_size: int):
     assert hash_size & (hash_size - 1) == 0, "hash_size must be power of 2"
     assert level <= ll_max_level, "hash_size in a wrong range"
     dwt_level = ll_max_level - level
-    L = img.convert("L").resize((image_scale, image_scale), imagehash.ANTIALIAS)
+    L = _spec_resize(img.convert("L"), (image_scale, image_scale))
     pixels = np.asarray(L) / 255.0
     coeffs = pywt.wavedec2(pixels, "haar", level=ll_max_level)
     coeffs = list(coeffs)
@@ -170,6 +187,83 @@ def _whash_db4_robust(img, hash_size: int):
     # Snap near-median coefficients to bit 0 (the new tie-break step).
     diff = dwt_low > med + SNAP_EPS
     return imagehash.ImageHash(diff)
+
+
+# Reference versions of the upstream algorithms whose body calls
+# `Image.resize` directly. Bodies are upstream imagehash 4.3.2 verbatim
+# except that the resize goes through `_spec_resize`, so the goldens are
+# produced by the spec pipeline rather than by whatever pass order the
+# installed Pillow uses. colorhash never resizes and is used from upstream.
+
+
+def _average_hash(img, hash_size: int):
+    L = _spec_resize(img.convert("L"), (hash_size, hash_size))
+    pixels = np.asarray(L)
+    avg = np.mean(pixels)
+    diff = pixels > avg
+    return imagehash.ImageHash(diff)
+
+
+def _dhash(img, hash_size: int = 8):
+    # resize(w, h), but numpy.array((h, w))
+    L = _spec_resize(img.convert("L"), (hash_size + 1, hash_size))
+    pixels = np.asarray(L)
+    diff = pixels[:, 1:] > pixels[:, :-1]
+    return imagehash.ImageHash(diff)
+
+
+def _dhash_vertical(img, hash_size: int):
+    L = _spec_resize(img.convert("L"), (hash_size, hash_size + 1))
+    pixels = np.asarray(L)
+    diff = pixels[1:, :] > pixels[:-1, :]
+    return imagehash.ImageHash(diff)
+
+
+def _whash_haar(img, hash_size: int):
+    """Reference whash(mode='haar', remove_max_haar_ll=True)."""
+    image_natural_scale = 2 ** int(np.log2(min(img.size)))
+    image_scale = max(image_natural_scale, hash_size)
+    ll_max_level = int(np.log2(image_scale))
+    level = int(np.log2(hash_size))
+    assert hash_size & (hash_size - 1) == 0, "hash_size must be power of 2"
+    assert level <= ll_max_level, "hash_size in a wrong range"
+    dwt_level = ll_max_level - level
+    L = _spec_resize(img.convert("L"), (image_scale, image_scale))
+    pixels = np.asarray(L) / 255.0
+    coeffs = pywt.wavedec2(pixels, "haar", level=ll_max_level)
+    coeffs = list(coeffs)
+    coeffs[0] *= 0
+    pixels = pywt.waverec2(coeffs, "haar")
+    coeffs = pywt.wavedec2(pixels, "haar", level=dwt_level)
+    dwt_low = coeffs[0]
+    med = np.median(dwt_low)
+    diff = dwt_low > med
+    return imagehash.ImageHash(diff)
+
+
+def _crop_resistant_hash(img, segment_threshold: int = 128, min_segment_size: int = 500,
+                         segmentation_image_size: int = 300):
+    """Reference crop_resistant_hash with default params; per-segment hash is `_dhash`."""
+    orig_image = img.copy()
+    image = _spec_resize(img.convert("L"), (segmentation_image_size, segmentation_image_size))
+    image = image.filter(ImageFilter.GaussianBlur()).filter(ImageFilter.MedianFilter())
+    pixels = np.array(image).astype(np.float32)
+    segments = imagehash._find_all_segments(pixels, segment_threshold, min_segment_size)
+    if not segments:
+        full_image_segment = {(0, 0), (segmentation_image_size - 1, segmentation_image_size - 1)}
+        segments.append(full_image_segment)
+    hashes = []
+    for segment in segments:
+        orig_w, orig_h = orig_image.size
+        scale_w = float(orig_w) / segmentation_image_size
+        scale_h = float(orig_h) / segmentation_image_size
+        min_y = min(coord[0] for coord in segment) * scale_h
+        min_x = min(coord[1] for coord in segment) * scale_w
+        max_y = (max(coord[0] for coord in segment) + 1) * scale_h
+        max_x = (max(coord[1] for coord in segment) + 1) * scale_w
+        bounding_box = orig_image.crop((min_x, min_y, max_x, max_y))
+        hashes.append(_dhash(bounding_box))
+    return imagehash.ImageMultiHash(hashes)
 
 
 def write_decoded(fixtures: list[Path], decoded_dir: Path) -> dict[str, str]:
@@ -227,11 +321,11 @@ def compute_goldens(fixtures: list[Path]) -> dict:
     for fix in sorted(fixtures):
         img = Image.open(fix)
         for size in ALGO_HASH_SIZES["average_hash"]:
-            algorithms["average_hash"]["fixtures"].setdefault(fix.name, {})[str(size)] = str(imagehash.average_hash(img, hash_size=size))
+            algorithms["average_hash"]["fixtures"].setdefault(fix.name, {})[str(size)] = str(_average_hash(img, size))
         for size in ALGO_HASH_SIZES["dhash"]:
-            algorithms["dhash"]["fixtures"].setdefault(fix.name, {})[str(size)] = str(imagehash.dhash(img, hash_size=size))
+            algorithms["dhash"]["fixtures"].setdefault(fix.name, {})[str(size)] = str(_dhash(img, size))
         for size in ALGO_HASH_SIZES["dhash_vertical"]:
-            algorithms["dhash_vertical"]["fixtures"].setdefault(fix.name, {})[str(size)] = str(imagehash.dhash_vertical(img, hash_size=size))
+            algorithms["dhash_vertical"]["fixtures"].setdefault(fix.name, {})[str(size)] = str(_dhash_vertical(img, size))
         for size in ALGO_HASH_SIZES["phash"]:
             # snap-to-threshold tie-break (SNAP_EPS) — see SPEC.md §"Threshold tie-break"
             algorithms["phash"]["fixtures"].setdefault(fix.name, {})[str(size)] = str(_phash_with_snap(img, size))
@@ -240,7 +334,7 @@ def compute_goldens(fixtures: list[Path]) -> dict:
         for size in ALGO_HASH_SIZES["whash_haar"]:
             # whash needs hash_size <= image_natural_scale; skip if it would assert
             try:
-                algorithms["whash_haar"]["fixtures"].setdefault(fix.name, {})[str(size)] = str(imagehash.whash(img, hash_size=size, mode="haar", remove_max_haar_ll=True))
+                algorithms["whash_haar"]["fixtures"].setdefault(fix.name, {})[str(size)] = str(_whash_haar(img, size))
             except AssertionError:
                 # Fixture too small for this hash_size; emit explicit null sentinel
                 algorithms["whash_haar"]["fixtures"].setdefault(fix.name, {})[str(size)] = None
@@ -258,7 +352,7 @@ def compute_goldens(fixtures: list[Path]) -> dict:
             algorithms["colorhash"]["fixtures"].setdefault(fix.name, {})[str(binbits)] = str(imagehash.colorhash(img, binbits=binbits))
         if fix.name not in CROP_RESISTANT_HASH_EXCLUDE:
             # crop_resistant_hash uses default params; single "default" key per fixture.
-            algorithms["crop_resistant_hash"]["fixtures"].setdefault(fix.name, {})["default"] = str(imagehash.crop_resistant_hash(img))
+            algorithms["crop_resistant_hash"]["fixtures"].setdefault(fix.name, {})["default"] = str(_crop_resistant_hash(img))
 
     return algorithms
 
