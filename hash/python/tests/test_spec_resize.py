@@ -1,14 +1,13 @@
 """Pin the Lanczos resize to the spec's pass order, independent of Pillow.
 
 SPEC.md §Step 4 defines the resize as a horizontal pass followed by a
-vertical pass, each rounding to uint8. Pillow <= 12.3 always did that, so the
-Python reference could call ``Image.resize`` directly. Pillow >= 13 runs the
-vertical pass first whenever the height shrinks by more than twice as much as
-the width, which changes the output for inputs taller than ~2:1 — and so
-their hashes. ``_spec_resize`` issues the two passes explicitly to pin the
-spec order on any Pillow version.
+vertical pass, each rounding to uint8. Pillow runs the vertical pass first on
+tall inputs: Pillow <= 12.3 beyond 100:1 (in ``Image.resize``), Pillow >= 13
+beyond ~2:1 (in ``Resample.c``). Either changes the output, and so the
+hashes. ``_spec_resize`` issues the two passes explicitly to pin the spec
+order on any Pillow version.
 
-Two guards:
+Three guards:
 
 1. ``_spec_resize`` reproduces every ``spec/lanczos_cases/*.bin`` reference
    vector (the same bins every native port tests against).
@@ -16,6 +15,9 @@ Two guards:
    sha256 values frozen under Pillow 12.3.0. No fixture in ``spec/`` is
    taller than 2:1, so the goldens alone would not catch a pass-order
    change; this does.
+3. A 5x1200 input (240:1, past Pillow 12.3's 100:1 cutoff) hashes to the
+   values the Go port produces. rosetta-squint-hash <= 1.0.1 disagreed with
+   Go on all eight.
 """
 
 from __future__ import annotations
@@ -75,4 +77,34 @@ def test_spec_resize_tall_input_is_pillow_independent(size: tuple[int, int]):
     assert hashlib.sha256(out.tobytes()).hexdigest() == TALL_REFERENCE[size], (
         f"_spec_resize {size} on a 3:1 input no longer matches the Pillow 12.3.0 "
         "reference — the installed Pillow changed its per-pass Lanczos arithmetic"
+    )
+
+
+def _very_tall_input() -> Image.Image:
+    """5x1200 'L' image (240:1 portrait), closed-form like ``_tall_input``."""
+    y, x = np.mgrid[0:1200, 0:5]
+    return Image.fromarray(((x * 53 + y * 7 + (x * y) // 11) % 256).astype(np.uint8), mode="L")
+
+
+# Hex output of hash/go/imagehash on the same pixels (saved as an 'L' PNG).
+VERY_TALL_GO_REFERENCE = {
+    ("average_hash", 8): "1d7b01607199f698",
+    ("dhash", 8): "f1c3218181324432",
+    ("dhash_vertical", 8): "e30000f00bf86698",
+    ("phash", 8): "88825d975f171d87",
+    ("average_hash", 16): "07f0e0073ffd1f877ff9400700017e3d7f0001ff0181e1ffbfc00c06f078c3c0",
+    ("dhash", 16): "fd81851ff841f81f808182158901b021a0034244070d06803004102400e00f0e",
+    ("dhash_vertical", 16): "f0071ff80003e1f0001f00803f7fff0000ff0007e000fefe1f00003cf03083c0",
+    ("phash", 16): "8822820a1d77823a183e57da18fe972fcc2917570d7ed2784d6f93179a2752b7",
+}
+
+
+@pytest.mark.parametrize("algo,size", sorted(VERY_TALL_GO_REFERENCE))
+def test_very_tall_input_matches_go_port(algo: str, size: int):
+    import rosetta_squint_hash
+
+    got = str(getattr(rosetta_squint_hash, algo)(_very_tall_input(), hash_size=size))
+    assert got == VERY_TALL_GO_REFERENCE[(algo, size)], (
+        f"{algo}({size}) on a 240:1 input diverged from the Go port — the resize "
+        "is no longer running in spec order (Pillow <= 12.3 reorders past 100:1)"
     )

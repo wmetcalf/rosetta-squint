@@ -35,12 +35,12 @@ def _spec_resize(image: Image.Image, size: tuple[int, int]) -> Image.Image:
     """Lanczos resize in the spec's pass order: horizontal, then vertical.
 
     SPEC.md §Step 4 defines the resize as a horizontal pass over the source
-    rows followed by a vertical pass, each rounding to uint8. Pillow <= 12.3
-    always did that; Pillow >= 13 runs the vertical pass first whenever the
-    height shrinks by more than twice as much as the width, which changes
-    the output for inputs taller than ~2:1. Issuing the two passes as two
-    explicit resize calls pins the spec order on every Pillow version, so
-    the goldens no longer depend on which Pillow generated them. Mirrors
+    rows followed by a vertical pass, each rounding to uint8. Pillow runs the
+    vertical pass first on tall inputs (Pillow <= 12.3 beyond 100:1, Pillow
+    >= 13 beyond ~2:1; see SPEC.md §Step 4), which changes the output.
+    Issuing the two passes as two explicit resize calls pins the spec order
+    on every Pillow version, so the goldens no longer depend on which Pillow
+    generated them. Mirrors
     `rosetta_squint_hash._impl._spec_resize`.
     """
     width, height = size

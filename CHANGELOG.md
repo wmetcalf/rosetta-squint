@@ -30,8 +30,25 @@ no change and are not re-cut. The umbrella's floor on `rosetta-squint-hash` rise
   explicitly (`_spec_resize`), so it matches the spec and the other ports on every
   Pillow version. Verified: decode and hash goldens are byte-identical under Pillow
   12.3.0 and 13.0.0; only the recorded `pillow_version` stamp changes.
+- **Python — images taller than 100:1 now hash the same as the native ports.**
+  Pillow ≤ 12.3's `Image.resize` also reorders the passes, when the source is more
+  than 100× taller than wide and the height shrinks, so `rosetta-squint-hash` ≤ 1.0.1
+  disagreed with every native port on such images. `_spec_resize` fixes this case
+  too. **Stored Python hashes of images taller than 100:1 will change** (to the value
+  every other port already produced). All other inputs hash identically to 1.0.1:
+  checked across the hash fixtures, the full decode corpus (140 valid files, all
+  formats, through the umbrella) and generated odd-shaped and RGBA images. New test
+  `test_very_tall_input_matches_go_port` pins a 240:1 input to the Go port's hashes.
 
-Landed in CI via #92.
+### Changed
+
+- **Python (`rosetta-squint`) — an oversized WebP now raises
+  `PIL.Image.DecompressionBombError` instead of `OSError`.** Pillow 13 rejects it in
+  its pixel-limit check before libwebp sees it. `DecompressionBombError` does not
+  subclass `OSError`, so callers that catch only `OSError` around `decode_*` / hash
+  calls should also catch it. The input is still rejected.
+
+Landed in CI via #92; the 100:1 note and test in #93.
 
 ## [1.1.4] — 2026-10-05
 
