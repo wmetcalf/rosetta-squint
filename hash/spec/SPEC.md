@@ -150,16 +150,27 @@ Vertical pass uses the same arithmetic, applied to the columns of the horizontal
 
 **Pass order is normative, and Pillow no longer guarantees it.** Each pass rounds to
 uint8, so running vertical-then-horizontal gives a different result from
-horizontal-then-vertical whenever both axes change. Pillow ≤ 12.3 always ran horizontal
-first. Pillow 13.0 added a heuristic to `ImagingResampleInner` (`Resample.c`) that runs
-the vertical pass first when `(src_h - dst_h) > 2 * (src_w - dst_w)` — i.e. on inputs
-taller than roughly 2:1 — so a bare `Image.resize` on Pillow ≥ 13 diverges from this
-spec (and from every native port) on such inputs. The Python reference
+horizontal-then-vertical whenever both axes change. Pillow has two heuristics that
+reorder the passes:
+
+- **Pillow ≤ 12.3**, in Python-level `Image.resize`: when
+  `src_h > 100 * src_w` and the height shrinks, it resizes vertically first. Inputs
+  taller than 100:1 therefore never followed this spec on Pillow ≤ 12.3, and
+  `rosetta-squint-hash` ≤ 1.0.1, which called `Image.resize` directly, disagreed with
+  every native port on them.
+- **Pillow 13.0**, in `ImagingResampleInner` (`Resample.c`): runs the vertical pass
+  first when `(src_h - dst_h) > 2 * (src_w - dst_w)`, i.e. on inputs taller than
+  roughly 2:1.
+
+So a bare `Image.resize` diverges from this spec (and from every native port) on tall
+inputs on any Pillow version. The Python reference
 (`rosetta_squint_hash._impl._spec_resize`, mirrored in `regenerate.py` and
 `gen_unit_cases.py`) therefore issues the two passes as two explicit `resize` calls,
 `resize((dst_w, src_h))` then `resize((dst_w, dst_h))`, which pins the spec order on any
-Pillow version. The per-pass arithmetic above is unchanged in Pillow 13; only the order
-moved. Native ports already implement horizontal-first and need no change.
+Pillow version: each call changes only one axis, so there is no order left for either
+heuristic to change. The per-pass arithmetic above is identical in
+Pillow 12.3 and 13.0; only the order moved. Native ports implement horizontal-first
+unconditionally and need no change.
 
 References: `lanczos_cases/*.bin` — 4 reference cases (downsample, upsample, identity,
 asymmetric). Group-1 test: `test_lanczos_fixed_point`. The downsample case is the

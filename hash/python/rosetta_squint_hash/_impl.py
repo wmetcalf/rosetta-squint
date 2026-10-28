@@ -22,7 +22,7 @@ This module provides:
 - ``_spec_resize``: the one Lanczos resize every algorithm above goes
   through. It pins the separable pass order (horizontal, then vertical)
   that ``spec/SPEC.md`` §Step 4 defines, independent of which order the
-  installed Pillow happens to use (Pillow ≥ 13 picks the order per call).
+  installed Pillow happens to use (every Pillow picks the order per call).
 
 See ``__init__.py`` docstring and ``spec/SPEC.md`` §"Threshold tie-break"
 for the rationale.
@@ -43,18 +43,24 @@ def _spec_resize(image: Image.Image, size: tuple[int, int]) -> Image.Image:
     ``spec/SPEC.md`` §Step 4 defines the resize as a separable Lanczos3
     filter run as a horizontal pass over the source rows followed by a
     vertical pass over that result, each pass rounding to uint8. Every
-    native port implements exactly that. Pillow ≤ 12.3 did too, so the
-    Python reference could call ``Image.resize`` directly.
+    native port implements exactly that, unconditionally.
 
-    Pillow 13.0 added a performance heuristic to ``ImagingResampleInner``
-    (``src/libImaging/Resample.c``): when the height shrinks by more than
-    twice as much as the width, the vertical pass runs *first*. Because
-    each pass rounds to 8 bits, the order changes the output — any input
-    taller than roughly 2:1 resizes differently, and so hashes differently
-    from every other port. The per-axis arithmetic itself is unchanged, so
-    issuing the two passes as two explicit ``resize`` calls restores the
-    spec order on any Pillow version and reproduces Pillow ≤ 12.3's output
-    byte-for-byte.
+    Pillow does not. Because each pass rounds to 8 bits, running the
+    vertical pass first changes the output, and Pillow does so in two
+    cases:
+
+    - Pillow ≤ 12.3's ``Image.resize`` (Python level): when the source is
+      more than 100x taller than wide and the height shrinks. Releases up
+      to 1.0.1 called ``Image.resize`` directly and so disagreed with every
+      other port on such inputs.
+    - Pillow 13.0's ``ImagingResampleInner`` (``src/libImaging/Resample.c``):
+      when the height shrinks by more than twice as much as the width,
+      i.e. inputs taller than roughly 2:1.
+
+    The per-axis arithmetic is the same in both versions, so issuing the
+    two passes as two explicit ``resize`` calls gives the spec order, and
+    the native ports' output, on any Pillow version. It matches Pillow
+    ≤ 12.3's single-call output byte-for-byte below 100:1.
 
     Note that the second call never re-runs the horizontal pass: Pillow's
     ``resize`` is a no-op copy along an axis whose size does not change.
@@ -325,8 +331,8 @@ def whash_db4_robust(
 # The five that resize (``average_hash``, ``dhash``, ``dhash_vertical``,
 # ``whash``, ``crop_resistant_hash``) carry their own copy of the upstream
 # ``imagehash`` 4.3.2 body so the resize can go through :func:`_spec_resize`
-# — upstream calls ``Image.resize`` directly, whose pass order is Pillow-
-# version dependent from Pillow 13 on. The bodies are otherwise verbatim
+# — upstream calls ``Image.resize`` directly, whose pass order depends on
+# the input's aspect ratio and the Pillow version. The bodies are otherwise verbatim
 # (``imagehash`` is BSD-2-Clause). ``colorhash`` never resizes and still
 # forwards to upstream.
 

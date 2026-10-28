@@ -145,7 +145,7 @@ def gen_haar_cases() -> dict:
 def _spec_resize(image: Image.Image, size: tuple[int, int]) -> Image.Image:
     """Lanczos resize in the spec's pass order (horizontal, then vertical).
 
-    Pillow >= 13 may run the vertical pass first for tall inputs, which
+    Pillow may run the vertical pass first for tall inputs, which
     changes the uint8 output; two explicit calls pin the SPEC.md §Step 4
     order on any Pillow. See regenerate.py for the full note.
     """
