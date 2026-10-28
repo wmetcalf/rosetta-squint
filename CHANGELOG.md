@@ -2,10 +2,13 @@
 
 All notable changes to rosetta-squint go here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [1.1.5] — 2026-10-28
 
-Pillow security sweep. Affects **`rosetta-squint-hash`** and **`rosetta-squint`** on
-**PyPI** (the shipped Pillow pin changes); every other registry carries no change.
+Pillow security sweep. Affects **`rosetta-squint-hash`** (PyPI 1.0.1 → 1.1.0) and
+**`rosetta-squint`** (umbrella, PyPI 1.1.2 → 1.1.3) on **PyPI only**: the shipped Pillow
+pin and Python floor change. crates.io, npm, Maven Central and the Go/Swift tags carry
+no change and are not re-cut. The umbrella's floor on `rosetta-squint-hash` rises to
+`>=1.1.0` so an umbrella install always pulls the pass-order fix below.
 
 ### Security (dependencies)
 
@@ -27,6 +30,8 @@ Pillow security sweep. Affects **`rosetta-squint-hash`** and **`rosetta-squint`*
   explicitly (`_spec_resize`), so it matches the spec and the other ports on every
   Pillow version. Verified: decode and hash goldens are byte-identical under Pillow
   12.3.0 and 13.0.0; only the recorded `pillow_version` stamp changes.
+
+Landed in CI via #92.
 
 ## [1.1.4] — 2026-10-05
 
