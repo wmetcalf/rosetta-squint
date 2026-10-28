@@ -90,11 +90,11 @@ public func cropResistantHash(
 
         // Scale to original image coordinates (float), then round to nearest integer.
         // Matches PIL Image.py `_crop`: `x0, y0, x1, y1 = map(int, map(round, box))`.
-        // Pillow 10.4.0 uses round() (not int/truncate) for crop coordinates.
-        let cropLeft   = Int((Double(minX)     * scaleW).rounded())
-        let cropTop    = Int((Double(minY)     * scaleH).rounded())
-        let cropRight  = Int((Double(maxX + 1) * scaleW).rounded())
-        let cropBottom = Int((Double(maxY + 1) * scaleH).rounded())
+        // Python round() is half-to-even (SPEC §3.4), hence .toNearestOrEven.
+        let cropLeft   = Int((Double(minX)     * scaleW).rounded(.toNearestOrEven))
+        let cropTop    = Int((Double(minY)     * scaleH).rounded(.toNearestOrEven))
+        let cropRight  = Int((Double(maxX + 1) * scaleW).rounded(.toNearestOrEven))
+        let cropBottom = Int((Double(maxY + 1) * scaleH).rounded(.toNearestOrEven))
 
         // Clamp to valid image bounds.
         let left   = max(0, min(origW, cropLeft))

@@ -298,13 +298,10 @@ CROP_RESISTANT_DEFAULTS = {
     "segmentation_image_size": 300,
 }
 
-# Fixtures excluded from the crop_resistant_hash golden table.
-# crop-boundary-150.png lives in the spec specifically to expose the audit's
-# H-H1 banker's-rounding drift (Rust/Java/Swift use the wrong rounding mode).
-# Until H-H1 is fixed in those ports the Python-generated golden would FAIL
-# the cross-port tests, so skip this fixture for now and revisit when H-H1
-# lands.
-CROP_RESISTANT_HASH_EXCLUDE = {"crop-boundary-150.png"}
+# Fixtures excluded from the crop_resistant_hash golden table. Empty since
+# H-H1 (half-to-even crop-box rounding, SPEC §3.4) was fixed in the Rust,
+# Java and Swift ports; crop-boundary-150.png now pins that fix.
+CROP_RESISTANT_HASH_EXCLUDE: set[str] = set()
 
 
 def compute_goldens(fixtures: list[Path]) -> dict:
