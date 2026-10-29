@@ -131,11 +131,11 @@ public final class CropResistantHash {
             // bbox in segmentation coords: (minY, minX, maxY+1, maxX+1)
             // Scale to original image coords (float), then round and convert to int.
             // Pillow 10.4 Image._crop does: x0, y0, x1, y1 = map(int, map(round, box))
-            // This is round-then-int, NOT truncate-toward-zero (despite spec §3.4 wording).
-            int cropLeft   = (int) Math.round(minX * scaleW);
-            int cropTop    = (int) Math.round(minY * scaleH);
-            int cropRight  = (int) Math.round((maxX + 1) * scaleW);
-            int cropBottom = (int) Math.round((maxY + 1) * scaleH);
+            // Python round() is half-to-even (SPEC §3.4), so Math.rint, not Math.round.
+            int cropLeft   = (int) Math.rint(minX * scaleW);
+            int cropTop    = (int) Math.rint(minY * scaleH);
+            int cropRight  = (int) Math.rint((maxX + 1) * scaleW);
+            int cropBottom = (int) Math.rint((maxY + 1) * scaleH);
 
             // Clamp to image bounds and ensure w,h >= 1
             cropLeft   = clamp(cropLeft, 0, origW - 1);
