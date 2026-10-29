@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  A downstream consumer of the published Java umbrella, resolved ONLY through
+  Maven metadata: one dependency on io.github.wmetcalf:rosetta-squint, nothing
+  else. If the umbrella's installed/deployed POM drops its runtime deps (as
+  maven-shade's dependency-reduced POM did for rosetta-squint 1.0.0 - 1.1.2 and
+  rosetta-squint-decode 1.1.0), Main fails with NoClassDefFoundError.
+
+  Run after `mvn install` of hash, decode and squint:
+    mvn -B -ntp -q -Dsquint.version=<v> package
+    java -cp "target/classes:$(cat target/cp.txt)" check.Main <decode/spec/fixtures>
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>io.github.wmetcalf.check</groupId>
+  <artifactId>maven-consumer-check</artifactId>
+  <version>0</version>
+  <packaging>jar</packaging>
+
+  <properties>
+    <squint.version>REQUIRED</squint.version>
+    <maven.compiler.release>17</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>io.github.wmetcalf</groupId>
+      <artifactId>rosetta-squint</artifactId>
+      <version>${squint.version}</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.13.0</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>3.8.1</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals><goal>build-classpath</goal></goals>
+            <configuration>
+              <outputFile>${project.build.directory}/cp.txt</outputFile>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>
