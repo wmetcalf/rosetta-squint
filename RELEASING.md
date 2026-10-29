@@ -2,7 +2,7 @@
 
 This document covers how to cut a new release across all 5 registries. Run the steps in order — most registries have inter-crate ordering dependencies (the umbrella package needs the libs published first).
 
-Currently published on **crates.io**: `rosetta-squint` 1.1.2, `rosetta-squint-decode` 1.1.2, `rosetta-squint-hash` 1.0.0; on **PyPI**: `rosetta-squint-hash` 1.1.0, `rosetta-squint` 1.1.3 (CHANGELOG 1.1.5, tag `v1.1.5`). Other registries: see [CHANGELOG.md](./CHANGELOG.md), which records per-registry versions. Update this line after each publish.
+Currently published on **crates.io**: `rosetta-squint` 1.1.2, `rosetta-squint-decode` 1.1.2, `rosetta-squint-hash` 1.0.1; on **PyPI**: `rosetta-squint-hash` 1.1.0, `rosetta-squint` 1.1.3; on **Maven Central**: `rosetta-squint-hash` 1.0.2, `rosetta-squint` 1.1.2 (CHANGELOG 1.1.6, tag `v1.1.6`). Other registries: see [CHANGELOG.md](./CHANGELOG.md), which records per-registry versions. Update this line after each publish.
 
 ## Quick map
 

@@ -4,9 +4,14 @@ All notable changes to rosetta-squint go here. Format: [Keep a Changelog](https:
 
 ## [Unreleased]
 
-Needs a release of **`rosetta-squint-hash`** on crates.io, Maven Central and the Swift
-tag (and the umbrellas that bundle them) to reach users. PyPI, npm and Go are already
-correct.
+## [1.1.6] — 2026-10-28
+
+H-H1 crop-rounding fix. Affects **`rosetta-squint-hash`** on **crates.io (1.0.0 → 1.0.1)**,
+**Maven Central (1.0.1 → 1.0.2)** and the **Swift tag `v1.1.6`**, plus the Maven umbrella
+**`rosetta-squint` (1.1.1 → 1.1.2)**, whose exact pin on the hash artifact moves to 1.0.2
+so umbrella users get the fix. The crates.io umbrella is not re-cut: its `1.0.0` caret
+requirement already resolves hash 1.0.1. PyPI, npm and Go were already correct and are
+not re-cut.
 
 ### Fixed
 

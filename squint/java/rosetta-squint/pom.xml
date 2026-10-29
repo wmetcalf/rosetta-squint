@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.github.wmetcalf</groupId>
   <artifactId>rosetta-squint</artifactId>
-  <version>1.1.1</version>
+  <version>1.1.2</version>
   <packaging>jar</packaging>
 
   <name>rosetta-squint</name>
@@ -52,11 +52,11 @@
     <dependency>
       <groupId>io.github.wmetcalf</groupId>
       <artifactId>rosetta-squint-hash</artifactId>
-      <!-- 1.0.1 is the first release built with maven.compiler.release=17. Keep this in
+      <!-- 1.0.2 carries the H-H1 crop_resistant_hash rounding fix. Keep this in
            step with hash/java/pom.xml: squint-ci installs hash/java locally before
            building this module, so a stale pin here silently resolves the OLD artifact
            from Central instead of the sibling in this tree. -->
-      <version>1.0.1</version>
+      <version>1.0.2</version>
     </dependency>
     <dependency>
       <groupId>io.github.wmetcalf</groupId>

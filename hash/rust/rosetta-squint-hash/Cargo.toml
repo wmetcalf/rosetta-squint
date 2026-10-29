@@ -1,6 +1,6 @@
 [package]
 name = "rosetta-squint-hash"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2021"
 rust-version = "1.84"
 description = "Byte-exact perceptual-hash library — Rust port of Python imagehash 4.3.2. Part of rosetta-squint."
