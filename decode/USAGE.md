@@ -150,7 +150,7 @@ Maven coordinates (Maven Central):
 <dependency>
   <groupId>io.github.wmetcalf</groupId>
   <artifactId>rosetta-squint-decode</artifactId>
-  <version>1.0.0</version>
+  <version>1.1.1</version>
 </dependency>
 ```
 

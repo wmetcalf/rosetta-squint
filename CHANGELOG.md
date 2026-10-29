@@ -4,6 +4,31 @@ All notable changes to rosetta-squint go here. Format: [Keep a Changelog](https:
 
 ## [Unreleased]
 
+Needs a **Maven Central** release of **`rosetta-squint-decode` 1.1.1** and then
+**`rosetta-squint` 1.1.2 → 1.1.3** (decode first: the umbrella depends on it). No other
+registry is affected.
+
+### Fixed
+
+- **Java (Maven Central) — `rosetta-squint` and `rosetta-squint-decode` published POMs
+  had no runtime dependencies.** Both modules build a CLI fat jar with `maven-shade`,
+  which by default also swaps the POM that `install`/`deploy` publish for a
+  dependency-reduced copy dropping everything it bundled into the CLI jar. The
+  published artifacts are thin jars, so a project depending on them got only their
+  own classes: `rosetta-squint` 1.0.0 – 1.1.2 lacked `rosetta-squint-hash` and
+  `rosetta-squint-decode` (consumers could not compile against it), and
+  `rosetta-squint-decode` 1.1.0 lacked `jna`, `imageio-tiff` and the Chicory
+  `runtime`/`wasi` that its TIFF, WebP and HEIC paths need. Shade now runs with
+  `createDependencyReducedPom=false`; the fat CLI jars are unchanged.
+  `rosetta-squint-hash` does not use shade and was never affected.
+
+### Tests
+
+- **`tools/maven-consumer-check`**: a downstream project that depends only on
+  `io.github.wmetcalf:rosetta-squint` and hashes a PNG, a TIFF and a HEIC through it.
+  Runs in `squint-ci` (Java) against the freshly installed modules. It fails to
+  compile against the old POMs (`cannot access …hash.ImageHash`).
+
 ## [1.1.6] — 2026-10-28
 
 H-H1 crop-rounding fix. Affects **`rosetta-squint-hash`** on **crates.io (1.0.0 → 1.0.1)**,
