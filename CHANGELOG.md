@@ -4,9 +4,21 @@ All notable changes to rosetta-squint go here. Format: [Keep a Changelog](https:
 
 ## [Unreleased]
 
-Needs a **Maven Central** release of **`rosetta-squint-decode` 1.1.1** and then
-**`rosetta-squint` 1.1.2 → 1.1.3** (decode first: the umbrella depends on it). No other
-registry is affected.
+## [1.1.7] — 2026-10-29
+
+Maven Central only: **`rosetta-squint-decode` 1.1.0 → 1.1.1** and **`rosetta-squint`
+1.1.2 → 1.1.3**. No other registry is affected. Verified after publish with
+`tools/maven-consumer-check` against Maven Central and an empty local repository.
+**Java users of either artifact should upgrade**: no earlier version resolves its
+runtime dependencies.
+
+### Build
+
+- **`central-publishing-maven-plugin` 0.11.0 → 0.12.0** (#97). GitHub's
+  `ubuntu-24.04` image moved to Maven 3.10.0, under which 0.11.0 bundled
+  `maven-metadata-local.xml` at the artifact level and Central rejected the
+  deployment ("Bundle has content that does NOT have a .pom file"). This blocked the
+  1.1.6 Maven publish until fixed.
 
 ### Fixed
 
