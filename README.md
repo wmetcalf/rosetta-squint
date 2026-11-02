@@ -9,7 +9,7 @@
 | Python | [PyPI](https://pypi.org/project/rosetta-squint/) | `pip install rosetta-squint` |
 | Rust | [crates.io](https://crates.io/crates/rosetta-squint) | `cargo add rosetta-squint` |
 | Go | [pkg.go.dev](https://pkg.go.dev/github.com/wmetcalf/rosetta-squint/squint/go/squint) | `go get github.com/wmetcalf/rosetta-squint/squint/go/squint@v1.0.0` |
-| Java | [Maven Central](https://central.sonatype.com/artifact/io.github.wmetcalf/rosetta-squint) | `<dependency><groupId>io.github.wmetcalf</groupId><artifactId>rosetta-squint</artifactId><version>1.0.0</version></dependency>` |
+| Java | [Maven Central](https://central.sonatype.com/artifact/io.github.wmetcalf/rosetta-squint) | `<dependency><groupId>io.github.wmetcalf</groupId><artifactId>rosetta-squint</artifactId><version>1.1.3</version></dependency>` |
 | JS / TS | [npm](https://www.npmjs.com/package/rosetta-squint) | `npm install rosetta-squint` |
 | Swift | SwiftPM (git tag) | `.package(url: "https://github.com/wmetcalf/rosetta-squint", from: "1.0.0")` — note: subpath-based Package.swift currently requires a local clone; see [hash/USAGE.md](./hash/USAGE.md) |
 
