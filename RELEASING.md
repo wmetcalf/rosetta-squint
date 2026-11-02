@@ -2,7 +2,7 @@
 
 This document covers how to cut a new release across all 5 registries. Run the steps in order — most registries have inter-crate ordering dependencies (the umbrella package needs the libs published first).
 
-Currently published on **crates.io**: `rosetta-squint` 1.1.1, `rosetta-squint-decode` 1.1.1, `rosetta-squint-hash` 1.0.0 (other registries: see [CHANGELOG.md](./CHANGELOG.md), which records per-registry versions). The Rust manifests in this tree are staged for **`rosetta-squint-decode` 1.1.2** and **`rosetta-squint` 1.1.2** (CHANGELOG 1.1.4). Update this line once they are published.
+Currently published on **crates.io**: `rosetta-squint` 1.1.2, `rosetta-squint-decode` 1.1.2, `rosetta-squint-hash` 1.0.1; on **PyPI**: `rosetta-squint-hash` 1.1.0, `rosetta-squint` 1.1.3; on **Maven Central**: `rosetta-squint-hash` 1.0.2, `rosetta-squint-decode` 1.1.1, `rosetta-squint` 1.1.3 (CHANGELOG 1.1.7; last tag `v1.1.6`). Other registries: see [CHANGELOG.md](./CHANGELOG.md), which records per-registry versions. Update this line after each publish.
 
 ## Quick map
 
@@ -40,7 +40,7 @@ python3 -m twine check dist/*                      # must say PASSED
 python3 -m twine upload dist/*                     # publishes to PyPI
 
 # Verify:
-pip install --upgrade rosetta-squint-hash          # should pull 1.0.1
+pip install --upgrade rosetta-squint-hash          # should pull 1.1.0
 ```
 
 ## crates.io
@@ -154,6 +154,12 @@ cd hash/java
 mvn -Prelease deploy                       # builds source+javadoc jars, signs, uploads to staging
 # Verify staging at https://central.sonatype.com/publishing/deployments
 # Click "Publish" in the UI (or set autoPublish=true in the pom plugin config)
+
+# After the umbrella is published, prove it resolves from Central the way a user
+# would (empty local repo, so nothing comes from this machine's ~/.m2):
+#   cd tools/maven-consumer-check
+#   mvn -B -ntp -q -Dmaven.repo.local=$(mktemp -d) -Dsquint.version=<v> package
+#   java -cp "target/classes:$(cat target/cp.txt)" check.Main ../../decode/spec/fixtures
 
 # 3) Wait for hash to appear at search.maven.org (~10-30 min after release)
 # Verify (set VERSION to the version you just cut):

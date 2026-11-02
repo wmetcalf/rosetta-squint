@@ -112,7 +112,17 @@ jobs:
           # Install sibling halves first (squint depends on hash + decode JARs).
           cd hash/java && mvn -B -ntp -DskipTests -Dmaven.compiler.source=21 -Dmaven.compiler.target=21 install
           cd ../../decode/java/rosetta-squint-decode && mvn -B -ntp -DskipTests -Dmaven.compiler.source=21 -Dmaven.compiler.target=21 install
-          cd ../../../squint/java/rosetta-squint && mvn -B -ntp -Dmaven.compiler.source=21 -Dmaven.compiler.target=21 test
+          cd ../../../squint/java/rosetta-squint && mvn -B -ntp -Dmaven.compiler.source=21 -Dmaven.compiler.target=21 install
+      - name: Java — downstream consumer resolves the umbrella from its POM
+        if: matrix.port == 'java'
+        # A separate project depending only on io.github.wmetcalf:rosetta-squint,
+        # as a user would. Catches a published POM that drops runtime deps
+        # (maven-shade's dependency-reduced POM did, 1.0.0 - 1.1.2).
+        run: |
+          V=$(sed -n 's#^  <version>\(.*\)</version>#\1#p' squint/java/rosetta-squint/pom.xml | head -1)
+          cd tools/maven-consumer-check
+          mvn -B -ntp -q -Dsquint.version="$V" package
+          java -cp "target/classes:$(cat target/cp.txt)" check.Main "$GITHUB_WORKSPACE/decode/spec/fixtures"
 
       # ── JS
       - name: Set up Node 20

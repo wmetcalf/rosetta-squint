@@ -10,7 +10,7 @@ raw decoded pixel buffers). This script diffs the full squint chain —
 decode + hash — across all 6 ports. End-to-end byte-exact verification.
 
 Usage:
-    diff_all_squint.py                       # default grid (70 combos × 2 fixtures = full)
+    diff_all_squint.py                       # default grid (35 combos × 4 fixtures = 140)
     diff_all_squint.py --grid=minimal        # ~22 combos: one canonical size per algo, fast
     diff_all_squint.py --grid=boundary       # ~48 combos: just sizes 2/32/64
     diff_all_squint.py --fixture <path>      # specific fixture (repeatable)
@@ -218,6 +218,11 @@ GRIDS: dict[str, list[tuple[str, int]]] = {
 DEFAULT_FIXTURES = [
     HASH_FIXTURES / "imagehash.png",
     HASH_FIXTURES / "peppers.png",
+    # Extreme aspect ratios: the tall one trips Pillow's resize pass reorder
+    # (SPEC.md §Step 4), the wide one lands crop_resistant_hash segment boxes
+    # on exact .5 coordinates (SPEC.md §3.4 half-to-even rounding).
+    HASH_FIXTURES / "aspect-tall-240to1-5x1200.png",
+    HASH_FIXTURES / "aspect-wide-120to1-1200x10.png",
 ]
 
 
