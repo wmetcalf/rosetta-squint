@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rosetta-squint"
-version = "1.1.2"
+version = "1.1.3"
 description = "Cross-language byte-exact perceptual image hashing — decode + hash in one call"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 license = { text = "BSD-2-Clause" }
 authors = [
     { name = "Will Metcalf", email = "william.metcalf@gmail.com" },
@@ -22,8 +22,8 @@ authors = [
 #     pip install -e .
 # Once on PyPI, this dependency will be specified normally.
 dependencies = [
-    "rosetta-squint-hash>=1.0.0,<2.0",
-    "Pillow==12.3.*",
+    "rosetta-squint-hash>=1.1.0,<2.0",
+    "Pillow>=13.0,<14",
 ]
 
 [project.optional-dependencies]
