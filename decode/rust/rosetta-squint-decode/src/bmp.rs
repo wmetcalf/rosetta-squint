@@ -189,7 +189,7 @@ fn parse_bmp_header(bytes: &[u8]) -> Result<BmpHeader, DecodeError> {
 }
 
 fn decode_rgb24(bytes: &[u8], hdr: &BmpHeader) -> Result<DecodedImage, DecodeError> {
-    let stride = ((hdr.width * 3 + 3) / 4) * 4;
+    let stride = (hdr.width * 3).div_ceil(4) * 4;
     let needed = checked_needed(hdr.pixel_data_offset, stride, hdr.height)?;
     if bytes.len() < needed {
         return Err(truncated("pixel data truncated (24-bit RGB)"));
@@ -306,7 +306,7 @@ fn decode_pal8(bytes: &[u8], hdr: &BmpHeader) -> Result<DecodedImage, DecodeErro
             bytes[off],     // B
         ]);
     }
-    let stride = ((hdr.width + 3) / 4) * 4;
+    let stride = hdr.width.div_ceil(4) * 4;
     let needed = checked_needed(hdr.pixel_data_offset, stride, hdr.height)?;
     if bytes.len() < needed {
         return Err(truncated("pixel data truncated (8-bit paletted)"));
@@ -342,8 +342,8 @@ fn decode_pal8(bytes: &[u8], hdr: &BmpHeader) -> Result<DecodedImage, DecodeErro
 fn decode_pal4(bytes: &[u8], hdr: &BmpHeader) -> Result<DecodedImage, DecodeError> {
     let entry_count = clamp_entry_count(hdr.clr_used, 16);
     let palette = read_color_table(bytes, hdr, entry_count)?;
-    // Row stride: ceil(width*4 / 32) * 4 bytes = ((width * 4 + 31) / 32) * 4
-    let stride = ((hdr.width * 4 + 31) / 32) * 4;
+    // Row stride: ceil(width*4 / 32) * 4 bytes = (width * 4).div_ceil(32) * 4
+    let stride = (hdr.width * 4).div_ceil(32) * 4;
     let needed = checked_needed(hdr.pixel_data_offset, stride, hdr.height)?;
     if bytes.len() < needed {
         return Err(truncated("pixel data truncated (4-bit paletted)"));
@@ -384,8 +384,8 @@ fn decode_pal4(bytes: &[u8], hdr: &BmpHeader) -> Result<DecodedImage, DecodeErro
 fn decode_pal1(bytes: &[u8], hdr: &BmpHeader) -> Result<DecodedImage, DecodeError> {
     let entry_count = clamp_entry_count(hdr.clr_used, 2);
     let palette = read_color_table(bytes, hdr, entry_count)?;
-    // Row stride: ceil(width / 32) * 4 bytes = ((width + 31) / 32) * 4
-    let stride = ((hdr.width + 31) / 32) * 4;
+    // Row stride: ceil(width / 32) * 4 bytes = width.div_ceil(32) * 4
+    let stride = hdr.width.div_ceil(32) * 4;
     let needed = checked_needed(hdr.pixel_data_offset, stride, hdr.height)?;
     if bytes.len() < needed {
         return Err(truncated("pixel data truncated (1-bit paletted)"));
@@ -448,7 +448,7 @@ fn decode_bitfields(
     };
 
     let stride = if bits_per_pixel == 16 {
-        ((hdr.width * 2 + 3) / 4) * 4
+        (hdr.width * 2).div_ceil(4) * 4
     } else {
         hdr.width * 4
     };
@@ -559,7 +559,7 @@ fn decode_rle(bytes: &[u8], hdr: &BmpHeader, bits_per_pixel: u32) -> Result<Deco
             match data_byte {
                 0 => {
                     // EOL: pad with zeros to next row boundary (Pillow behavior)
-                    while data_buf.len() % xsize != 0 {
+                    while !data_buf.len().is_multiple_of(xsize) {
                         data_buf.push(0);
                     }
                     x = 0;
@@ -613,8 +613,8 @@ fn decode_rle(bytes: &[u8], hdr: &BmpHeader, bits_per_pixel: u32) -> Result<Deco
                     }
                     x += num_abs;
                     pos += byte_count;
-                    // Word-align: check if (pos - hdr.pixel_data_offset) % 2 != 0
-                    if (pos - hdr.pixel_data_offset) % 2 != 0 {
+                    // Word-align: check if (pos - hdr.pixel_data_offset) is not a multiple of 2
+                    if !(pos - hdr.pixel_data_offset).is_multiple_of(2) {
                         pos += 1; // skip padding byte
                     }
                 }

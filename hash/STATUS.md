@@ -36,7 +36,7 @@ Every port produces the same hex output as the Python `imagehash` package for th
 
 Goldens were generated against:
 - `imagehash==4.3.2`
-- `Pillow==12.2.0`
+- `Pillow==13.0.0`
 - `numpy>=1.26,<2.0`
 - `scipy>=1.11,<1.15`
 - `PyWavelets>=1.5,<2.0`

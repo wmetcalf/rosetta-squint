@@ -148,6 +148,30 @@ the accumulator stays well under int64 range.
 
 Vertical pass uses the same arithmetic, applied to the columns of the horizontal-pass output. **Both passes use the same fixed-point arithmetic; no intermediate float buffer exists** in PIL's C path.
 
+**Pass order is normative, and Pillow no longer guarantees it.** Each pass rounds to
+uint8, so running vertical-then-horizontal gives a different result from
+horizontal-then-vertical whenever both axes change. Pillow has two heuristics that
+reorder the passes:
+
+- **Pillow ≤ 12.3**, in Python-level `Image.resize`: when
+  `src_h > 100 * src_w` and the height shrinks, it resizes vertically first. Inputs
+  taller than 100:1 therefore never followed this spec on Pillow ≤ 12.3, and
+  `rosetta-squint-hash` ≤ 1.0.1, which called `Image.resize` directly, disagreed with
+  every native port on them.
+- **Pillow 13.0**, in `ImagingResampleInner` (`Resample.c`): runs the vertical pass
+  first when `(src_h - dst_h) > 2 * (src_w - dst_w)`, i.e. on inputs taller than
+  roughly 2:1.
+
+So a bare `Image.resize` diverges from this spec (and from every native port) on tall
+inputs on any Pillow version. The Python reference
+(`rosetta_squint_hash._impl._spec_resize`, mirrored in `regenerate.py` and
+`gen_unit_cases.py`) therefore issues the two passes as two explicit `resize` calls,
+`resize((dst_w, src_h))` then `resize((dst_w, dst_h))`, which pins the spec order on any
+Pillow version: each call changes only one axis, so there is no order left for either
+heuristic to change. The per-pass arithmetic above is identical in
+Pillow 12.3 and 13.0; only the order moved. Native ports implement horizontal-first
+unconditionally and need no change.
+
 References: `lanczos_cases/*.bin` — 4 reference cases (downsample, upsample, identity,
 asymmetric). Group-1 test: `test_lanczos_fixed_point`. The downsample case is the
 one where float reference diverges; that's the most sensitive parity check.
@@ -586,7 +610,7 @@ Parsing: `hex_to_multihash("hex1,hex2,hex3")` splits on `,`, parses each via `he
 
 **3.3 Flood-fill iteration order:** Python `_find_region` iterates `remaining_pixels` in `np.argwhere` order (row-major, y-then-x). Tie-breaking matters because segments containing the same pixels can otherwise end up in different orders, producing different bounding boxes after sorting in step 8. Ports MUST use row-major iteration. Reference cases in `spec/segmentation_cases.json`.
 
-**3.4 Bounding-box float→int rounding:** PIL's `Image.crop((left, top, right, bottom))` accepts floats and internally calls `map(int, map(round, box))` — i.e. **round-half-to-even THEN cast to int** (NOT plain truncate toward zero as an earlier draft of this spec incorrectly stated). The Rust port's `src/crop_resistant.rs` uses this rounding to match Python. Other ports must do likewise: e.g. Java `Math.round` (which is round-half-up — NOT exactly the same as Python's banker's rounding, but works for the .5 ambiguity if you instead use `Math.rint` which IS round-half-to-even); Go `math.RoundToEven`; JS `Math.round` is round-half-away-from-zero (problematic — use a banker's-rounding helper); Swift `.rounded(.toNearestOrEven)`.
+**3.4 Bounding-box float→int rounding:** PIL's `Image.crop((left, top, right, bottom))` accepts floats and internally calls `map(int, map(round, box))` — i.e. **round-half-to-even THEN cast to int** (NOT plain truncate toward zero as an earlier draft of this spec incorrectly stated). Every port must use a half-to-even rounding: Rust `f64::round_ties_even`; Java `Math.rint` (not `Math.round`, which is half-up); Go a half-to-even helper or `math.RoundToEven`; JS a banker's-rounding helper (`Math.round` is half-up); Swift `.rounded(.toNearestOrEven)` (plain `.rounded()` is half-away-from-zero). The `crop-boundary-150.png` and `aspect-wide-120to1-1200x10.png` fixtures land segment boxes on exact `.5` coordinates and fail under any other mode.
 
 **3.5 Variable-length output:** Each fixture produces a different number of segments depending on image content. Group-2 tests compare the full comma-separated hex string against `goldens.json` — same number of segments, same order, same per-segment hex.
 

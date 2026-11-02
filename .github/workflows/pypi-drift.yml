@@ -1,0 +1,71 @@
+name: pypi-drift
+
+# What users actually get from PyPI, checked against the goldens every port
+# tests against. The shipped Python packages pin Pillow to a range
+# (`>=13.0,<14`) and float numpy / scipy / PyWavelets, while every other CI job
+# installs the exact versions in hash/spec/requirements.txt. A dependency
+# release inside those ranges that moves a hash or a decoded pixel would pass
+# all of CI and still reach users; this job catches it within a week.
+#
+# A failure means: the published packages, as a fresh install resolves them
+# today, no longer match goldens.json. Read the "Resolved versions" step to see
+# which dependency moved, then tighten the shipped pin or fix the package.
+
+on:
+  schedule:
+    # Monday 09:00 UTC, same batch as the dep-audit / CodeQL runs.
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/pypi-drift.yml"
+      - "tools/pypi-drift/**"
+
+permissions:
+  contents: read
+
+jobs:
+  pypi-drift:
+    name: PyPI drift (python ${{ matrix.python }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        # Oldest supported (Requires-Python >=3.11) and newest: dependency
+        # resolution differs across them.
+        python: ["3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Fresh install from PyPI (no repo code)
+        run: |
+          python -m venv /tmp/pypi
+          /tmp/pypi/bin/pip install --no-cache-dir --upgrade pip
+          /tmp/pypi/bin/pip install --no-cache-dir rosetta-squint rosetta-squint-hash pytest
+
+      - name: Resolved versions
+        run: /tmp/pypi/bin/pip freeze
+
+      - name: Confirm the packages under test come from site-packages
+        working-directory: /tmp
+        run: |
+          /tmp/pypi/bin/python -c "
+          import rosetta_squint, rosetta_squint_hash
+          for m in (rosetta_squint, rosetta_squint_hash):
+              print(m.__name__, m.__version__, m.__file__)
+              assert 'site-packages' in m.__file__, m.__file__
+          "
+
+      - name: Hash goldens (all algorithms x fixtures x sizes)
+        # --import-mode=importlib keeps hash/python/ off sys.path, so the
+        # test imports the PyPI install, not the checkout.
+        run: /tmp/pypi/bin/pytest -q -p no:cacheprovider --import-mode=importlib hash/python/tests/test_goldens.py
+
+      - name: Decode goldens through the umbrella
+        # HEIC is skipped: rosetta_squint decodes it with the runner's system
+        # libheif (1.17.x on ubuntu-24.04), while the goldens come from libheif
+        # 1.21.2, so it never matches here. See decode/spec/HEIC_REPRODUCIBILITY.md.
+        run: /tmp/pypi/bin/python -I tools/pypi-drift/check_decode.py --skip-format heic

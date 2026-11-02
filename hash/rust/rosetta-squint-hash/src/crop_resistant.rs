@@ -105,11 +105,11 @@ pub fn crop_resistant_hash(
 
         // Scale to original coords.
         // PIL._crop uses: x0, y0, x1, y1 = map(int, map(round, box))
-        // i.e., round() then int() (not truncation toward zero).
-        let crop_left = (min_x as f64 * scale_w).round() as i64 as u32;
-        let crop_top = (min_y as f64 * scale_h).round() as i64 as u32;
-        let crop_right = ((max_x + 1) as f64 * scale_w).round() as i64 as u32;
-        let crop_bottom = ((max_y + 1) as f64 * scale_h).round() as i64 as u32;
+        // i.e., Python round() (half to even, SPEC §3.4) then int().
+        let crop_left = (min_x as f64 * scale_w).round_ties_even() as i64 as u32;
+        let crop_top = (min_y as f64 * scale_h).round_ties_even() as i64 as u32;
+        let crop_right = ((max_x + 1) as f64 * scale_w).round_ties_even() as i64 as u32;
+        let crop_bottom = ((max_y + 1) as f64 * scale_h).round_ties_even() as i64 as u32;
 
         // Clamp crop to image bounds
         let crop_right = crop_right.min(orig_w as u32);

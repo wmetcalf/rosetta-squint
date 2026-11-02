@@ -109,7 +109,7 @@ pub(crate) fn decode_png(bytes: &[u8]) -> Result<DecodedImage, DecodeError> {
         let raw = la16.as_raw(); // [gray, alpha, gray, alpha, ...]
         let pixel_count = width * height;
         let mut data = Vec::with_capacity(pixel_count * 4);
-        for chunk in raw.chunks_exact(2) {
+        for chunk in raw.as_chunks::<2>().0 {
             let gray = (chunk[0] >> 8) as u8;
             let alpha = (chunk[1] >> 8) as u8;
             data.push(gray);  // R
